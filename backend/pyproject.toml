@@ -1,0 +1,67 @@
+[project]
+name = "healthtrend-backend"
+version = "0.1.0"
+description = "HealthTrend numerical core: latent weight estimation, uncertainty and probabilistic forecasting."
+requires-python = ">=3.11"
+dependencies = ["numpy>=1.26"]
+
+[dependency-groups]
+dev = ["mypy>=1.11", "pytest>=8.0", "ruff>=0.6"]
+
+[tool.uv]
+# The backend is run in place, not installed as a distribution. `pythonpath` below
+# makes `app` and `testing` importable from this directory.
+package = false
+
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra --strict-markers --strict-config"
+# The numerical core must not emit warnings. Treat any warning as a failure so
+# NumPy deprecations and invalid-value warnings surface immediately.
+filterwarnings = ["error"]
+
+# ---------------------------------------------------------------------------
+# Lint / format
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["."]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP", "B", "SIM", "RUF", "ANN", "D", "NPY"]
+ignore = [
+    "D203", # incompatible with D211
+    "D213", # incompatible with D212
+    # Docstrings intentionally carry mathematical notation (sigma, Delta, x-cross,
+    # em dashes). Confusable-character checks fight that and add no safety here.
+    "RUF001",
+    "RUF002",
+    "RUF003",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D", "ANN", "N803", "N806"]
+# The core names matrices after the symbols in the equations it implements: F, Q, P, H,
+# K. Lower-casing them to satisfy pep8-naming would break the correspondence between
+# docs/mathematics.md and the code, which is the point of writing it this way. Tests
+# assert against those same equations, so they use the same names.
+"app/core/**" = ["N803", "N806"]
+
+# ---------------------------------------------------------------------------
+# Type checking
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.11"
+files = ["app", "testing"]
+strict = true
+warn_unreachable = true
+enable_error_code = ["redundant-expr", "truthy-bool", "ignore-without-code"]

@@ -1,0 +1,47 @@
+# ---------------------------------------------------------------------------
+# Privacy first (master plan §42). Real health data must never be committed.
+# These rules exist BEFORE any data file can be created.
+# ---------------------------------------------------------------------------
+private/
+real_data/
+apple_health_export/
+*.xml
+export*.zip
+*.zip
+
+# Any CSV is assumed to be real weight data unless it lives in sample_data/
+*.csv
+!sample_data/**/*.csv
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ---------------------------------------------------------------------------
+# Node (frontend milestone, not yet present)
+# ---------------------------------------------------------------------------
+node_modules/
+.next/
+out/
+
+# ---------------------------------------------------------------------------
+# Environment and editors
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+.DS_Store
+.idea/
+.vscode/
