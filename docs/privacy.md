@@ -41,13 +41,66 @@ Error messages name positions and field names, never values. For example
 no weight, no timestamp. Test `F8` asserts that none of the input weights and no year appears in the
 message, because an exception string is exactly the kind of thing that ends up in a log aggregator.
 
-When the API layer arrives, the same rule applies to request logging: log that an analysis ran and
-how many observations it covered, never the observations.
+## The same rule at the HTTP boundary
+
+The core cannot leak a measurement because it cannot log. One layer up, the data actually arrives, so
+the rule has to be enforced rather than implied. ADR-0006 records the decisions; this is what they
+mean operationally.
+
+**Request logs carry counts, never contents.** `app/api/logging.py` records the method, the matched
+route template, the status, the duration and the number of observations analysed. The middleware
+**never reads the request body** — not to count observations, not to check a size. A route that has
+already validated its input records the count via `record_observation_count`, and the middleware picks
+it up afterwards. Parsing a body in a logging path is how a weight reaches a log line by accident.
+
+**No application logger ever records a caller-controlled route value.** The access log writes the
+matched route *template* (`/api/demo/{scenario}`), never the raw path — even a matched path embeds
+whatever the caller typed into a parameter, and an unmatched path is an arbitrary string (those log
+as `<unmatched>`). The error handlers log only fixed metadata: a public error code, a field-problem
+count, an exception class name. Nothing derived from the request URL appears in any
+`healthtrend.*` record.
+
+**Validation errors are rebuilt, not filtered.** Pydantic's error detail carries `input`: the
+offending value. Removing that key is not enough, because `msg` is generated text too. So the public
+message is looked up by the machine-readable error `type` from a table of our own strings, and only
+`location`, `code` and that message are published. Locations are filtered to integer indices and
+plain identifiers, because with `extra="forbid"` an unknown *field name* comes from the request body
+and a caller controls field names.
+
+**Domain and core errors are looked up in a table.** Never `str(exc)`, never a class name. An
+unmapped exception becomes a fixed 500 with no detail and no traceback in the body.
+
+**Unexpected exceptions are converted, and their messages are never logged.** A third-party
+exception message can quote a value (Pydantic's own errors embed the offending input), so the
+request middleware catches anything unhandled, logs one line carrying the exception **class name**
+only — no message, no traceback — and returns the fixed 500 itself. Converting in the middleware is
+what keeps the traceback out of the *server's* logs too: Starlette deliberately re-raises after a
+registered catch-all handler runs, and uvicorn would then print the full traceback to `uvicorn.error`.
+The accepted cost is that diagnosing an unexpected failure means reproducing it, not reading its
+message out of a log.
+
+**Residual channel, stated honestly.** If the logging middleware itself fails, the backstop handler
+in `app/api/errors.py` fires, Starlette re-raises, and the ASGI server logs the full traceback on its
+own logger. That channel cannot be closed from inside the application; it is reachable only through a
+bug in a dozen lines of our own middleware code, which never handles measurement values.
+
+**Uvicorn's access log is disabled as hardening, not because it leaks weights today.** It records
+request lines — method, raw path, query string — never JSON bodies, and this API carries measurements
+only in bodies. But raw paths are caller-controlled strings, this application's own access log
+already records the safe equivalent, and a metadata log nobody reads is pure liability. Run with
+`--no-access-log`. This is deployment configuration, and therefore a weaker guarantee than the rest —
+revisit it when deployment is designed.
+
+All of this is enforced by [`backend/tests/api/test_privacy.py`](../backend/tests/api/test_privacy.py),
+which submits a sentinel weight *and* a sentinel timestamp — through the body, through a matched
+route parameter, and inside an injected exception message — and asserts that neither appears in a
+validation response, a domain-error response, a 500 body, or any application log record.
 
 ## No storage, no accounts
 
-Milestone 1 stores nothing — it is a library that transforms a list of measurements into a result
-object. There is no database, no session, no cache, no telemetry.
+Nothing is stored. The analysis happens inside the request and the result is returned; there is no
+database, no session, no cache, no telemetry, and no retained upload. `create_app()` wires routes,
+error handlers and the access log, and nothing else.
 
 When the public web version arrives (master plan §42): synthetic demo data, user upload, analysis in
 the request, no permanent health-data storage by default. Account-based tracking is a separate later
@@ -65,11 +118,14 @@ so wide it says nothing — which is the correct output from one measurement, no
 
 ## Claims
 
-Only claim what is implemented and measured (master plan §71). As of Milestone 1:
+Only claim what is implemented and measured (master plan §71). As of Milestone 2:
 
 - the model parameters are documented priors, not values fitted to data
 - calibration has been demonstrated only on data drawn from the model itself
 - there is no robustness to outliers, and the sensitivity is measured and recorded
 - no real health data has been used for any evaluation
+- **Milestone 2 changed no mathematics.** It put the existing estimator behind HTTP. Nothing about
+  accuracy, calibration or robustness improved, and the golden fixture from Milestone 1 is
+  byte-identical — which is the evidence for that claim.
 
 Do not describe the system as validated, robust, or accurate until there are experiments that say so.

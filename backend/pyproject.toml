@@ -3,10 +3,10 @@ name = "healthtrend-backend"
 version = "0.1.0"
 description = "HealthTrend numerical core: latent weight estimation, uncertainty and probabilistic forecasting."
 requires-python = ">=3.11"
-dependencies = ["numpy>=1.26"]
+dependencies = ["fastapi>=0.115", "numpy>=1.26", "pydantic>=2.9", "uvicorn>=0.30"]
 
 [dependency-groups]
-dev = ["mypy>=1.11", "pytest>=8.0", "ruff>=0.6"]
+dev = ["httpx2>=2", "mypy>=1.11", "pytest>=8.0", "ruff>=0.6"]
 
 [tool.uv]
 # The backend is run in place, not installed as a distribution. `pythonpath` below

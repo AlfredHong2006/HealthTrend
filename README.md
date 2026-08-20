@@ -9,10 +9,9 @@ uncertain that estimate is, and forecasts where the trajectory is probably headi
 
 ---
 
-## Status: Milestone 1 in progress
+## Status: Milestone 2 — the numerical core, behind an HTTP API
 
-This repository currently contains **only the numerical core and its test suite**. There is no web
-application yet.
+There is a backend. There is **no web frontend yet**.
 
 **Implemented**
 
@@ -20,40 +19,84 @@ application yet.
 - Kalman filtering with Joseph-form covariance updates
 - Latent weight estimate with a 95% interval
 - Trend velocity (kg/day, reported as kg/week)
-- Analytic 30-day probabilistic forecast with an uncertainty band that widens with horizon
-- Deterministic test suite covering the mathematics
+- Analytic 7-, 30- and 90-day probabilistic forecasts, with a band that widens with horizon
+- A JSON API: submit weigh-ins in kg or lb, in any order, from any timezone
+- Five synthetic demo scenarios, so the product can be tried with no data of your own
+- Privacy-safe error and log behaviour, enforced by sentinel-value tests
+- Deterministic test suite covering the mathematics and the HTTP boundary
 
 **Not implemented yet:**
 
-HTTP API, web frontend, CSV ingestion, Apple Health parsing, trend classification, plateau detection,
-change detection, goal projection, robust outlier handling, RTS smoothing, baseline comparison,
-calibration study, contextual machine learning, accounts.
+Web frontend, CSV ingestion, Apple Health parsing, trend classification, plateau detection, change
+detection, goal projection, robust outlier handling, RTS smoothing, baseline comparison, calibration
+study, contextual machine learning, accounts, deployment.
 
-No accuracy or robustness claims are made at this stage. The model parameters are documented priors,
-not values fitted to data — see [docs/mathematics.md](docs/mathematics.md).
+No accuracy or robustness claims are made at this stage. Milestone 2 changed no mathematics — it put
+the existing estimator behind HTTP. The model parameters are documented priors, not values fitted to
+data — see [docs/mathematics.md](docs/mathematics.md).
 
 ---
 
-## Running the core
+## Running it
 
 Requires [uv](https://docs.astral.sh/uv/). From `backend/`:
 
 ```
-uv sync                        # provision Python 3.11 + numpy + dev tools
+uv sync                        # provision Python 3.11 and dependencies
 uv run pytest -q               # full test suite
 uv run ruff check .            # lint
 uv run ruff format --check .   # formatting
 uv run mypy app                # strict type checking
 ```
 
+Then start the server. `--no-access-log` disables uvicorn's built-in access log as privacy
+hardening: that log records request metadata — method, raw path, query string — never JSON bodies,
+but raw paths are caller-controlled strings, and the application writes its own metadata-only access
+log instead ([docs/privacy.md](docs/privacy.md)).
+
+```
+uv run uvicorn app.main:app --no-access-log
+```
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /health` | liveness |
+| `POST /api/analyse` | analyse submitted weigh-ins |
+| `GET /api/demo` | list the synthetic demo scenarios |
+| `GET /api/demo/{scenario}` | analyse one of them |
+| `GET /docs`, `GET /openapi.json` | interactive docs and the machine-readable contract |
+
+Try it without any data of your own:
+
+```
+curl localhost:8000/api/demo
+curl localhost:8000/api/demo/gradual-loss
+```
+
+Or with your own:
+
+```
+curl -X POST localhost:8000/api/analyse -H 'content-type: application/json' -d '{
+  "observations": [
+    {"timestamp": "2026-08-01T07:30:00+01:00", "weight": 72.4, "unit": "kg"},
+    {"timestamp": "2026-08-08T07:20:00+01:00", "weight": 71.9, "unit": "kg"}
+  ]
+}'
+```
+
+Horizons are fixed at 7, 30 and 90 days. By default they are measured from **now**, so a stale series
+carries the extra elapsed uncertainty; the response publishes `origin_timestamp`,
+`last_observation_timestamp` and `lead_days` so a client can say which it means. Pass
+`"forecast_from": "last_observation"` for the series-relative view.
+
 ## Documentation
 
 | Document | Contents |
 | --- | --- |
 | [docs/mathematics.md](docs/mathematics.md) | Every equation, and the code symbol that implements it |
-| [docs/architecture.md](docs/architecture.md) | Layer boundaries and the dependency rule |
+| [docs/architecture.md](docs/architecture.md) | Layer boundaries and the dependency rules |
 | [docs/privacy.md](docs/privacy.md) | What must never be committed or logged |
-| [docs/decisions/](docs/decisions/) | Architecture decision records (ADR-0001 to ADR-0005) |
+| [docs/decisions/](docs/decisions/) | Architecture decision records (ADR-0001 to ADR-0007) |
 
 The frozen product specification (the master plan) is not in this repository yet — drop it at
 `docs/MASTER_PLAN.md`. Section references throughout the docs and code comments point at it.
