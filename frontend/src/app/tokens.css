@@ -1,0 +1,74 @@
+/**
+ * Design tokens: the whole visual language as custom properties.
+ *
+ * HealthTrend should read as calm, precise and non-judgemental (master plan section 80) --
+ * not a dashboard, a trading terminal or a fitness app. There is deliberately one accent
+ * colour and no red/green judgement colours: a maintenance user's flat rate is a success,
+ * not a "no gain" warning, so colour never encodes a value judgement about the trend.
+ */
+
+:root {
+  /* Neutral scale */
+  --ht-bg: #fbfaf8;
+  --ht-surface: #ffffff;
+  --ht-border: #e4e0da;
+  --ht-text: #262421;
+  --ht-text-muted: #6b6459;
+  --ht-text-faint: #9a9285;
+
+  /* The one accent: the latent trend line and its interactive states */
+  --ht-accent: #2f5d50;
+  --ht-accent-soft: rgba(47, 93, 80, 0.14);
+
+  /* The forecast: visually related to the accent but clearly distinct -- never the
+     judgement colours (red/green) that would imply the forecast is good or bad news. */
+  --ht-forecast: #8a6a3f;
+  --ht-forecast-soft: rgba(138, 106, 63, 0.14);
+
+  /* Raw observations: quiet, so the estimate (not the noise) draws the eye */
+  --ht-observation: #b7ae9f;
+
+  --ht-focus-ring: #1a5fb4;
+
+  /* Type */
+  --ht-font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --ht-size-headline: clamp(2.5rem, 5vw + 1rem, 4rem);
+  --ht-size-value: clamp(1.5rem, 2.5vw + 1rem, 2rem);
+  --ht-size-body: 1rem;
+  --ht-size-caption: 0.875rem;
+  --ht-line-tight: 1.1;
+
+  /* Space, in one consistent scale */
+  --ht-space-1: 0.25rem;
+  --ht-space-2: 0.5rem;
+  --ht-space-3: 0.75rem;
+  --ht-space-4: 1rem;
+  --ht-space-6: 1.5rem;
+  --ht-space-8: 2rem;
+  --ht-space-12: 3rem;
+
+  --ht-radius: 10px;
+  --ht-max-width: 760px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ht-bg: #161513;
+    --ht-surface: #1e1c19;
+    --ht-border: #33302a;
+    --ht-text: #efece6;
+    --ht-text-muted: #b0a99b;
+    --ht-text-faint: #7d7669;
+
+    --ht-accent: #6fb09d;
+    --ht-accent-soft: rgba(111, 176, 157, 0.16);
+
+    --ht-forecast: #d3ab6e;
+    --ht-forecast-soft: rgba(211, 171, 110, 0.16);
+
+    --ht-observation: #58524a;
+
+    --ht-focus-ring: #6cb0ff;
+  }
+}

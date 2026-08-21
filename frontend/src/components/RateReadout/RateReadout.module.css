@@ -1,0 +1,16 @@
+.rate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ht-space-1);
+}
+
+.value {
+  font-size: var(--ht-size-value);
+  font-weight: 600;
+  line-height: var(--ht-line-tight);
+}
+
+.caption {
+  color: var(--ht-text-muted);
+  font-size: var(--ht-size-caption);
+}

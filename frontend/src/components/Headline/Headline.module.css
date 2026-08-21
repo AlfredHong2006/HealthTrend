@@ -1,0 +1,21 @@
+.headline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ht-space-1);
+}
+
+.value {
+  font-size: var(--ht-size-headline);
+  font-weight: 600;
+  line-height: var(--ht-line-tight);
+  letter-spacing: -0.02em;
+}
+
+.caption {
+  color: var(--ht-text-muted);
+  font-size: var(--ht-size-caption);
+}
+
+.range {
+  color: var(--ht-text-faint);
+}

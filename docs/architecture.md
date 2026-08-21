@@ -1,8 +1,10 @@
 # Architecture
 
 Milestone 1 was one layer: the pure numerical core. Milestone 2 added the HTTP boundary above it
-without changing a line of it. This document records the boundaries, so later milestones add to the
-structure rather than negotiating it again.
+without changing a line of it. Milestone 3 added a Next.js frontend above that, again without
+changing a line of the backend other than the CORS decision recorded in
+[ADR-0008](decisions/ADR-0008-frontend-contract-and-cors.md). This document records the boundaries,
+so later milestones add to the structure rather than negotiating it again.
 
 ## The dependency rule
 
@@ -16,11 +18,23 @@ structure rather than negotiating it again.
   errors  ·  schemas  ·  demo             leaves above the core; no web framework
         |
         v
-  ingestion  ->  services  ->  api  ->  main                    the HTTP boundary
-        |
+  ingestion  ->  services  ->  api  ->  main                    the HTTP boundary (backend/)
+
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  a network boundary, not a
+                                                                 same-process dependency
+  schema.d.ts  ->  types  ->  client  ->  chart, analysis        frontend/, generated from
+        |                                                        the committed openapi.json
         v
-  [Milestone 3+]  frontend                                      (not yet present)
+  components  ->  app/ (routes)                                  Next.js, server-rendered
 ```
+
+The frontend is a **separate application**, not another layer of the same dependency graph: it talks
+to the backend only over HTTP, through the committed OpenAPI contract
+([ADR-0008](decisions/ADR-0008-frontend-contract-and-cors.md)), and could be replaced or removed
+without the backend knowing. Within `frontend/`, `src/lib/api` (generated types, client, errors) sits
+below `src/lib/chart` and `src/lib/analysis` (pure data shaping, no HTTP or React), which sit below
+`src/components`, which sit below `src/app` (routes). Only `src/app` and `TrendChart` import
+Next.js/React client-only APIs; everything below that is plain TypeScript, testable without either.
 
 Dependencies point downward only. `app.core` never imports anything above it, and the direction
 above it is `api -> services -> core`, with services reaching sideways into `ingestion` for
@@ -113,8 +127,10 @@ backend/
     fixtures/             committed golden output
 ```
 
-Reserved names, deliberately absent until they are needed: `app/evaluation/`, `frontend/`,
-`experiments/`, `sample_data/`.
+Reserved names, deliberately absent until they are needed: `app/evaluation/`, `experiments/`,
+`sample_data/`.
+
+`frontend/` is no longer reserved — see [below](#the-frontend) for its layout.
 
 ## What the HTTP layer is responsible for
 
@@ -152,8 +168,7 @@ silently producing nonsense.
 | Later feature | Attachment point | Present today |
 | --- | --- | --- |
 | CSV / Apple Health ingestion | a parser in `app/ingestion/` producing `ObservationIn`, reusing `normalise_observations` | the normalisation step |
-| frontend | `GET /openapi.json` is complete enough to generate TypeScript types from | the contract |
-| CORS | `create_app()` | deliberately absent until origins are known (ADR-0006) |
+| real-data upload from the frontend | a submit form calling `POST /api/analyse`; CORS for that browser origin | the endpoint and its schema already exist (ADR-0008) |
 | trend classification, plateau, goals | a new response block plus a service; the estimator stays goal-neutral | `AnalysisResponse` |
 | "30 days from now" for a stale series | `origin` parameter on `forecast_at` / `forecast_path` | tests `P5`, ADR-0005 |
 | Robust / adaptive `R` | `Observation.obs_variance` per-observation override | field, unused |
@@ -162,6 +177,45 @@ silently producing nonsense.
 | RTS smoother (§23) | per-step priors and posteriors are the smoother's input | recorded |
 | Contextual ML (§31) | ML models residuals against this baseline | `AnalysisResult` is the baseline |
 | Baselines, calibration study | `testing/synthetic.py` generators, `normalized_innovation` | generators + diagnostics |
+
+## The frontend
+
+```
+frontend/
+  package.json  package-lock.json  .nvmrc  .env.example
+  next.config.ts  tsconfig.json  eslint.config.mjs  vitest.config.ts  vitest.setup.ts
+  src/
+    app/
+      layout.tsx  page.tsx  globals.css  tokens.css
+      demo/[scenario]/
+        page.tsx        server component: fetch, then compose
+        loading.tsx  error.tsx  not-found.tsx
+    components/
+      Headline/  RateReadout/  ForecastCallout/  SyntheticBadge/  ScenarioNav/
+      TrendChart/            the only 'use client' component
+    lib/
+      api/
+        schema.d.ts          GENERATED from backend/openapi.json -- do not edit
+        types.ts  client.ts  errors.ts
+      chart/
+        series.ts            pure: an analysis response -> plottable arrays
+        hover.ts  format.ts
+      analysis.ts
+```
+
+Every fetch to the backend happens inside a Next.js **server component** (`src/app/demo/[scenario]/
+page.tsx`), using plain `fetch` with `cache: "no-store"` — demo data is generated relative to the
+current instant (ADR-0007), so the same URL legitimately returns different data on every request.
+There is no client-side data fetching, no state library and no caching layer: switching scenarios is
+a URL change (`/demo/{scenario}`), which the router handles. `TrendChart` is the one component that
+needs the browser (pointer-driven tooltips) and is the only place `'use client'` appears outside the
+files Next.js itself requires it for (`error.tsx`).
+
+`src/lib/api/schema.d.ts` is generated by `openapi-typescript` from the **committed**
+`backend/openapi.json` (`npm run gen:api`), not from a running server, so the frontend typechecks on
+a cold clone with no Python installed. See
+[ADR-0008](decisions/ADR-0008-frontend-contract-and-cors.md) for why generated types were chosen over
+a handwritten contract, and how CI catches drift between the two files.
 
 ## Tooling
 
@@ -183,3 +237,10 @@ The test client needs `httpx2` rather than `httpx`: recent Starlette emits a dep
 `TestClient` is used with `httpx`, and `filterwarnings = ["error"]` turns that into a failure. Fixing
 the dependency was preferred over adding a warning exemption, because the "any warning fails the
 build" rule is worth more than the convenience.
+
+The frontend has its own workflow, [`.github/workflows/frontend.yml`](../.github/workflows/frontend.yml),
+deliberately separate from `backend.yml` rather than one combined pipeline: the two run
+independently, so a frontend failure never blocks the backend job from reporting and vice versa. It
+runs `npm ci`, regenerates `schema.d.ts` and diffs it against the committed file (contract drift),
+`eslint`, `tsc --noEmit`, `vitest run`, and `next build` — the same commands documented in the README,
+in the same order.

@@ -1,0 +1,21 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ht-space-4);
+  width: 100%;
+  max-width: var(--ht-max-width);
+  margin: 0 auto;
+  padding: var(--ht-space-12) var(--ht-space-4);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ht-space-2);
+  list-style: none;
+}
+
+.list a {
+  color: var(--ht-accent);
+  text-decoration: underline;
+}

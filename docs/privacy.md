@@ -102,9 +102,30 @@ Nothing is stored. The analysis happens inside the request and the result is ret
 database, no session, no cache, no telemetry, and no retained upload. `create_app()` wires routes,
 error handlers and the access log, and nothing else.
 
-When the public web version arrives (master plan §42): synthetic demo data, user upload, analysis in
-the request, no permanent health-data storage by default. Account-based tracking is a separate later
-phase that needs its own storage and privacy design first.
+Master plan §42's public web version is arriving in stages. Milestone 3 delivers the synthetic-demo
+half: no user upload yet, so there is nothing for this section to say about real data reaching the
+frontend. Real-data upload and account-based tracking are separate later phases that need their own
+privacy design first.
+
+## The frontend
+
+Milestone 3 uses only the five built-in synthetic demo scenarios. There is no upload control, no
+form, no file input and no `localStorage`/`sessionStorage`/cookie anywhere in `frontend/` — not
+because a policy forbids them, but because nothing in the frontend needs them yet, which is a
+stronger guarantee than a policy.
+
+- **No analytics, telemetry or third-party script.** Nothing in `frontend/` loads a script, font,
+  stylesheet or tracking pixel from any origin other than this app's own and the configured backend.
+- **The backend URL never reaches the browser.** Every fetch happens in a Next.js server component
+  (`src/app/demo/[scenario]/page.tsx`); the `HEALTHTREND_API_URL` environment variable is read
+  server-side only and is deliberately not prefixed `NEXT_PUBLIC_`.
+- **Demo responses are never cached.** `cache: "no-store"` on every fetch, because demo data is
+  generated relative to the current instant (ADR-0007) and the same URL legitimately returns
+  different data on every request — caching it would be a correctness bug before it was a privacy
+  one, but it also means no response is retained anywhere between requests.
+- **The committed test fixtures are synthetic.** `frontend/src/lib/api/__fixtures__/gradual-loss.json`
+  is a captured demo response; its `meta.source` is `"demo"` and its label says "synthetic", the same
+  rule this document already applies to `backend/tests/fixtures/`.
 
 ## Not a medical device
 
@@ -118,14 +139,17 @@ so wide it says nothing — which is the correct output from one measurement, no
 
 ## Claims
 
-Only claim what is implemented and measured (master plan §71). As of Milestone 2:
+Only claim what is implemented and measured (master plan §71). As of Milestone 3:
 
 - the model parameters are documented priors, not values fitted to data
 - calibration has been demonstrated only on data drawn from the model itself
 - there is no robustness to outliers, and the sensitivity is measured and recorded
 - no real health data has been used for any evaluation
-- **Milestone 2 changed no mathematics.** It put the existing estimator behind HTTP. Nothing about
-  accuracy, calibration or robustness improved, and the golden fixture from Milestone 1 is
-  byte-identical — which is the evidence for that claim.
+- **Milestones 2 and 3 changed no mathematics.** They put the existing estimator behind HTTP and then
+  behind a browser. Nothing about accuracy, calibration or robustness improved, and the golden
+  fixture from Milestone 1 is byte-identical — which is the evidence for that claim.
+- the frontend renders numbers the backend computed and interprets none of them; it does not label
+  anything "high confidence", "plateau" or "likely to continue" unless that classification exists as
+  a defined backend result, which it does not yet
 
 Do not describe the system as validated, robust, or accurate until there are experiments that say so.

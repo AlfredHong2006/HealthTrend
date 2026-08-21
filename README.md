@@ -9,9 +9,10 @@ uncertain that estimate is, and forecasts where the trajectory is probably headi
 
 ---
 
-## Status: Milestone 2 — the numerical core, behind an HTTP API
+## Status: Milestone 3 — a public synthetic-demo frontend
 
-There is a backend. There is **no web frontend yet**.
+There is a backend and a web frontend. The frontend only shows synthetic demo scenarios; it has no
+upload flow or accounts yet.
 
 **Implemented**
 
@@ -23,17 +24,20 @@ There is a backend. There is **no web frontend yet**.
 - A JSON API: submit weigh-ins in kg or lb, in any order, from any timezone
 - Five synthetic demo scenarios, so the product can be tried with no data of your own
 - Privacy-safe error and log behaviour, enforced by sentinel-value tests
-- Deterministic test suite covering the mathematics and the HTTP boundary
+- A Next.js frontend: pick a scenario, see the estimated weight, weekly rate, forecast and a
+  graph joining history to forecast, with explicit uncertainty throughout
+- TypeScript types generated from the backend's own OpenAPI contract, checked for drift in CI
+- Deterministic test suite covering the mathematics, the HTTP boundary and the frontend
 
 **Not implemented yet:**
 
-Web frontend, CSV ingestion, Apple Health parsing, trend classification, plateau detection, change
-detection, goal projection, robust outlier handling, RTS smoothing, baseline comparison, calibration
-study, contextual machine learning, accounts, deployment.
+CSV ingestion, Apple Health parsing, trend classification, plateau detection, change detection, goal
+projection, robust outlier handling, RTS smoothing, baseline comparison, calibration study, contextual
+machine learning, accounts, real-data upload, deployment.
 
-No accuracy or robustness claims are made at this stage. Milestone 2 changed no mathematics — it put
-the existing estimator behind HTTP. The model parameters are documented priors, not values fitted to
-data — see [docs/mathematics.md](docs/mathematics.md).
+No accuracy or robustness claims are made at this stage. Milestones 2 and 3 changed no mathematics —
+they put the existing estimator behind HTTP and then behind a browser. The model parameters are
+documented priors, not values fitted to data — see [docs/mathematics.md](docs/mathematics.md).
 
 ---
 
@@ -89,6 +93,30 @@ carries the extra elapsed uncertainty; the response publishes `origin_timestamp`
 `last_observation_timestamp` and `lead_days` so a client can say which it means. Pass
 `"forecast_from": "last_observation"` for the series-relative view.
 
+### Frontend
+
+Requires Node (version pinned in [frontend/.nvmrc](frontend/.nvmrc)). From `frontend/`, with the
+backend already running:
+
+```
+npm ci                         # install from the committed lockfile
+npm run gen:api                # regenerate TypeScript types from backend/openapi.json
+npm run typecheck              # strict type checking
+npm run lint                   # ESLint
+npm run test                   # Vitest + Testing Library + axe
+npm run build                  # production build
+npm run dev                    # http://localhost:3000
+```
+
+Copy [frontend/.env.example](frontend/.env.example) to `.env.local` to point at a backend that
+is not on `localhost:8000`. The backend URL is read server-side only (every request to it happens
+from a Next.js server component, never from the browser), and there is no client-side data
+fetching, state library or caching layer: switching scenarios is a URL change
+(`/demo/{scenario}`), handled by the router.
+
+The frontend consumes only `GET /api/demo` and `GET /api/demo/{scenario}` — it has no form for
+submitting your own data yet. Opening `/` redirects to `/demo/gradual-loss`.
+
 ## Documentation
 
 | Document | Contents |
@@ -96,10 +124,7 @@ carries the extra elapsed uncertainty; the response publishes `origin_timestamp`
 | [docs/mathematics.md](docs/mathematics.md) | Every equation, and the code symbol that implements it |
 | [docs/architecture.md](docs/architecture.md) | Layer boundaries and the dependency rules |
 | [docs/privacy.md](docs/privacy.md) | What must never be committed or logged |
-| [docs/decisions/](docs/decisions/) | Architecture decision records (ADR-0001 to ADR-0007) |
-
-The frozen product specification (the master plan) is not in this repository yet — drop it at
-`docs/MASTER_PLAN.md`. Section references throughout the docs and code comments point at it.
+| [docs/decisions/](docs/decisions/) | Architecture decision records (ADR-0001 to ADR-0008) |
 
 ## Privacy
 

@@ -1,0 +1,37 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ht-space-8);
+  width: 100%;
+  max-width: var(--ht-max-width);
+  margin: 0 auto;
+  padding: var(--ht-space-6) var(--ht-space-4) var(--ht-space-12);
+}
+
+.navSkeleton {
+  display: flex;
+  gap: var(--ht-space-2);
+}
+
+.navPill {
+  width: 96px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--ht-border);
+  opacity: 0.6;
+}
+
+.block {
+  border-radius: var(--ht-radius);
+  background: var(--ht-border);
+  opacity: 0.6;
+}
+
+.chartBlock {
+  width: 100%;
+  aspect-ratio: 21 / 9;
+  min-height: 260px;
+  border-radius: var(--ht-radius);
+  background: var(--ht-border);
+  opacity: 0.4;
+}

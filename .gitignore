@@ -30,11 +30,15 @@ dist/
 htmlcov/
 
 # ---------------------------------------------------------------------------
-# Node (frontend milestone, not yet present)
+# Node (frontend/, Milestone 3)
 # ---------------------------------------------------------------------------
 node_modules/
 .next/
 out/
+*.tsbuildinfo
+
+# Local dev toolchain, never part of the repository.
+.tools/
 
 # ---------------------------------------------------------------------------
 # Environment and editors

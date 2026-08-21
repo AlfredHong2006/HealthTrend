@@ -1,0 +1,68 @@
+@import "./tokens.css";
+
+html {
+  height: 100%;
+  color-scheme: light dark;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  color: var(--ht-text);
+  background: var(--ht-bg);
+  font-family: var(--ht-font-sans);
+  font-feature-settings: "tnum" 1; /* tabular figures: numbers do not jitter between scenarios */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ht-focus-ring);
+  outline-offset: 2px;
+}
+
+.skipLink {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: var(--ht-space-2) var(--ht-space-4);
+  background: var(--ht-surface);
+  color: var(--ht-text);
+  border-radius: var(--ht-radius);
+}
+
+.skipLink:focus {
+  left: var(--ht-space-4);
+  top: var(--ht-space-4);
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

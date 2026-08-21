@@ -203,7 +203,10 @@ config through which a preference could reach it (master plan §4).
 
 **CORS configured now, "ready for the frontend".** Rejected. There is no browser client yet, so
 any origin policy written today would be a guess, and a permissive one added for convenience is
-exactly the kind of thing that ships unreviewed.
+exactly the kind of thing that ships unreviewed. Milestone 3 built the frontend and, per
+[ADR-0008](ADR-0008-frontend-contract-and-cors.md), still did not add CORS: every request to this
+API happens from a Next.js server component, never from a browser, so the question this section
+anticipated has not actually arisen yet.
 
 ## Consequences
 
