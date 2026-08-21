@@ -14,7 +14,7 @@
  */
 
 import { ApiError, NetworkError } from "./errors";
-import type { AnalysisRequest, AnalysisResponse, ErrorBody } from "./types";
+import type { AnalysisRequest, AnalysisResponse, CsvIngestResponse, ErrorBody } from "./types";
 
 function publicApiBaseUrl(): string {
   const url = process.env.NEXT_PUBLIC_HEALTHTREND_API_URL ?? "http://localhost:8000";
@@ -62,6 +62,55 @@ export async function submitAnalysis(request: AnalysisRequest): Promise<Analysis
   if (response.ok) {
     try {
       return (await response.json()) as AnalysisResponse;
+    } catch (cause) {
+      throw new NetworkError(cause);
+    }
+  }
+
+  throw new ApiError(response.status, await parseErrorBody(response));
+}
+
+interface IngestCsvOptions {
+  /** IANA timezone (e.g. "Europe/London") for timestamps with no UTC offset. */
+  assumedTimezone: string;
+  /** Unit assumed for a weight column with no per-row or header-implied unit. */
+  defaultUnit: "kg" | "lb";
+}
+
+/**
+ * Parse an uploaded CSV file into observations ready for {@link submitAnalysis}.
+ *
+ * The file is sent as the raw request body (not `multipart/form-data`): the backend reads
+ * it as a capped stream and never invokes a multipart parser, which is what lets it promise
+ * the upload is never written to disk (ADR-0010). `fetch` accepts a `File` directly as
+ * `body`, so no `FormData` wrapping is needed either.
+ *
+ * @throws {ApiError} for a non-2xx response, e.g. a file that is too large (413), the wrong
+ *   Content-Type (415), or a structural problem with the CSV itself (422).
+ * @throws {NetworkError} if the backend cannot be reached, or its response is unparsable.
+ */
+export async function ingestCsv(
+  file: File,
+  { assumedTimezone, defaultUnit }: IngestCsvOptions,
+): Promise<CsvIngestResponse> {
+  const url = new URL(`${publicApiBaseUrl()}/api/ingest/csv`);
+  url.searchParams.set("assumed_timezone", assumedTimezone);
+  url.searchParams.set("default_unit", defaultUnit);
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "text/csv" },
+      body: file,
+    });
+  } catch (cause) {
+    throw new NetworkError(cause);
+  }
+
+  if (response.ok) {
+    try {
+      return (await response.json()) as CsvIngestResponse;
     } catch (cause) {
       throw new NetworkError(cause);
     }

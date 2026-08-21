@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CsvImport } from "@/components/CsvImport/CsvImport";
 import { ForecastCallout } from "@/components/ForecastCallout/ForecastCallout";
 import { Headline } from "@/components/Headline/Headline";
 import { MeasurementForm } from "@/components/MeasurementForm/MeasurementForm";
@@ -15,15 +16,24 @@ import styles from "./AnalysisWorkspace.module.css";
 
 const GENERIC_SUBMIT_ERROR = "Something went wrong analysing your measurements.";
 
+type EntryMode = "manual" | "csv";
+
 /**
- * The client-side half of the manual-entry page: form state, the direct browser call to
- * FastAPI, and rendering whatever it returns. The page itself (`src/app/analyse/page.tsx`)
+ * The client-side half of the manual-entry page: entry-mode state, the direct browser call
+ * to FastAPI, and rendering whatever it returns. The page itself (`src/app/analyse/page.tsx`)
  * stays a server component holding only static structure and the privacy notice -- this is
  * the one place on this route that needs `useState`, matching this milestone's own
  * justification for a client-side fetch (docs/privacy.md) rather than expanding it further
  * than necessary.
+ *
+ * `MeasurementForm` and `CsvImport` (M5) are two different ways of arriving at the same
+ * `ObservationIn[]`, so both are wired to the identical `handleSubmit` -- CSV import is an
+ * adapter in front of the same `POST /api/analyse` call, not a second analysis path, and
+ * `AnalysisResult` below (including the `span_days === 0` gate) needs no knowledge of which
+ * mode produced its input.
  */
 export function AnalysisWorkspace() {
+  const [mode, setMode] = useState<EntryMode>("manual");
   const [result, setResult] = useState<AnalysisResponse | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -45,9 +55,49 @@ export function AnalysisWorkspace() {
     }
   }
 
+  function selectMode(next: EntryMode) {
+    setMode(next);
+    setSubmitError(null);
+  }
+
   return (
     <div className={styles.workspace}>
-      <MeasurementForm onSubmit={handleSubmit} submitting={submitting} submitError={submitError} />
+      <div role="group" aria-label="How to enter measurements" className={styles.modeTabs}>
+        <button
+          type="button"
+          aria-pressed={mode === "manual"}
+          className={styles.modeTab}
+          onClick={() => {
+            selectMode("manual");
+          }}
+        >
+          Manual entry
+        </button>
+        <button
+          type="button"
+          aria-pressed={mode === "csv"}
+          className={styles.modeTab}
+          onClick={() => {
+            selectMode("csv");
+          }}
+        >
+          Import CSV
+        </button>
+      </div>
+
+      {mode === "manual" ? (
+        <MeasurementForm onSubmit={handleSubmit} submitting={submitting} submitError={submitError} />
+      ) : (
+        <CsvImport
+          onSubmit={handleSubmit}
+          submitting={submitting}
+          submitError={submitError}
+          onInputsChanged={() => {
+            setResult(null);
+            setSubmitError(null);
+          }}
+        />
+      )}
       {result && <AnalysisResult result={result} />}
     </div>
   );

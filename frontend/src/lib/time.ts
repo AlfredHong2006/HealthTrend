@@ -33,3 +33,35 @@ export function datetimeLocalToUtcIso(value: string): string | null {
   }
   return parsed.toISOString();
 }
+
+/**
+ * The browser's own IANA timezone (e.g. "Europe/London"), used to pre-fill -- and only
+ * pre-fill -- the timezone a CSV import assumes for timestamps with no UTC offset. Unlike
+ * `datetimeLocalToUtcIso`, this is a starting point the user can review and change before
+ * importing, not something applied silently: a CSV can easily contain history recorded in a
+ * different timezone than the one importing it (ADR-0010).
+ */
+export function detectLocalTimeZone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+/**
+ * The canonical IANA name for `timeZone` as `Intl` resolves it, or `null` if not recognised.
+ *
+ * `Intl` matches zone names case-insensitively but reports the canonical form back through
+ * `resolvedOptions()` -- "america/new_york" resolves to "America/New_York". The backend's
+ * `zoneinfo` does not: it looks a zone up by exact case, so sending the browser's raw,
+ * possibly differently-cased input could fail server-side for a timezone the browser itself
+ * already accepted. Canonicalising here, once, before the value is sent or shown again, is
+ * cheaper than reconciling two different case-sensitivity rules later.
+ */
+export function canonicalizeTimeZone(timeZone: string): string | null {
+  if (timeZone.trim() === "") {
+    return null;
+  }
+  try {
+    return Intl.DateTimeFormat(undefined, { timeZone }).resolvedOptions().timeZone;
+  } catch {
+    return null;
+  }
+}

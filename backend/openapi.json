@@ -115,6 +115,118 @@
         "title": "AnalysisResponse",
         "type": "object"
       },
+      "CsvIngestResponse": {
+        "additionalProperties": false,
+        "description": "The result of parsing one CSV upload: what to submit, and what to fix.\n\n``accepted`` is ready to pass straight into ``AnalysisRequest.observations``. Nothing\nhere is analysed -- ``n_obs``, ``span_days``, a trend or a forecast only exist after\ncalling ``POST /api/analyse`` with ``accepted``.",
+        "properties": {
+          "accepted": {
+            "description": "Rows that parsed successfully, normalised to kilograms and UTC.",
+            "items": {
+              "$ref": "#/components/schemas/ObservationIn"
+            },
+            "title": "Accepted",
+            "type": "array"
+          },
+          "accepted_count": {
+            "description": "Number of rows in accepted.",
+            "title": "Accepted Count",
+            "type": "integer"
+          },
+          "blank_rows_skipped": {
+            "description": "Fully empty rows: skipped, not rejected.",
+            "title": "Blank Rows Skipped",
+            "type": "integer"
+          },
+          "date_only_count": {
+            "description": "The subset of naive_timestamp_count that were date-only rows (no time of day), assigned 12:00 local time in assumed_timezone as a deterministic convention.",
+            "title": "Date Only Count",
+            "type": "integer"
+          },
+          "duplicate_count": {
+            "description": "Exact-duplicate observations (same resolved timestamp and canonical weight) beyond the first in each group -- three identical readings contribute 2, not 3 or 1. Duplicates are retained in accepted, not removed; this only counts them, the same way the underlying filter treats them as repeated measurements rather than a no-op.",
+            "title": "Duplicate Count",
+            "type": "integer"
+          },
+          "issues_truncated": {
+            "description": "True if more rows were rejected than the rejected list includes.",
+            "title": "Issues Truncated",
+            "type": "boolean"
+          },
+          "naive_timestamp_count": {
+            "description": "Accepted rows whose timestamp carried no UTC offset and was therefore resolved using assumed_timezone. Includes date-only rows -- see date_only_count for that subset specifically.",
+            "title": "Naive Timestamp Count",
+            "type": "integer"
+          },
+          "rejected": {
+            "description": "Up to 500 rejected rows; see issues_truncated for the rest.",
+            "items": {
+              "$ref": "#/components/schemas/CsvRowIssue"
+            },
+            "title": "Rejected",
+            "type": "array"
+          },
+          "rejected_count": {
+            "description": "Total rejected rows, regardless of truncation.",
+            "title": "Rejected Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "accepted",
+          "rejected",
+          "issues_truncated",
+          "accepted_count",
+          "rejected_count",
+          "duplicate_count",
+          "blank_rows_skipped",
+          "naive_timestamp_count",
+          "date_only_count"
+        ],
+        "title": "CsvIngestResponse",
+        "type": "object"
+      },
+      "CsvRowIssue": {
+        "additionalProperties": false,
+        "description": "One row that was not accepted, and why -- never what it contained.",
+        "properties": {
+          "line": {
+            "description": "1-based physical line the record starts on. For a record spanning multiple physical lines (a quoted cell containing a newline), this is the starting line, not the line the record happens to end on.",
+            "title": "Line",
+            "type": "integer"
+          },
+          "message": {
+            "description": "Fixed explanation. Never contains a submitted value.",
+            "title": "Message",
+            "type": "string"
+          },
+          "reason_code": {
+            "enum": [
+              "missing_timestamp",
+              "missing_weight",
+              "unparseable_timestamp",
+              "ambiguous_local_time",
+              "nonexistent_local_time",
+              "non_numeric_weight",
+              "non_positive_weight",
+              "non_finite_weight",
+              "timestamp_out_of_range",
+              "invalid_unit",
+              "conflicting_unit",
+              "column_count_mismatch",
+              "invalid_row"
+            ],
+            "title": "Reason Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "line",
+          "reason_code",
+          "message"
+        ],
+        "title": "CsvRowIssue",
+        "type": "object"
+      },
       "CurrentEstimateOut": {
         "description": "The estimate as of the last observation: weight, uncertainty and weekly rate.",
         "properties": {
@@ -770,6 +882,97 @@
         "summary": "Analyse a synthetic demo scenario",
         "tags": [
           "demo"
+        ]
+      }
+    },
+    "/api/ingest/csv": {
+      "post": {
+        "description": "Parse an uploaded CSV file into validated, normalised observations.\n\nDoes not analyse anything. Call ``POST /api/analyse`` next with the returned\n``accepted`` list to get a trend and forecast -- the same call a manually entered\nseries makes, since ``accepted`` is already shaped as ``ObservationIn`` (ADR-0010). No\nrow count from this endpoint is logged; the parse report reaches the caller directly and\nnowhere else.",
+        "operationId": "ingest_csv_route_api_ingest_csv_post",
+        "parameters": [
+          {
+            "description": "IANA timezone (e.g. Europe/London) used to resolve timestamps with no UTC offset. Ignored for timestamps that already carry one.",
+            "in": "query",
+            "name": "assumed_timezone",
+            "required": true,
+            "schema": {
+              "description": "IANA timezone (e.g. Europe/London) used to resolve timestamps with no UTC offset. Ignored for timestamps that already carry one.",
+              "title": "Assumed Timezone",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Unit assumed for a weight column with no per-row or header-implied unit.",
+            "in": "query",
+            "name": "default_unit",
+            "required": true,
+            "schema": {
+              "description": "Unit assumed for a weight column with no per-row or header-implied unit.",
+              "enum": [
+                "kg",
+                "lb"
+              ],
+              "title": "Default Unit",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "text/csv": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CsvIngestResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The file was too large."
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request's Content-Type was not text/csv."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected."
+          }
+        },
+        "summary": "Parse an uploaded CSV into observations ready for /api/analyse",
+        "tags": [
+          "ingestion"
         ]
       }
     },

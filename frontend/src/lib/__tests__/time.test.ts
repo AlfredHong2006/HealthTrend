@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { datetimeLocalToUtcIso } from "../time";
+import { canonicalizeTimeZone, datetimeLocalToUtcIso, detectLocalTimeZone } from "../time";
 
 /**
  * Expected values are computed with the local-component `Date` constructor
@@ -37,5 +37,36 @@ describe("datetimeLocalToUtcIso", () => {
 
   it("rejects trailing garbage after an otherwise valid value", () => {
     expect(datetimeLocalToUtcIso("2026-08-21T14:30 ")).toBeNull();
+  });
+});
+
+describe("detectLocalTimeZone", () => {
+  it("returns a non-empty, already-canonical IANA zone", () => {
+    const zone = detectLocalTimeZone();
+    expect(typeof zone).toBe("string");
+    expect(zone.length).toBeGreaterThan(0);
+    expect(canonicalizeTimeZone(zone)).toBe(zone);
+  });
+});
+
+describe("canonicalizeTimeZone", () => {
+  it("returns well-known IANA zones unchanged", () => {
+    expect(canonicalizeTimeZone("Europe/London")).toBe("Europe/London");
+    expect(canonicalizeTimeZone("America/New_York")).toBe("America/New_York");
+    expect(canonicalizeTimeZone("UTC")).toBe("UTC");
+  });
+
+  it("canonicalises a differently-cased zone name to the IANA form the backend expects", () => {
+    expect(canonicalizeTimeZone("america/new_york")).toBe("America/New_York");
+    expect(canonicalizeTimeZone("EUROPE/LONDON")).toBe("Europe/London");
+  });
+
+  it("rejects an empty value", () => {
+    expect(canonicalizeTimeZone("")).toBeNull();
+    expect(canonicalizeTimeZone("   ")).toBeNull();
+  });
+
+  it("rejects a name Intl does not recognise", () => {
+    expect(canonicalizeTimeZone("Not/A_Real_Zone")).toBeNull();
   });
 });

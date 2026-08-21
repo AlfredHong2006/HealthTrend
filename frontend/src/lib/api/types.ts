@@ -26,3 +26,8 @@ export type ErrorBody = components["schemas"]["ErrorBody"];
 export type AnalysisRequest = components["schemas"]["AnalysisRequest"];
 export type AnalysisResponse = components["schemas"]["AnalysisResponse"];
 export type ObservationIn = components["schemas"]["ObservationIn"];
+
+// CSV import (`POST /api/ingest/csv`): a parsing step, not an analysis. `accepted` is
+// `ObservationIn[]`, the same type above -- pass it straight into `AnalysisRequest.observations`.
+export type CsvIngestResponse = components["schemas"]["CsvIngestResponse"];
+export type CsvRowIssue = components["schemas"]["CsvRowIssue"];

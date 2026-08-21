@@ -9,10 +9,10 @@ uncertain that estimate is, and forecasts where the trajectory is probably headi
 
 ---
 
-## Status: Milestone 3 — a public synthetic-demo frontend
+## Status: Milestone 5 — CSV weight-history import
 
-There is a backend and a web frontend. The frontend only shows synthetic demo scenarios; it has no
-upload flow or accounts yet.
+There is a backend and a web frontend. Measurements can be entered manually or imported from a
+CSV file; there are no accounts and nothing is stored.
 
 **Implemented**
 
@@ -28,12 +28,14 @@ upload flow or accounts yet.
   graph joining history to forecast, with explicit uncertainty throughout
 - TypeScript types generated from the backend's own OpenAPI contract, checked for drift in CI
 - Deterministic test suite covering the mathematics, the HTTP boundary and the frontend
+- Manual measurement entry and CSV weight-history import, both feeding the same analysis endpoint
+  (see [ADR-0010](docs/decisions/ADR-0010-csv-ingestion.md))
 
 **Not implemented yet:**
 
-CSV ingestion, Apple Health parsing, trend classification, plateau detection, change detection, goal
-projection, robust outlier handling, RTS smoothing, baseline comparison, calibration study, contextual
-machine learning, accounts, real-data upload, deployment.
+Apple Health parsing, trend classification, plateau detection, change detection, goal projection,
+robust outlier handling, RTS smoothing, baseline comparison, calibration study, contextual machine
+learning, accounts, deployment.
 
 No accuracy or robustness claims are made at this stage. Milestones 2 and 3 changed no mathematics —
 they put the existing estimator behind HTTP and then behind a browser. The model parameters are
@@ -66,6 +68,7 @@ uv run uvicorn app.main:app --no-access-log
 | --- | --- |
 | `GET /health` | liveness |
 | `POST /api/analyse` | analyse submitted weigh-ins |
+| `POST /api/ingest/csv` | parse an uploaded CSV into observations for `/api/analyse` |
 | `GET /api/demo` | list the synthetic demo scenarios |
 | `GET /api/demo/{scenario}` | analyse one of them |
 | `GET /docs`, `GET /openapi.json` | interactive docs and the machine-readable contract |
@@ -114,8 +117,10 @@ from a Next.js server component, never from the browser), and there is no client
 fetching, state library or caching layer: switching scenarios is a URL change
 (`/demo/{scenario}`), handled by the router.
 
-The frontend consumes only `GET /api/demo` and `GET /api/demo/{scenario}` — it has no form for
-submitting your own data yet. Opening `/` redirects to `/demo/gradual-loss`.
+The demo pages (`/demo/{scenario}`) only fetch `GET /api/demo` and `GET /api/demo/{scenario}` from
+a server component. The `/analyse` page is the real-data path: it calls `POST /api/analyse` (and,
+for CSV import, `POST /api/ingest/csv`) directly from the browser. Opening `/` redirects to
+`/demo/gradual-loss`.
 
 ## Documentation
 
@@ -124,7 +129,7 @@ submitting your own data yet. Opening `/` redirects to `/demo/gradual-loss`.
 | [docs/mathematics.md](docs/mathematics.md) | Every equation, and the code symbol that implements it |
 | [docs/architecture.md](docs/architecture.md) | Layer boundaries and the dependency rules |
 | [docs/privacy.md](docs/privacy.md) | What must never be committed or logged |
-| [docs/decisions/](docs/decisions/) | Architecture decision records (ADR-0001 to ADR-0008) |
+| [docs/decisions/](docs/decisions/) | Architecture decision records (ADR-0001 to ADR-0010) |
 
 ## Privacy
 

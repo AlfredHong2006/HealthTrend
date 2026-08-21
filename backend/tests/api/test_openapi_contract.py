@@ -35,4 +35,5 @@ def test_the_committed_contract_covers_every_route():
         "/api/analyse",
         "/api/demo",
         "/api/demo/{scenario}",
+        "/api/ingest/csv",
     }

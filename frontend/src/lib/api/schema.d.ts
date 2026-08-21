@@ -70,6 +70,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ingest/csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Parse an uploaded CSV into observations ready for /api/analyse
+         * @description Parse an uploaded CSV file into validated, normalised observations.
+         *
+         *     Does not analyse anything. Call ``POST /api/analyse`` next with the returned
+         *     ``accepted`` list to get a trend and forecast -- the same call a manually entered
+         *     series makes, since ``accepted`` is already shaped as ``ObservationIn`` (ADR-0010). No
+         *     row count from this endpoint is logged; the parse report reaches the caller directly and
+         *     nowhere else.
+         */
+        post: operations["ingest_csv_route_api_ingest_csv_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -154,6 +180,82 @@ export interface components {
             span_days: number;
             /** Trajectory */
             trajectory: components["schemas"]["TrajectoryPointOut"][];
+        };
+        /**
+         * CsvIngestResponse
+         * @description The result of parsing one CSV upload: what to submit, and what to fix.
+         *
+         *     ``accepted`` is ready to pass straight into ``AnalysisRequest.observations``. Nothing
+         *     here is analysed -- ``n_obs``, ``span_days``, a trend or a forecast only exist after
+         *     calling ``POST /api/analyse`` with ``accepted``.
+         */
+        CsvIngestResponse: {
+            /**
+             * Accepted
+             * @description Rows that parsed successfully, normalised to kilograms and UTC.
+             */
+            accepted: components["schemas"]["ObservationIn"][];
+            /**
+             * Accepted Count
+             * @description Number of rows in accepted.
+             */
+            accepted_count: number;
+            /**
+             * Blank Rows Skipped
+             * @description Fully empty rows: skipped, not rejected.
+             */
+            blank_rows_skipped: number;
+            /**
+             * Date Only Count
+             * @description The subset of naive_timestamp_count that were date-only rows (no time of day), assigned 12:00 local time in assumed_timezone as a deterministic convention.
+             */
+            date_only_count: number;
+            /**
+             * Duplicate Count
+             * @description Exact-duplicate observations (same resolved timestamp and canonical weight) beyond the first in each group -- three identical readings contribute 2, not 3 or 1. Duplicates are retained in accepted, not removed; this only counts them, the same way the underlying filter treats them as repeated measurements rather than a no-op.
+             */
+            duplicate_count: number;
+            /**
+             * Issues Truncated
+             * @description True if more rows were rejected than the rejected list includes.
+             */
+            issues_truncated: boolean;
+            /**
+             * Naive Timestamp Count
+             * @description Accepted rows whose timestamp carried no UTC offset and was therefore resolved using assumed_timezone. Includes date-only rows -- see date_only_count for that subset specifically.
+             */
+            naive_timestamp_count: number;
+            /**
+             * Rejected
+             * @description Up to 500 rejected rows; see issues_truncated for the rest.
+             */
+            rejected: components["schemas"]["CsvRowIssue"][];
+            /**
+             * Rejected Count
+             * @description Total rejected rows, regardless of truncation.
+             */
+            rejected_count: number;
+        };
+        /**
+         * CsvRowIssue
+         * @description One row that was not accepted, and why -- never what it contained.
+         */
+        CsvRowIssue: {
+            /**
+             * Line
+             * @description 1-based physical line the record starts on. For a record spanning multiple physical lines (a quoted cell containing a newline), this is the starting line, not the line the record happens to end on.
+             */
+            line: number;
+            /**
+             * Message
+             * @description Fixed explanation. Never contains a submitted value.
+             */
+            message: string;
+            /**
+             * Reason Code
+             * @enum {string}
+             */
+            reason_code: "missing_timestamp" | "missing_weight" | "unparseable_timestamp" | "ambiguous_local_time" | "nonexistent_local_time" | "non_numeric_weight" | "non_positive_weight" | "non_finite_weight" | "timestamp_out_of_range" | "invalid_unit" | "conflicting_unit" | "column_count_mismatch" | "invalid_row";
         };
         /**
          * CurrentEstimateOut
@@ -549,6 +651,62 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ingest_csv_route_api_ingest_csv_post: {
+        parameters: {
+            query: {
+                /** @description IANA timezone (e.g. Europe/London) used to resolve timestamps with no UTC offset. Ignored for timestamps that already carry one. */
+                assumed_timezone: string;
+                /** @description Unit assumed for a weight column with no per-row or header-implied unit. */
+                default_unit: "kg" | "lb";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "text/csv": string;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CsvIngestResponse"];
+                };
+            };
+            /** @description The file was too large. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request's Content-Type was not text/csv. */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request was rejected. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

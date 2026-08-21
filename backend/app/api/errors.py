@@ -45,9 +45,26 @@ from app.core.types import (
     InvalidCovarianceError,
     UnsortedObservationsError,
 )
-from app.errors import FutureObservationError, HealthTrendError, UnknownScenarioError
+from app.errors import (
+    CsvAmbiguousTimestampColumnsError,
+    CsvAmbiguousWeightColumnsError,
+    CsvDuplicateHeaderColumnError,
+    CsvEmptyFileError,
+    CsvInvalidTimezoneError,
+    CsvMalformedStructureError,
+    CsvMissingTimestampColumnError,
+    CsvMissingWeightColumnError,
+    CsvTooLargeError,
+    CsvTooManyRowsError,
+    CsvUndecodableTextError,
+    CsvUnsupportedMediaTypeError,
+    FutureObservationError,
+    HealthTrendError,
+    UnknownScenarioError,
+)
 from app.schemas.analysis import MAX_OBSERVATIONS
 from app.schemas.errors import ErrorBody, ErrorDetail, ErrorResponse
+from app.schemas.ingestion import MAX_CSV_BYTES
 
 logger = logging.getLogger("healthtrend.api")
 
@@ -123,6 +140,75 @@ _DOMAIN_ERRORS: Final[tuple[tuple[type[Exception], ErrorSpec], ...]] = (
             code="invalid_observations",
             message="The observations could not be analysed. Check the values submitted.",
         ),
+    ),
+    (
+        CsvUnsupportedMediaTypeError,
+        ErrorSpec(415, "unsupported_media_type", "The request Content-Type must be text/csv."),
+    ),
+    (
+        CsvTooLargeError,
+        ErrorSpec(413, "csv_too_large", f"The file exceeds the {MAX_CSV_BYTES} byte limit."),
+    ),
+    (
+        CsvTooManyRowsError,
+        ErrorSpec(
+            422,
+            "csv_too_many_rows",
+            f"The file has more than {MAX_OBSERVATIONS} data rows.",
+        ),
+    ),
+    (
+        CsvEmptyFileError,
+        ErrorSpec(422, "csv_empty", "The file has no data rows to import."),
+    ),
+    (
+        CsvUndecodableTextError,
+        ErrorSpec(422, "csv_undecodable", "The file must be UTF-8 encoded text."),
+    ),
+    (
+        CsvMissingTimestampColumnError,
+        ErrorSpec(
+            422,
+            "csv_missing_timestamp_column",
+            "No recognised timestamp column was found. Expected one of: timestamp, date, datetime.",
+        ),
+    ),
+    (
+        CsvMissingWeightColumnError,
+        ErrorSpec(
+            422,
+            "csv_missing_weight_column",
+            "No recognised weight column was found. Expected a column such as weight, "
+            "weight_kg or weight_lb.",
+        ),
+    ),
+    (
+        CsvAmbiguousTimestampColumnsError,
+        ErrorSpec(
+            422,
+            "csv_ambiguous_timestamp_columns",
+            "More than one recognised timestamp column was found.",
+        ),
+    ),
+    (
+        CsvAmbiguousWeightColumnsError,
+        ErrorSpec(
+            422,
+            "csv_ambiguous_weight_columns",
+            "More than one recognised weight column was found.",
+        ),
+    ),
+    (
+        CsvDuplicateHeaderColumnError,
+        ErrorSpec(422, "csv_duplicate_header_column", "A column name appears more than once."),
+    ),
+    (
+        CsvMalformedStructureError,
+        ErrorSpec(422, "csv_malformed_structure", "The file could not be parsed as CSV."),
+    ),
+    (
+        CsvInvalidTimezoneError,
+        ErrorSpec(422, "invalid_timezone", "assumed_timezone is not a recognised IANA timezone."),
     ),
 )
 

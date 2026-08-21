@@ -1,11 +1,14 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api/errors";
-import type { AnalysisResponse } from "@/lib/api/types";
+import type { AnalysisResponse, CsvIngestResponse } from "@/lib/api/types";
 import { AnalysisWorkspace } from "../AnalysisWorkspace";
 
-const { submitAnalysis } = vi.hoisted(() => ({ submitAnalysis: vi.fn() }));
-vi.mock("@/lib/api/browserClient", () => ({ submitAnalysis }));
+const { submitAnalysis, ingestCsv } = vi.hoisted(() => ({
+  submitAnalysis: vi.fn(),
+  ingestCsv: vi.fn(),
+}));
+vi.mock("@/lib/api/browserClient", () => ({ submitAnalysis, ingestCsv }));
 
 const ESTABLISHED_RESULT: AnalysisResponse = {
   n_obs: 4,
@@ -146,5 +149,94 @@ describe("AnalysisWorkspace", () => {
     expect(screen.getByRole("button", { name: "Analysing…" })).toBeDisabled();
     resolveSubmit(ESTABLISHED_RESULT);
     await waitFor(() => expect(screen.getByRole("button", { name: "Analyse" })).toBeEnabled());
+  });
+
+  it("starts in manual-entry mode and switches to CSV import on request", () => {
+    render(<AnalysisWorkspace />);
+
+    expect(screen.getByRole("button", { name: "Manual entry" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByLabelText("Date and time")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Import CSV" }));
+
+    expect(screen.getByRole("button", { name: "Import CSV" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByLabelText("CSV file")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Date and time")).not.toBeInTheDocument();
+  });
+
+  it("analyses observations imported from a CSV exactly like manually entered ones", async () => {
+    const csvResult: CsvIngestResponse = {
+      accepted: [{ timestamp: "2026-04-26T08:50:16.705Z", weight: 81.68, unit: "kg" }],
+      rejected: [],
+      issues_truncated: false,
+      accepted_count: 1,
+      rejected_count: 0,
+      duplicate_count: 0,
+      blank_rows_skipped: 0,
+      naive_timestamp_count: 0,
+      date_only_count: 0,
+    };
+    ingestCsv.mockResolvedValueOnce(csvResult);
+    submitAnalysis.mockResolvedValueOnce(ONE_OBSERVATION_RESULT);
+    render(<AnalysisWorkspace />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Import CSV" }));
+    const file = new File(["timestamp,weight\n2026-04-26T08:50:16.705Z,81.68\n"], "h.csv", {
+      type: "text/csv",
+    });
+    fireEvent.change(screen.getByLabelText("CSV file"), { target: { files: [file] } });
+    fireEvent.click(screen.getByRole("button", { name: "Read file" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Analyse 1 measurement" }));
+
+    expect(submitAnalysis).toHaveBeenCalledWith({
+      observations: csvResult.accepted,
+      forecast_from: "now",
+    });
+    expect(await screen.findByText("Trend not established yet.")).toBeInTheDocument();
+  });
+
+  it("clears a CSV-derived analysis result when the import settings change afterward", async () => {
+    const csvResult: CsvIngestResponse = {
+      accepted: [{ timestamp: "2026-04-26T08:50:16.705Z", weight: 81.68, unit: "kg" }],
+      rejected: [],
+      issues_truncated: false,
+      accepted_count: 1,
+      rejected_count: 0,
+      duplicate_count: 0,
+      blank_rows_skipped: 0,
+      naive_timestamp_count: 0,
+      date_only_count: 0,
+    };
+    ingestCsv.mockResolvedValueOnce(csvResult);
+    submitAnalysis.mockResolvedValueOnce(ESTABLISHED_RESULT);
+    render(<AnalysisWorkspace />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Import CSV" }));
+    const file = new File(["timestamp,weight\n2026-04-26T08:50:16.705Z,81.68\n"], "h.csv", {
+      type: "text/csv",
+    });
+    fireEvent.change(screen.getByLabelText("CSV file"), { target: { files: [file] } });
+    fireEvent.click(screen.getByRole("button", { name: "Read file" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Analyse 1 measurement" }));
+
+    // The CSV-derived analysis is showing, exactly like the manual-entry case above.
+    expect(await screen.findByText("81.7 kg", { selector: "p" })).toBeInTheDocument();
+
+    // Changing the timezone after that result exists must not leave a result on screen
+    // that was produced under settings the visible controls no longer reflect.
+    fireEvent.change(screen.getByLabelText(/Timezone/), {
+      target: { value: "America/New_York" },
+    });
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument(); // the CSV parse report
+    expect(screen.queryByRole("button", { name: /Analyse/ })).not.toBeInTheDocument();
+    expect(screen.queryByText("81.7 kg", { selector: "p" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: /Weight trend chart/ })).not.toBeInTheDocument();
   });
 });

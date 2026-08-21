@@ -30,3 +30,51 @@ class FutureObservationError(HealthTrendError):
 
 class UnknownScenarioError(HealthTrendError):
     """No demo scenario is registered under the requested identifier."""
+
+
+class CsvUnsupportedMediaTypeError(HealthTrendError):
+    """The request's Content-Type is not ``text/csv``."""
+
+
+class CsvTooLargeError(HealthTrendError):
+    """The uploaded CSV exceeds the maximum accepted byte size."""
+
+
+class CsvTooManyRowsError(HealthTrendError):
+    """The uploaded CSV has more non-blank data rows than this API will parse."""
+
+
+class CsvEmptyFileError(HealthTrendError):
+    """The uploaded CSV has no data rows to parse (header-only, or every row blank)."""
+
+
+class CsvUndecodableTextError(HealthTrendError):
+    """The uploaded bytes are not valid UTF-8 text."""
+
+
+class CsvMissingTimestampColumnError(HealthTrendError):
+    """No recognised timestamp column was found in the header."""
+
+
+class CsvMissingWeightColumnError(HealthTrendError):
+    """No recognised weight column was found in the header."""
+
+
+class CsvAmbiguousTimestampColumnsError(HealthTrendError):
+    """More than one recognised timestamp column was found in the header."""
+
+
+class CsvAmbiguousWeightColumnsError(HealthTrendError):
+    """More than one recognised weight column was found in the header."""
+
+
+class CsvDuplicateHeaderColumnError(HealthTrendError):
+    """The same recognised column appears more than once in the header."""
+
+
+class CsvMalformedStructureError(HealthTrendError):
+    """The upload could not be parsed as well-formed CSV."""
+
+
+class CsvInvalidTimezoneError(HealthTrendError):
+    """``assumed_timezone`` is not a timezone :mod:`zoneinfo` recognises."""

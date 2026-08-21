@@ -1,15 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { submitAnalysis } from "../browserClient";
+import { ingestCsv, submitAnalysis } from "../browserClient";
 import { ApiError, NetworkError } from "../errors";
-import type { AnalysisRequest } from "../types";
+import type { AnalysisRequest, CsvIngestResponse } from "../types";
 
 /**
- * `submitAnalysis` is the one call this frontend makes directly from the browser, so unlike
- * `client.ts` (server-side, exercised in `client.test.ts`), this is the boundary a real
- * browser actually crosses. Covers what is specific to it: the POST shape, the base-URL
- * resolution from `NEXT_PUBLIC_HEALTHTREND_API_URL` (including a trailing slash, since that
- * variable is deployment-supplied and easy to get wrong), and that nothing it throws exposes
- * the configured URL or a raw exception.
+ * `submitAnalysis` and `ingestCsv` are the two calls this frontend makes directly from the
+ * browser, so unlike `client.ts` (server-side, exercised in `client.test.ts`), this is the
+ * boundary a real browser actually crosses. Covers what is specific to each: the request
+ * shape, the base-URL resolution from `NEXT_PUBLIC_HEALTHTREND_API_URL` (including a
+ * trailing slash, since that variable is deployment-supplied and easy to get wrong), and
+ * that nothing either throws exposes the configured URL or a raw exception.
  */
 
 const REQUEST: AnalysisRequest = {
@@ -146,5 +146,76 @@ describe("submitAnalysis", () => {
     const error = await submitAnalysis(REQUEST).catch((e: unknown) => e);
 
     expect((error as Error).message).not.toMatch(/internal-backend\.example|8123/);
+  });
+});
+
+const CSV_RESPONSE: CsvIngestResponse = {
+  accepted: [{ timestamp: "2026-05-01T07:00:00Z", weight: 72.4, unit: "kg" }],
+  rejected: [],
+  issues_truncated: false,
+  accepted_count: 1,
+  rejected_count: 0,
+  duplicate_count: 0,
+  blank_rows_skipped: 0,
+  naive_timestamp_count: 0,
+  date_only_count: 0,
+};
+
+function csvFile(contents = "timestamp,weight\n2026-05-01T07:00:00Z,72.4\n"): File {
+  return new File([contents], "history.csv", { type: "text/csv" });
+}
+
+describe("ingestCsv", () => {
+  it("posts the file as a raw body, with the options in the query string", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify(CSV_RESPONSE), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await ingestCsv(csvFile(), {
+      assumedTimezone: "Europe/London",
+      defaultUnit: "kg",
+    });
+
+    expect(result).toEqual(CSV_RESPONSE);
+    const [url, init] = fetchMock.mock.calls[0] as [URL, RequestInit];
+    expect(url.toString()).toContain("/api/ingest/csv");
+    expect(url.searchParams.get("assumed_timezone")).toBe("Europe/London");
+    expect(url.searchParams.get("default_unit")).toBe("kg");
+    expect(init.method).toBe("POST");
+    expect((init.headers as Record<string, string>)["Content-Type"]).toBe("text/csv");
+    expect(init.body).toBeInstanceOf(File);
+  });
+
+  it("throws ApiError for a non-2xx response, carrying the sanitised code and message", async () => {
+    const errorBody = {
+      error: { code: "csv_too_large", message: "The file exceeds the limit.", details: [] },
+    };
+    mockFetchOnce(new Response(JSON.stringify(errorBody), { status: 413 }));
+
+    await expect(
+      ingestCsv(csvFile(), { assumedTimezone: "UTC", defaultUnit: "kg" }),
+    ).rejects.toMatchObject({
+      name: "ApiError",
+      status: 413,
+      code: "csv_too_large",
+      message: "The file exceeds the limit.",
+    });
+  });
+
+  it("throws NetworkError when fetch itself fails", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("network down")));
+
+    await expect(
+      ingestCsv(csvFile(), { assumedTimezone: "UTC", defaultUnit: "kg" }),
+    ).rejects.toBeInstanceOf(NetworkError);
+  });
+
+  it("throws NetworkError when the successful response body cannot be parsed", async () => {
+    mockFetchOnce(new Response("not json", { status: 200 }));
+
+    await expect(
+      ingestCsv(csvFile(), { assumedTimezone: "UTC", defaultUnit: "kg" }),
+    ).rejects.toBeInstanceOf(NetworkError);
   });
 });

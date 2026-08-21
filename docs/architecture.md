@@ -6,7 +6,11 @@ changing a line of the backend — ADR-0008's decision was specifically *not* to
 every Milestone 3 request still ran server-to-server. Milestone 4 (real-data manual entry) is the
 first change to reach back into the backend: a browser now calls `POST /api/analyse` directly, so
 `app/main.py` gained narrow, fail-closed CORS and its first environment-read (`app/config.py`),
-recorded in [ADR-0009](decisions/ADR-0009-real-data-browser-boundary.md). This document records the
+recorded in [ADR-0009](decisions/ADR-0009-real-data-browser-boundary.md). Milestone 5 (CSV
+weight-history import) adds a second endpoint, `POST /api/ingest/csv`, exactly at the seam this
+document already reserved for it below — a parser in `app/ingestion/` producing `ObservationIn`,
+reusing `normalise_observations` — and nothing about `/api/analyse`, the core, or CORS changes to
+support it; see [ADR-0010](decisions/ADR-0010-csv-ingestion.md). This document records the
 boundaries, so later milestones add to the structure rather than negotiating it again.
 
 ## The dependency rule
@@ -112,14 +116,17 @@ backend/
       scenarios.py        the five product scenarios and their registry
     ingestion/
       observations.py     units, UTC, stable sort, keep-everything
+      csv.py              CSV -> ObservationIn: header resolution, timestamp/unit
+                          resolution, per-row validation (ADR-0010)
     services/
       clock.py            Clock protocol + SystemClock
       analysis.py         forecast-origin policy; the two service calls
+      ingestion.py        parses a CSV upload, counts duplicates, builds the report
     api/
       deps.py             the injected clock
       errors.py           exception -> response, by explicit table
       logging.py          access log carrying counts only
-      routes.py           /health, /api/analyse, /api/demo, /api/demo/{scenario}
+      routes.py           /health, /api/analyse, /api/demo, /api/demo/{scenario}, /api/ingest/csv
     main.py               create_app()
   testing/
     synthetic.py          deterministic seeded generators, for the core tests only
@@ -170,7 +177,7 @@ silently producing nonsense.
 
 | Later feature | Attachment point | Present today |
 | --- | --- | --- |
-| CSV / Apple Health ingestion | a parser in `app/ingestion/` producing `ObservationIn`, reusing `normalise_observations` | the normalisation step |
+| Apple Health ingestion | a sibling parser in `app/ingestion/`, same shape as `csv.py`, reusing `normalise_observations` | CSV ingestion shipped in Milestone 5 at this exact seam ([ADR-0010](decisions/ADR-0010-csv-ingestion.md)) |
 | trend classification, plateau, goals | a new response block plus a service; the estimator stays goal-neutral | `AnalysisResponse` |
 | "30 days from now" for a stale series | `origin` parameter on `forecast_at` / `forecast_path` | tests `P5`, ADR-0005 |
 | Robust / adaptive `R` | `Observation.obs_variance` per-observation override | field, unused |
@@ -203,17 +210,18 @@ frontend/
       Headline/  RateReadout/  ForecastCallout/  SyntheticBadge/  ScenarioNav/
       TrendChart/            'use client': pointer-driven tooltips
       MeasurementForm/       'use client': add/remove rows, client-side validation
-      AnalysisWorkspace/     'use client': owns the direct-to-backend submission and its result
+      CsvImport/             'use client': read a CSV, show the parse report (Milestone 5)
+      AnalysisWorkspace/     'use client': owns entry-mode, the direct-to-backend calls, the result
     lib/
       api/
         schema.d.ts          GENERATED from backend/openapi.json -- do not edit
         types.ts  client.ts  errors.ts   server-side: the demo path
-        browserClient.ts     browser-side: the manual-entry path (ADR-0009)
+        browserClient.ts     browser-side: manual entry (ADR-0009) and CSV import (ADR-0010)
       chart/
         series.ts            pure: an analysis response -> plottable arrays
         hover.ts  format.ts
       analysis.ts
-      time.ts                 datetime-local -> UTC ISO, for manual entry
+      time.ts                 datetime-local -> UTC ISO; browser IANA-zone detection for CSV import
       privacy/
         __tests__/no-persistence.test.ts   static guard: no browser storage in src/
 ```
@@ -234,9 +242,17 @@ merging them risks the public one silently reaching the private one's call sites
 [ADR-0009](decisions/ADR-0009-real-data-browser-boundary.md) for why this path talks to FastAPI
 directly instead of proxying through the Next.js server, and what that requires of the backend (CORS).
 
-`TrendChart`, `MeasurementForm` and `AnalysisWorkspace` are the only components that need the browser
-and the only places `'use client'` appears outside the files Next.js itself requires it for
-(`error.tsx`).
+CSV import (`CsvImport`, Milestone 5) extends this same path rather than adding a third one: it
+calls `ingestCsv` (also in `browserClient.ts`) directly from the browser to `POST /api/ingest/csv`,
+then hands the response's `accepted` list to the identical `submitAnalysis` call `MeasurementForm`
+already makes. `AnalysisWorkspace` toggles between `MeasurementForm` and `CsvImport` as two ways of
+producing the same `ObservationIn[]`; neither `AnalysisResult` nor `/api/analyse` knows or needs to
+know which one a given submission came from. See
+[ADR-0010](decisions/ADR-0010-csv-ingestion.md).
+
+`TrendChart`, `MeasurementForm`, `CsvImport` and `AnalysisWorkspace` are the only components that
+need the browser and the only places `'use client'` appears outside the files Next.js itself
+requires it for (`error.tsx`).
 
 `src/lib/api/schema.d.ts` is generated by `openapi-typescript` from the **committed**
 `backend/openapi.json` (`npm run gen:api`), not from a running server, so the frontend typechecks on

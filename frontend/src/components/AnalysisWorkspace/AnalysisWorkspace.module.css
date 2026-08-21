@@ -4,6 +4,30 @@
   gap: var(--ht-space-8);
 }
 
+.modeTabs {
+  display: flex;
+  gap: var(--ht-space-2);
+  border-bottom: 1px solid var(--ht-border);
+}
+
+.modeTab {
+  font: inherit;
+  font-size: var(--ht-size-caption);
+  color: var(--ht-text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: var(--ht-space-2) var(--ht-space-1);
+  margin-bottom: -1px;
+  cursor: pointer;
+}
+
+.modeTab[aria-pressed="true"] {
+  color: var(--ht-text);
+  border-bottom-color: var(--ht-accent);
+  font-weight: 600;
+}
+
 .result {
   display: flex;
   flex-direction: column;

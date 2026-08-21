@@ -161,6 +161,37 @@ no server-side retention; deployment-level hardening is a separate, later concer
   rule this document already applies to `backend/tests/fixtures/`. Nothing under `frontend/` fixtures
   a real measurement — the manual-entry tests use invented numbers, the same way the backend's do.
 
+## CSV import (Milestone 5)
+
+CSV weight-history import (`POST /api/ingest/csv`, [ADR-0010](decisions/ADR-0010-csv-ingestion.md))
+follows the same rules above, plus its own:
+
+- **The upload is never written to disk by this application.** The route reads the request body
+  as a raw, capped byte stream rather than `multipart/form-data`. That is a real constraint, not
+  a preference: Starlette's multipart parser spools any file part above 1 MiB to a genuine
+  on-disk temporary file (`tempfile.SpooledTemporaryFile`), which would make a "never touches
+  disk" claim false for any file over roughly a megabyte. The raw-body path never invokes that
+  parser at all, so this guarantee holds regardless of file size, up to the byte cap. It is an
+  application-level guarantee — it says nothing about OS paging or infrastructure outside this
+  codebase's control.
+- **Only the recognised columns are read.** A CSV row is tokenised like any other by ordinary CSV
+  parsing, but only the timestamp, weight and (optional) unit columns are ever interpreted.
+  Anything else — a `notes` or `source` column some export tools add — is ignored immediately:
+  never semantically read, never returned to the browser, never logged, never persisted, never
+  forwarded to `/api/analyse`.
+- **No row counts are logged.** Unlike `/api/analyse` and `/api/demo/{scenario}`, this route never
+  calls `record_observation_count`. How many measurements someone is importing is itself
+  health-adjacent metadata, and the parse report already reaches the caller directly — there is
+  no operational need served by also writing it to a log.
+- **Error messages never echo a submitted value, including the timezone.** A malformed row's
+  message names only a stable reason code (e.g. `unparseable_timestamp`), never the cell that
+  caused it. An invalid `assumed_timezone` query parameter is rejected the same way, kept
+  consistent with the blanket policy above rather than treated as a special, lower-sensitivity
+  case.
+- **The frontend makes no new persistence surface.** `CsvImport` holds the selected `File` and the
+  parse report only in React component state, the same as `MeasurementForm` holds typed rows; the
+  existing `no-persistence.test.ts` static guard already covers it, unchanged.
+
 ## Not a medical device
 
 HealthTrend estimates and forecasts a measurement trend. It does not diagnose, treat, prescribe or
