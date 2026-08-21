@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "HealthTrend",
   description:
-    "Estimates the underlying weight trajectory behind noisy scale readings and forecasts where it is heading, with explicit uncertainty. Synthetic demo data only.",
+    "Estimates the underlying weight trajectory behind noisy scale readings and forecasts where it is heading, with explicit uncertainty. Try it with synthetic demo data, or enter your own -- nothing is stored either way.",
 };
 
 /**

@@ -20,3 +20,9 @@ export type Observation = components["schemas"]["ObservationOut"];
 export type TrajectoryPoint = components["schemas"]["TrajectoryPointOut"];
 
 export type ErrorBody = components["schemas"]["ErrorBody"];
+
+// The manual-entry (non-demo) request/response pair: `POST /api/analyse`, called directly
+// from the browser rather than from a demo server component.
+export type AnalysisRequest = components["schemas"]["AnalysisRequest"];
+export type AnalysisResponse = components["schemas"]["AnalysisResponse"];
+export type ObservationIn = components["schemas"]["ObservationIn"];

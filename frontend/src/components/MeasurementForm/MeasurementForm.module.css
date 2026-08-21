@@ -1,0 +1,120 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ht-space-6);
+}
+
+.unitRow {
+  display: flex;
+  align-items: center;
+  gap: var(--ht-space-3);
+}
+
+.unitLabel {
+  font-size: var(--ht-size-caption);
+  color: var(--ht-text-muted);
+}
+
+.unitGroup {
+  display: flex;
+  gap: var(--ht-space-3);
+}
+
+.unitOption {
+  display: flex;
+  align-items: center;
+  gap: var(--ht-space-1);
+  font-size: var(--ht-size-body);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ht-space-3);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--ht-space-3);
+  padding: var(--ht-space-3);
+  border: 1px solid var(--ht-border);
+  border-radius: var(--ht-radius);
+  background: var(--ht-surface);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ht-space-1);
+  font-size: var(--ht-size-caption);
+}
+
+.fieldLabel {
+  color: var(--ht-text-muted);
+}
+
+.field input {
+  font: inherit;
+  padding: var(--ht-space-2);
+  border: 1px solid var(--ht-border);
+  border-radius: calc(var(--ht-radius) / 2);
+  background: var(--ht-bg);
+  color: var(--ht-text);
+}
+
+.removeButton {
+  font-size: var(--ht-size-caption);
+  color: var(--ht-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--ht-space-2);
+}
+
+.removeButton:disabled {
+  visibility: hidden;
+}
+
+.actions {
+  display: flex;
+  gap: var(--ht-space-3);
+  align-items: center;
+}
+
+.addButton {
+  font-size: var(--ht-size-caption);
+  color: var(--ht-accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--ht-space-2) 0;
+}
+
+.submitButton {
+  font: inherit;
+  font-weight: 600;
+  color: var(--ht-surface);
+  background: var(--ht-accent);
+  border: none;
+  border-radius: var(--ht-radius);
+  padding: var(--ht-space-2) var(--ht-space-6);
+  cursor: pointer;
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.error {
+  color: var(--ht-text);
+  background: var(--ht-forecast-soft);
+  border-radius: var(--ht-radius);
+  padding: var(--ht-space-3);
+  font-size: var(--ht-size-caption);
+}

@@ -22,19 +22,19 @@
   letter-spacing: 0.08em;
 }
 
-.enterDataLink {
+.privacyNotice {
+  color: var(--ht-text-muted);
+  font-size: var(--ht-size-caption);
+  max-width: 60ch;
+}
+
+.demoLink {
   align-self: flex-start;
   font-size: var(--ht-size-caption);
   color: var(--ht-text-muted);
 }
 
-.enterDataLink:hover,
-.enterDataLink:focus-visible {
+.demoLink:hover,
+.demoLink:focus-visible {
   color: var(--ht-accent);
-}
-
-.stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ht-space-8);
 }

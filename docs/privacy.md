@@ -102,30 +102,64 @@ Nothing is stored. The analysis happens inside the request and the result is ret
 database, no session, no cache, no telemetry, and no retained upload. `create_app()` wires routes,
 error handlers and the access log, and nothing else.
 
-Master plan §42's public web version is arriving in stages. Milestone 3 delivers the synthetic-demo
-half: no user upload yet, so there is nothing for this section to say about real data reaching the
-frontend. Real-data upload and account-based tracking are separate later phases that need their own
-privacy design first.
+Master plan §42's public web version is arriving in stages. Milestone 3 delivered the synthetic-demo
+half: no user upload, so there was nothing for this section to say about real data reaching the
+frontend. The manual-entry milestone changes that: a user can now type their own measurements into
+the browser and submit them for analysis. What follows describes both paths, because they now have
+different privacy shapes.
+
+Nothing changes for the *server*: `create_app()` still wires only routes, error handlers, the access
+log and (as of the manual-entry milestone) the CORS middleware described below — still no database,
+no session, no cache, no telemetry, no retained upload, regardless of which frontend path called it.
 
 ## The frontend
 
-Milestone 3 uses only the five built-in synthetic demo scenarios. There is no upload control, no
-form, no file input and no `localStorage`/`sessionStorage`/cookie anywhere in `frontend/` — not
-because a policy forbids them, but because nothing in the frontend needs them yet, which is a
-stronger guarantee than a policy.
+Milestone 3's demo path — the five built-in synthetic scenarios — is unchanged: no upload control, no
+form, no file input, and nothing in `src/app/demo/**` writes to `localStorage`, `sessionStorage`,
+IndexedDB or a cookie.
 
-- **No analytics, telemetry or third-party script.** Nothing in `frontend/` loads a script, font,
-  stylesheet or tracking pixel from any origin other than this app's own and the configured backend.
-- **The backend URL never reaches the browser.** Every fetch happens in a Next.js server component
-  (`src/app/demo/[scenario]/page.tsx`); the `HEALTHTREND_API_URL` environment variable is read
-  server-side only and is deliberately not prefixed `NEXT_PUBLIC_`.
+The manual-entry page (`/analyse`) is the first place real health data can exist in the frontend, and
+it is held to the same "nothing needs it, which is stronger than a policy forbidding it" standard —
+enforced directly by a static guard, `frontend/src/lib/privacy/__tests__/no-persistence.test.ts`,
+which fails the build if any of those same four mechanisms appears anywhere under `frontend/src`.
+Entered measurements live only in that page's component state for the duration of the visit; there is
+no draft-saving, no restore-on-reload, and reloading or navigating away leaves nothing behind.
+
+**This is not on-device analysis.** Measurements typed into the form are sent, once, over HTTPS, to
+the FastAPI backend, and the backend computes the estimate — exactly as it does for demo scenarios.
+User-facing copy on the page says this plainly: *"Your measurements are sent to the HealthTrend
+analysis service for this analysis and are not stored."* It does not claim the data stays on the
+device, and it does not claim more security than the milestone actually provides (HTTPS transport and
+no server-side retention; deployment-level hardening is a separate, later concern).
+
+- **No analytics, telemetry or third-party script**, on either path. Nothing in `frontend/` loads a
+  script, font, stylesheet or tracking pixel from any origin other than this app's own and the
+  configured backend.
+- **The backend URL reaches the browser only for the manual-entry path, and only because it must.**
+  The demo path is unchanged: every demo fetch happens in a Next.js server component
+  (`src/app/demo/[scenario]/page.tsx`), `HEALTHTREND_API_URL` is read server-side only, and it is
+  still deliberately not prefixed `NEXT_PUBLIC_`. The manual-entry page issues its `POST
+  /api/analyse` request directly from the browser, so the browser must be told where to send it: a
+  second, distinct variable, `NEXT_PUBLIC_HEALTHTREND_API_URL`, is read only inside
+  `frontend/src/lib/api/browserClient.ts`. This is a Next.js **build-time** value baked into the
+  client bundle, not a per-request runtime read — a production deployment must supply it to the
+  frontend build, not just to the running server. It is configuration, not a secret: any visitor's
+  browser reveals the URL it is calling the moment it makes the request, with or without a
+  `NEXT_PUBLIC_` variable to carry it, so naming it explicitly costs nothing that direct browser
+  submission had not already spent. See [ADR-0006](decisions/ADR-0006-http-boundary.md) and
+  [ADR-0008](decisions/ADR-0008-frontend-contract-and-cors.md) for why direct-to-backend submission
+  was chosen over proxying through the Next.js server, and the narrow, fail-closed CORS configuration
+  (`HEALTHTREND_ALLOWED_ORIGINS`) that decision requires on the backend.
 - **Demo responses are never cached.** `cache: "no-store"` on every fetch, because demo data is
   generated relative to the current instant (ADR-0007) and the same URL legitimately returns
   different data on every request — caching it would be a correctness bug before it was a privacy
-  one, but it also means no response is retained anywhere between requests.
+  one, but it also means no response is retained anywhere between requests. The manual-entry
+  submission is a `POST`, which browsers never cache by default, and no caching header is added to
+  its response.
 - **The committed test fixtures are synthetic.** `frontend/src/lib/api/__fixtures__/gradual-loss.json`
   is a captured demo response; its `meta.source` is `"demo"` and its label says "synthetic", the same
-  rule this document already applies to `backend/tests/fixtures/`.
+  rule this document already applies to `backend/tests/fixtures/`. Nothing under `frontend/` fixtures
+  a real measurement — the manual-entry tests use invented numbers, the same way the backend's do.
 
 ## Not a medical device
 

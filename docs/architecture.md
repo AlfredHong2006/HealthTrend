@@ -2,9 +2,12 @@
 
 Milestone 1 was one layer: the pure numerical core. Milestone 2 added the HTTP boundary above it
 without changing a line of it. Milestone 3 added a Next.js frontend above that, again without
-changing a line of the backend other than the CORS decision recorded in
-[ADR-0008](decisions/ADR-0008-frontend-contract-and-cors.md). This document records the boundaries,
-so later milestones add to the structure rather than negotiating it again.
+changing a line of the backend — ADR-0008's decision was specifically *not* to add CORS, because
+every Milestone 3 request still ran server-to-server. Milestone 4 (real-data manual entry) is the
+first change to reach back into the backend: a browser now calls `POST /api/analyse` directly, so
+`app/main.py` gained narrow, fail-closed CORS and its first environment-read (`app/config.py`),
+recorded in [ADR-0009](decisions/ADR-0009-real-data-browser-boundary.md). This document records the
+boundaries, so later milestones add to the structure rather than negotiating it again.
 
 ## The dependency rule
 
@@ -168,7 +171,6 @@ silently producing nonsense.
 | Later feature | Attachment point | Present today |
 | --- | --- | --- |
 | CSV / Apple Health ingestion | a parser in `app/ingestion/` producing `ObservationIn`, reusing `normalise_observations` | the normalisation step |
-| real-data upload from the frontend | a submit form calling `POST /api/analyse`; CORS for that browser origin | the endpoint and its schema already exist (ADR-0008) |
 | trend classification, plateau, goals | a new response block plus a service; the estimator stays goal-neutral | `AnalysisResponse` |
 | "30 days from now" for a stale series | `origin` parameter on `forecast_at` / `forecast_path` | tests `P5`, ADR-0005 |
 | Robust / adaptive `R` | `Observation.obs_variance` per-observation override | field, unused |
@@ -177,6 +179,11 @@ silently producing nonsense.
 | RTS smoother (§23) | per-step priors and posteriors are the smoother's input | recorded |
 | Contextual ML (§31) | ML models residuals against this baseline | `AnalysisResult` is the baseline |
 | Baselines, calibration study | `testing/synthetic.py` generators, `normalized_innovation` | generators + diagnostics |
+
+Real-data upload from the frontend — a submit form calling `POST /api/analyse` directly from the
+browser — is no longer future work; it shipped in Milestone 4. See [below](#the-frontend) for the
+implemented shape and [ADR-0009](decisions/ADR-0009-real-data-browser-boundary.md) for the decisions
+behind it.
 
 ## The frontend
 
@@ -190,26 +197,46 @@ frontend/
       demo/[scenario]/
         page.tsx        server component: fetch, then compose
         loading.tsx  error.tsx  not-found.tsx
+      analyse/
+        page.tsx        server component: static structure + privacy notice only
     components/
       Headline/  RateReadout/  ForecastCallout/  SyntheticBadge/  ScenarioNav/
-      TrendChart/            the only 'use client' component
+      TrendChart/            'use client': pointer-driven tooltips
+      MeasurementForm/       'use client': add/remove rows, client-side validation
+      AnalysisWorkspace/     'use client': owns the direct-to-backend submission and its result
     lib/
       api/
         schema.d.ts          GENERATED from backend/openapi.json -- do not edit
-        types.ts  client.ts  errors.ts
+        types.ts  client.ts  errors.ts   server-side: the demo path
+        browserClient.ts     browser-side: the manual-entry path (ADR-0009)
       chart/
         series.ts            pure: an analysis response -> plottable arrays
         hover.ts  format.ts
       analysis.ts
+      time.ts                 datetime-local -> UTC ISO, for manual entry
+      privacy/
+        __tests__/no-persistence.test.ts   static guard: no browser storage in src/
 ```
 
-Every fetch to the backend happens inside a Next.js **server component** (`src/app/demo/[scenario]/
-page.tsx`), using plain `fetch` with `cache: "no-store"` — demo data is generated relative to the
-current instant (ADR-0007), so the same URL legitimately returns different data on every request.
-There is no client-side data fetching, no state library and no caching layer: switching scenarios is
-a URL change (`/demo/{scenario}`), which the router handles. `TrendChart` is the one component that
-needs the browser (pointer-driven tooltips) and is the only place `'use client'` appears outside the
-files Next.js itself requires it for (`error.tsx`).
+Two fetching models now coexist, deliberately kept apart rather than unified. The demo path is
+unchanged since Milestone 3: every fetch happens inside a Next.js **server component**
+(`src/app/demo/[scenario]/page.tsx`), using plain `fetch` with `cache: "no-store"` — demo data is
+generated relative to the current instant (ADR-0007), so the same URL legitimately returns different
+data on every request. There is no client-side data fetching, no state library and no caching layer
+on that path: switching scenarios is a URL change (`/demo/{scenario}`), which the router handles.
+
+The manual-entry path (`/analyse`, Milestone 4) is the one deliberate exception: `AnalysisWorkspace`
+is a client component that calls `submitAnalysis` (`lib/api/browserClient.ts`) directly from the
+browser to `POST /api/analyse`, bypassing the Next.js server entirely. `browserClient.ts` is a
+separate module from `client.ts` rather than an addition to it — the two resolve their base URL from
+different environment variables (`NEXT_PUBLIC_HEALTHTREND_API_URL` vs `HEALTHTREND_API_URL`), and
+merging them risks the public one silently reaching the private one's call sites. See
+[ADR-0009](decisions/ADR-0009-real-data-browser-boundary.md) for why this path talks to FastAPI
+directly instead of proxying through the Next.js server, and what that requires of the backend (CORS).
+
+`TrendChart`, `MeasurementForm` and `AnalysisWorkspace` are the only components that need the browser
+and the only places `'use client'` appears outside the files Next.js itself requires it for
+(`error.tsx`).
 
 `src/lib/api/schema.d.ts` is generated by `openapi-typescript` from the **committed**
 `backend/openapi.json` (`npm run gen:api`), not from a running server, so the frontend typechecks on

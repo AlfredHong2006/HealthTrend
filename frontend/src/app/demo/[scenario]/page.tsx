@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ForecastCallout } from "@/components/ForecastCallout/ForecastCallout";
 import { Headline } from "@/components/Headline/Headline";
@@ -42,6 +43,9 @@ export default async function DemoScenarioPage({ params }: DemoScenarioPageProps
       <header className={styles.header}>
         <h1 className={styles.title}>HealthTrend</h1>
         <SyntheticBadge meta={analysis.meta} label={analysis.scenario.label} />
+        <Link href="/analyse" className={styles.enterDataLink}>
+          Enter your own data →
+        </Link>
       </header>
 
       <section aria-label="Current estimate" className={styles.stats}>
