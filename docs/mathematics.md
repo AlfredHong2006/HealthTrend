@@ -44,8 +44,8 @@ H = \begin{bmatrix} 1 & 0 \end{bmatrix}, \qquad
 y_t = H\mathbf{x}_t + \epsilon_t, \quad \epsilon_t \sim \mathcal{N}(0, R_t)$$
 
 `app/core/model.py` — `H`, `STATE_DIM`. $R_t = \sigma_{obs}^2$ via `ModelParams.obs_variance`, or a
-per-observation override via `Observation.variance` (reserved for the robust models of master plan
-§21, unused in Milestone 1).
+per-observation override via `Observation.variance` (reserved for later robust observation models,
+see §8.3; unused in Milestone 1).
 
 ### Transition
 
@@ -65,9 +65,16 @@ $$Q(\Delta t) = \sigma_a^2 \begin{bmatrix} \Delta t^3/3 & \Delta t^2/2 \\ \Delta
 
 `app/core/model.py` — `process_noise`.
 
-**Why this form and not a diagonal random walk.** It is the only one satisfying
+**Why this form and not a diagonal random walk.** It is the integral of the continuous-time
+noise through the dynamics, $Q(\Delta t) = \int_0^{\Delta t} F(s)\,Q_c\,F(s)^\top\,ds$ with
+$Q_c = \operatorname{diag}(0, \sigma_a^2)$, and every covariance generated that way satisfies the
+time-splitting identity
 
 $$F(b)\,Q(a)\,F(b)^\top + Q(b) = Q(a+b)$$
+
+This form is the minimal one-parameter member of that family (the level-jitter variant in
+ADR-0002 is another member and also satisfies the identity); a diagonal random walk is not a
+member and fails it.
 
 Expanding the $(1,1)$ entry: $a^3/3 + a^2b + ab^2 + b^3/3 = (a+b)^3/3$; the $(1,2)$ entry gives
 $a^2/2 + ab + b^2/2 = (a+b)^2/2$; the $(2,2)$ entry gives $a + b$. So a 30-day gap yields
@@ -94,8 +101,8 @@ The first observation is **consumed by initialisation**, not by an update. Two c
   arbitrary starting variance (test `F1`).
 - A single measurement carries no velocity information, so the velocity prior stands untouched with
   mean zero. With one data point the model reports the weight and declines to invent a trend
-  (master plan §12). It is also structurally incapable of being biased by a user's goal: the core
-  has no parameter through which a goal could reach it (master plan §4).
+  (ADR-0003). It is also structurally incapable of being biased by a user's goal: the core
+  has no parameter through which a goal could reach it.
 
 $\sigma_{v0}$ is a genuine prior choice, not derivable — see §8 and ADR-0003.
 
@@ -159,8 +166,8 @@ likelihood later without restructuring anything.
 
 $$\hat w_t \pm z_{0.975}\sqrt{P_{t,ww}}, \qquad z_{0.975} = 1.959963984540054$$
 
-`types.py` — `Z_95`, `StateEstimate.w_interval`, `.w_ci95`, `.w_sd`. Master plan §16 writes this
-multiplier as $1.96$; `Z_95` is that value unrounded, referenced as a named constant so the choice
+`types.py` — `Z_95`, `StateEstimate.w_interval`, `.w_ci95`, `.w_sd`. This multiplier is usually
+written as $1.96$; `Z_95` is that value unrounded, referenced as a named constant so the choice
 is stated once rather than scattered as a literal.
 
 ---
@@ -211,7 +218,7 @@ honestly vague rather than confidently wrong (test `P3` isolates it; `P6` shows
 $\text{width}(7) < \text{width}(30) < \text{width}(90)$).
 
 Intervals describe the **latent** weight, matching what the product means by "30-day estimated trend
-weight" (master plan §9). `include_observation_noise=True` adds exactly $R$ to describe a future
+weight" (ADR-0005). `include_observation_noise=True` adds exactly $R$ to describe a future
 scale reading instead — a different question, and not what Milestone 1 reports (test `P9`).
 
 Because of the splitting identity in §2, propagating in daily steps and in one jump agree exactly, so
@@ -269,8 +276,8 @@ data.
    single mistyped $+10$ kg reading moves the latent estimate by **1.65 kg** and the reported weekly
    rate by **1.04 kg/week**. Two weeks later the rate is still 0.22 kg/week off a true
    −0.38 kg/week — a trend reported 57% too steep. The transient is a damped *oscillation*, so it
-   does not decay monotonically. Tests `F10` record all of this as characterisation. Master plan §21
-   addresses it; until then, do not describe this system as robust.
+   does not decay monotonically. Tests `F10` record all of this as characterisation. A later
+   robust-observation milestone addresses it; until then, do not describe this system as robust.
 
 4. **The model has no mean reversion, so it is only locally valid.** Latent weight is an integrated
    random walk: its spread grows like $\sigma_a\sqrt{t^3/3}$ — about 1.6 kg over 50 days, about
@@ -285,15 +292,15 @@ data.
    independence is an approximation, and the daily-median alternative is a Week 2 experiment.
 
 6. **A local-linear trend cannot represent a plateau or reversal as structure.** It tracks them by
-   drifting velocity, which lags. Expected; master plan §22 addresses it with change detection.
+   drifting velocity, which lags. Expected; a later change-detection milestone addresses it.
 
 7. **The trajectory is filtered, not smoothed.** Each point reflects only data available at that
-   instant. The retrospective view needs an RTS smoother (master plan §23); the per-step priors and
+   instant. The retrospective view needs an RTS smoother; the per-step priors and
    posteriors recorded in `FilterStep` are exactly its input.
 
 8. **Calibration is demonstrated only on data drawn from the model itself.** Test `F11` shows mean
    $z^2 \approx 1$ and about 95% interval coverage when the model is true by construction. That
-   validates the implementation, not the model choice. Real-data evaluation is master plan §27.
+   validates the implementation, not the model choice. Real-data evaluation is a later milestone.
 
 ---
 

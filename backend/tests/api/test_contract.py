@@ -37,9 +37,9 @@ TOP_LEVEL_EXCLUSIONS: Final = {
 }
 
 CURRENT_EXCLUSIONS: Final = {
-    "v_kg_per_day",  # users think in kg/week (master plan section 17)
+    "v_kg_per_day",  # users think in kg/week (ADR-0001)
     "v_sd",  # ditto; weekly_rate_sd_kg is published instead
-    "P",  # the state covariance belongs to the model inspector, section 51
+    "P",  # the state covariance belongs to a later model-inspector view
 }
 
 FORECAST_EXCLUSIONS: Final = {
@@ -211,7 +211,7 @@ def test_the_openapi_schema_describes_the_published_response_models(strict_clien
 def test_the_request_schema_publishes_no_goal_or_parameter_field(strict_client: TestClient):
     """Goal projection is a later milestone, and the priors are not caller-tunable.
 
-    The estimator is goal-neutral by construction (master plan section 4). Keeping the goal
+    The estimator is goal-neutral by construction. Keeping the goal
     out of the request keeps that guarantee structural rather than a promise.
     """
     schema = strict_client.get("/openapi.json").json()

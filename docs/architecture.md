@@ -85,10 +85,9 @@ Three things follow from it, and all three are load-bearing:
    golden regression test in `test_analyse_golden.py` mean anything. A core that consulted the clock
    would quietly turn that test into noise.
 2. **Goal neutrality.** The core has no parameter through which a user's lose/maintain/gain goal
-   could reach the estimator. That is a structural guarantee, not a code review promise
-   (master plan §4).
+   could reach the estimator. That is a structural guarantee, not a code review promise.
 3. **No health data in logs.** The core cannot print or log, so it cannot leak a measurement into a
-   log line (master plan §42). Error messages name positions and field names, never values — see
+   log line (docs/privacy.md). Error messages name positions and field names, never values — see
    `UnsortedObservationsError` and test `F8`.
 
 ## Layout

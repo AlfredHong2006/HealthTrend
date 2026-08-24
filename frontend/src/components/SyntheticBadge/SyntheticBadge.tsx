@@ -1,24 +1,27 @@
-import type { DemoAnalysis } from "@/lib/api/types";
+import type { DemoAnalysis, DemoScenario } from "@/lib/api/types";
 import styles from "./SyntheticBadge.module.css";
 
 interface SyntheticBadgeProps {
   meta: DemoAnalysis["meta"];
-  label: string;
+  scenario: Pick<DemoScenario, "title" | "label">;
 }
 
 /**
  * Unmistakable provenance: this is generated data, never a real measurement.
  *
- * `meta.source` is the honest claim the backend can make ("this API generated it"); the
- * scenario's own `label` is the human-readable form, and both are always rendered together
- * so the text on screen matches the underlying value rather than being a hardcoded string
- * that could drift from it (docs/privacy.md: only explicitly synthetic data is shown).
+ * `meta.source` is the honest claim the backend can make ("this API generated it"), and the
+ * visible text tracks it rather than being a hardcoded string that could drift from the
+ * underlying value (docs/privacy.md: only explicitly synthetic data is shown). The scenario's
+ * human-readable `title` is what a reader needs; its machine provenance `label` (which names
+ * the generator seed) is kept as hover text so it is still on the page without doubling up
+ * the word "synthetic" in the headline chip.
  */
-export function SyntheticBadge({ meta, label }: SyntheticBadgeProps) {
+export function SyntheticBadge({ meta, scenario }: SyntheticBadgeProps) {
+  const isDemo = meta.source === "demo";
   return (
-    <p className={styles.badge}>
+    <p className={styles.badge} title={isDemo ? scenario.label : undefined}>
       <span className={styles.dot} aria-hidden="true" />
-      Synthetic demo data ({meta.source === "demo" ? label : meta.source})
+      {isDemo ? `Synthetic demo data · ${scenario.title}` : `Source: ${meta.source}`}
     </p>
   );
 }

@@ -2,7 +2,7 @@
 
 The request is deliberately narrow: timestamped weights, a unit, and a choice of forecast
 origin. There is no goal field, because goal projection is a later milestone and the
-estimator is structurally goal-neutral (master plan section 4). There is no model-parameter
+estimator is structurally goal-neutral (``docs/architecture.md``). There is no model-parameter
 field either, because the priors are unfitted and inviting callers to tune them would imply
 an accuracy claim the project has not earned (``docs/privacy.md``).
 
@@ -37,7 +37,7 @@ plausible personal history while bounding the work one request can cause.
 """
 
 FORECAST_HORIZONS_DAYS: Final = (7.0, 30.0, 90.0)
-"""The three published horizons (master plan section 9). Fixed, not caller-selectable.
+"""The three published horizons. Fixed, not caller-selectable.
 
 30 days is the primary consumer forecast; 7 gives short-term trajectory; 90 shows
 direction while visibly carrying much greater uncertainty.
@@ -173,8 +173,8 @@ class CurrentEstimateOut(BaseModel):
         """Adapt :class:`app.core.types.StateEstimate`.
 
         The raw velocity in kg/day and the state covariance are deliberately not
-        published: users think in kg/week (master plan section 17), and the covariance
-        belongs to the model inspector of section 51.
+        published: users think in kg/week (ADR-0001), and the covariance
+        belongs to a later model-inspector view.
         """
         lower, upper = state.w_ci95
         return cls(

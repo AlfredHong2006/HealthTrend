@@ -1,7 +1,7 @@
 # ADR-0008 — Frontend contract, data fetching, the chart, and why CORS still is not needed
 
 **Status:** accepted, Milestone 3
-**Implements:** master plan §7, §36, §43, §50, §53; extends [ADR-0006](ADR-0006-http-boundary.md)
+**Extends:** [ADR-0006](ADR-0006-http-boundary.md)
 
 ## Context
 
@@ -122,7 +122,7 @@ from forecast needs one merged dataset threaded with `null`s to split the two se
 saved on the happy path is spent fighting the abstraction on exactly the three things this chart is
 made of.
 
-**ECharts** — the most capable option, and its `dataZoom` would give the master plan's future
+**ECharts** — the most capable option, and its `dataZoom` would give a future
 1W/3M/6M/1Y/ALL range selector for free. Rejected for this milestone: a large bundle, an imperative
 option-object API that fights React's data flow, and weaker practical type safety and accessibility
 than the alternatives — not justified for roughly 330 points with no realised need for pan/zoom yet.

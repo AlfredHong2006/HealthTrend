@@ -3,7 +3,7 @@
 HealthTrend handles body-weight measurements. Those are health data, and the default assumption is
 that they never leave the machine they were measured on and never enter this repository.
 
-Master plan §42 and §79 are the governing rules. This document is the operational form of them.
+This document is the operational form of the project's privacy and health-framing rules.
 
 ## Never committed
 
@@ -102,7 +102,7 @@ Nothing is stored. The analysis happens inside the request and the result is ret
 database, no session, no cache, no telemetry, and no retained upload. `create_app()` wires routes,
 error handlers and the access log, and nothing else.
 
-Master plan §42's public web version is arriving in stages. Milestone 3 delivered the synthetic-demo
+The public web version is arriving in stages. Milestone 3 delivered the synthetic-demo
 half: no user upload, so there was nothing for this section to say about real data reaching the
 frontend. The manual-entry milestone changes that: a user can now type their own measurements into
 the browser and submit them for analysis. What follows describes both paths, because they now have
@@ -195,7 +195,7 @@ follows the same rules above, plus its own:
 ## Not a medical device
 
 HealthTrend estimates and forecasts a measurement trend. It does not diagnose, treat, prescribe or
-explain physiology (master plan §79).
+explain physiology.
 
 The language in code, docs and UI stays hedged for a reason: *estimated*, *likely*, *consistent with*,
 *association*, *uncertainty*. Avoid *caused by*, *definitely*, *medically healthy*. The core supports
@@ -204,7 +204,7 @@ so wide it says nothing — which is the correct output from one measurement, no
 
 ## Claims
 
-Only claim what is implemented and measured (master plan §71). As of Milestone 3:
+Only claim what is implemented and measured. As of Milestone 3:
 
 - the model parameters are documented priors, not values fitted to data
 - calibration has been demonstrated only on data drawn from the model itself

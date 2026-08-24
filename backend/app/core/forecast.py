@@ -33,7 +33,7 @@ and the possibility that the trend itself drifts. The ``tau**3`` term is what ma
 forecasts honestly vague rather than confidently wrong.
 
 Intervals describe the **latent** weight, matching what the product means by "30-day
-estimated trend weight" (master plan section 9). Passing
+estimated trend weight" (ADR-0005). Passing
 ``include_observation_noise=True`` widens them to describe a future scale reading
 instead, which is a different question and not what Milestone 1 reports.
 
@@ -62,7 +62,7 @@ from app.core.types import (
 )
 
 DEFAULT_HORIZON_DAYS: Final = 30.0
-"""The primary consumer forecast horizon (master plan section 9)."""
+"""The primary consumer forecast horizon; 7 and 90 days are secondary."""
 
 DEFAULT_STEP_DAYS: Final = 1.0
 """Granularity of the forecast path used to draw the widening band."""
@@ -136,7 +136,7 @@ def forecast_path(
     The path always starts at horizon zero and ends exactly at ``horizon_days``, even
     when the horizon is not a whole multiple of ``step_days``. Horizon zero reproduces
     the state being forecast from, so the historical trend line and the forecast join
-    without a visual discontinuity (master plan section 7).
+    without a visual discontinuity.
 
     Raises:
         CoreError: if ``step_days`` is not positive, the horizon is negative, or the

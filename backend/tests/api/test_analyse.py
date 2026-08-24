@@ -334,7 +334,7 @@ def test_the_latest_acceptable_timestamp_still_forecasts_without_overflow(client
 def test_a_single_observation_reports_a_weight_and_declines_to_invent_a_trend(
     client: TestClient,
 ):
-    """Master plan section 12. One reading carries no velocity information at all."""
+    """ADR-0003: one reading carries no velocity information at all."""
     body = analyse(
         client,
         [{"timestamp": FROZEN_NOW.isoformat(), "weight": 72.4, "unit": "kg"}],

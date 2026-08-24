@@ -42,7 +42,7 @@ export default async function DemoScenarioPage({ params }: DemoScenarioPageProps
 
       <header className={styles.header}>
         <h1 className={styles.title}>HealthTrend</h1>
-        <SyntheticBadge meta={analysis.meta} label={analysis.scenario.label} />
+        <SyntheticBadge meta={analysis.meta} scenario={analysis.scenario} />
         <Link href="/analyse" className={styles.enterDataLink}>
           Enter your own data →
         </Link>

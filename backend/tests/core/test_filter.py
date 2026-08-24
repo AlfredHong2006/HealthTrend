@@ -273,7 +273,7 @@ def test_f10_an_outlier_displaces_the_estimate_by_exactly_gain_times_the_spike(
     """The Gaussian filter is linear, so the displacement is exactly K_w times the spike.
 
     This test asserts no robustness, because Milestone 1 has none. It pins down the exact
-    sensitivity so the robust variants of master plan section 21 have a baseline to beat.
+    sensitivity so a later robust-observation milestone has a baseline to beat.
     """
     clean, spiked = _outlier_pair(params)
     step = OUTLIER_INDEX - 1  # the first observation is consumed by initialisation
@@ -318,7 +318,7 @@ def test_f10_the_reported_trend_is_corrupted_worse_than_the_weight(params: Model
     One mistyped reading shifts the reported weekly rate by about 1.0 kg/week at once, and
     two weeks later it is still off by 0.22 kg/week -- on a true trend of about
     -0.38 kg/week, that is a rate reported 57% too steep. This is the strongest argument
-    for the robust observation model of master plan section 21.
+    for a later robust-observation milestone.
     """
     clean, spiked = _outlier_pair(params)
 
@@ -344,7 +344,7 @@ def test_f11_normalised_innovations_are_calibrated_on_model_consistent_data(
 
     The generator draws the initial velocity from the same prior the filter uses and the
     state noise from the same Q, so the filter is perfectly specified here. This is the
-    reference point for the calibration work of master plan section 26.
+    reference point for the evaluation milestone.
 
     Averaged over 40 independent 50-observation draws rather than one 2000-observation
     draw: the model has no mean reversion, so a single multi-year trajectory wanders

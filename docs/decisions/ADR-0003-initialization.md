@@ -1,11 +1,10 @@
 # ADR-0003 — Initialisation, and the priors it depends on
 
 **Status:** accepted, Milestone 1
-**Implements:** master plan §12, §13, §4
 
 ## Context
 
-The product must work from one measurement and be honest about it. Master plan §12 forbids crude
+The product must work from one measurement and be honest about it. The product forbids crude
 gates such as "five measurements unlock forecasting" — uncertainty itself has to carry that
 information. So the filter needs a starting state that is defensible with `n = 1`.
 
@@ -61,8 +60,7 @@ from zero at 95% (test `F2`). A weekly-rate spread of 1.0 kg/week is weakly info
 any realistic human rate while preventing two noisy points from implying an absurd trend.
 
 `FilterResult.loglik` is accumulated precisely so all three can be fitted by maximum likelihood later
-without restructuring anything. Until they are, no accuracy claim attaches to them
-(master plan §71).
+without restructuring anything. Until they are, no accuracy claim attaches to them.
 
 ## Alternatives considered
 
@@ -85,7 +83,7 @@ Good: `n = 1` and `n = 2` behave honestly with no special-casing; no magic thres
 bias is structurally impossible.
 
 Cost: `σ_v0` is a judgement call that visibly affects early-data behaviour, and it is unvalidated. A
-sensitivity sweep is Week 2 work (master plan §26). Note also that `loglik` is the likelihood of
+sensitivity sweep belongs to the evaluation milestone. Note also that `loglik` is the likelihood of
 observations 2..n *conditional on the first*, since the initialising observation has no predictive
 density — the correct convention here, but it must be remembered when comparing likelihoods across
 different series lengths.

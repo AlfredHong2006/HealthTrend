@@ -6,7 +6,7 @@ lets both :mod:`app.ingestion` and :mod:`app.services` depend on it without a cy
 
 The response models mirror :class:`app.core.types.AnalysisResult` deliberately and
 partially. Per-observation filter diagnostics and the log-likelihood are recorded by the
-core but not published: the model inspector is master plan section 51, a later milestone,
+core but not published: the model inspector is a later milestone,
 and ``loglik`` is a parameter-fitting tool rather than a product output.
 ``tests/api/test_contract.py`` pins every inclusion and every exclusion so that the schema
 and the core cannot drift apart silently.

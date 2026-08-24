@@ -4,7 +4,7 @@ Every error this API returns is built from a value in a table in this module. No
 ever derived from ``str(exc)``, from an exception's class name, or from a Pydantic validator
 message. That is not stylistic fussiness -- it is the only way to be sure a body weight
 cannot appear in an error body, and from there in whatever aggregates the caller's logs
-(master plan section 42, ``docs/privacy.md``).
+(``docs/privacy.md``).
 
 Three concrete hazards this closes:
 

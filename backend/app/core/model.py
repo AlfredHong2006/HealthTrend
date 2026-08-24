@@ -20,13 +20,17 @@ weight is its integral (continuous white-noise acceleration)::
     Q(dt) = sigma_accel**2 * [[dt**3 / 3, dt**2 / 2],
                              [dt**2 / 2,       dt]]
 
-That form is not a convenience. It is the only one that satisfies
+That form is not a convenience. It is the integral ``Q(dt) = int_0^dt F(s) Q_c F(s)' ds`` of
+the continuous-time noise ``Q_c = diag(0, sigma_accel**2)`` through the dynamics, and every
+covariance produced that way satisfies
 
     F(b) Q(a) F(b)' + Q(b) == Q(a + b)
 
 so splitting an interval into sub-intervals changes nothing. A 30-day gap gives exactly
 the same answer as thirty 1-day steps, which is what makes irregular weigh-in times
-principled rather than approximated. See :func:`process_noise` and test ``M4``.
+principled rather than approximated. This is the minimal one-parameter member of that
+family; a diagonal random walk ``diag(sigma_w**2 * dt, sigma_v**2 * dt)`` is not a member
+and fails the identity. See :func:`process_noise` and test ``M4``.
 
 **Observation.** The scale reads the weight component only::
 

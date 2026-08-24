@@ -5,7 +5,7 @@ on:
   pull_request:
 
 # Every step is one of the four commands documented in the README, run in the same order.
-# No commit should be considered accepted if these fail (master plan section 56).
+# No commit should be considered accepted if these fail.
 jobs:
   checks:
     runs-on: ubuntu-latest

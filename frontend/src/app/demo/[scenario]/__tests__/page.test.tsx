@@ -45,9 +45,12 @@ describe("DemoScenarioPage", () => {
     // same figures as table cells for non-visual access (see TrendChart's own tests).
     expect(screen.getByText("81.7 kg", { selector: "p" })).toBeInTheDocument(); // current.w_kg
     expect(screen.getByText("−0.42 kg/week", { selector: "p" })).toBeInTheDocument(); // weekly_rate_kg
-    // The badge's text is one paragraph mixing a fixed prefix with the scenario's label;
-    // `toHaveTextContent` matches substrings, unlike `getByText`'s default exact match.
-    expect(screen.getByText(/Synthetic demo data/)).toHaveTextContent(demoAnalysisFixture.scenario.label);
+    // The badge's text is one paragraph mixing a fixed prefix with the scenario's title;
+    // `toHaveTextContent` matches substrings, unlike `getByText`'s default exact match. The
+    // machine provenance label (which names the seed) is kept as hover text, not inline.
+    const badge = screen.getByText(/Synthetic demo data/);
+    expect(badge).toHaveTextContent(demoAnalysisFixture.scenario.title);
+    expect(badge).toHaveAttribute("title", demoAnalysisFixture.scenario.label);
     expect(screen.getByRole("img", { name: /Weight trend chart/ })).toBeInTheDocument();
   });
 

@@ -1,7 +1,6 @@
 # ADR-0002 — Process noise, and why irregular intervals are exact rather than approximated
 
 **Status:** accepted, Milestone 1. Confirmed by the developer before implementation.
-**Implements:** master plan §14, §40
 
 ## Context
 
@@ -25,11 +24,16 @@ Velocity is a Wiener process; weight is its integral.
 
 ## Why, specifically
 
-It is the only form satisfying the time-splitting identity
+It is the integral of the continuous-time noise through the dynamics,
+`Q(Δt) = ∫₀^Δt F(s) Q_c F(s)' ds` with `Q_c = diag(0, σ_a²)`, and every covariance generated that
+way satisfies the time-splitting identity
 
 ```
 F(b) Q(a) F(b)' + Q(b) == Q(a + b)
 ```
+
+This form is the minimal one-parameter member of that family (the level-jitter variant below is
+another member and also satisfies the identity); a diagonal random walk is not a member and fails it.
 
 Expanding the (1,1) entry gives `a³/3 + a²b + ab² + b³/3 = (a+b)³/3`; the off-diagonal gives
 `a²/2 + ab + b²/2 = (a+b)²/2`; the (2,2) entry gives `a + b`. So a 30-day gap produces *identically*
@@ -64,7 +68,7 @@ individually and `Δt = 0` handles simultaneity exactly.
 Known approximation: three weigh-ins minutes apart are highly correlated in reality, but the model
 treats them as independent draws with variance `R`, so it shrinks `P_ww` more than it should. This is
 recorded rather than hidden. The daily-median alternative is a Week 2 A/B experiment
-(master plan §40); `Observation.obs_variance` already exists as the hook for inflating variance on
+(ADR-0004); `Observation.obs_variance` already exists as the hook for inflating variance on
 clustered readings instead.
 
 ## Parameterisation

@@ -1,7 +1,7 @@
 # ADR-0010 — CSV weight-history import: parsing boundary, timezone policy, and what stays unchanged
 
 **Status:** accepted, Milestone 5
-**Implements:** master plan §39; extends [ADR-0001](ADR-0001-state-and-units.md),
+**Extends:** [ADR-0001](ADR-0001-state-and-units.md),
 [ADR-0004](ADR-0004-multiple-observations-per-day.md), and the HTTP boundary established in
 [ADR-0006](ADR-0006-http-boundary.md) and [ADR-0009](ADR-0009-real-data-browser-boundary.md)
 
@@ -175,8 +175,8 @@ guess which column was meant. Per row, a weight column whose header already impl
 
 An earlier version of this design proposed "per-row unit column overrides the header-implied unit,"
 which would have silently accepted a self-contradictory file (`weight_kg` column, `unit: lb` cell)
-by picking a winner. That is exactly the kind of guess master plan §40's "do not silently discard
-or reinterpret data" principle rules out. Failing the row closed, with a specific reason code, costs
+by picking a winner. That is exactly the kind of guess ADR-0004's "do not arbitrarily discard
+data" principle rules out. Failing the row closed, with a specific reason code, costs
 nothing a real export would ever trigger — a well-formed file simply never contains the
 contradiction — while a genuinely malformed one is reported precisely instead of half-corrected.
 

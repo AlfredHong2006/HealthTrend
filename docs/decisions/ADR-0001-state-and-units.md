@@ -1,7 +1,6 @@
 # ADR-0001 — State representation and canonical units
 
 **Status:** accepted, Milestone 1
-**Implements:** master plan §14, §17, §39
 
 ## Context
 

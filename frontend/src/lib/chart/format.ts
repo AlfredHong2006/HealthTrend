@@ -1,7 +1,7 @@
 /**
  * Presentation formatting only. Every value passed in here is already a number the backend
  * published; nothing in this module computes, rounds for interpretation, or classifies a
- * trend -- it only chooses how many digits and which words to show (master plan section 9:
+ * trend -- it only chooses how many digits and which words to show (the rule being:
  * never manufacture false precision).
  *
  * Locale is pinned to `en-GB` rather than left to the runtime default, so a date renders the
@@ -29,7 +29,7 @@ const fullDateFormatter = new Intl.DateTimeFormat("en-GB", {
   year: "numeric",
 });
 
-/** "75.9 kg" -- one decimal place, matching the master plan's own examples. */
+/** "75.9 kg" -- one decimal place, the precision shown everywhere in the product. */
 export function formatWeightKg(kg: number): string {
   return `${weightFormatter.format(kg)} kg`;
 }

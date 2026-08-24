@@ -1,12 +1,11 @@
 # ADR-0004 — Multiple observations on the same day
 
 **Status:** accepted, Milestone 1. Confirmed by the developer before implementation.
-**Implements:** master plan §40, which requires this decision to be documented and tested
 
 ## Context
 
 Real weigh-in data contains clusters: someone steps on the scale, does not like the number, steps on
-again. Apple Health exports contain exact duplicates and same-minute repeats. Master plan §40 says
+again. Apple Health exports contain exact duplicates and same-minute repeats. The product rule is that
 data must not be arbitrarily discarded, and that whatever rule is chosen must be documented and
 experimentally tested.
 

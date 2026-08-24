@@ -1,7 +1,7 @@
 /**
  * Design tokens: the whole visual language as custom properties.
  *
- * HealthTrend should read as calm, precise and non-judgemental (master plan section 80) --
+ * HealthTrend should read as calm, precise and non-judgemental --
  * not a dashboard, a trading terminal or a fitness app. There is deliberately one accent
  * colour and no red/green judgement colours: a maintenance user's flat rate is a success,
  * not a "no gain" warning, so colour never encodes a value judgement about the trend.

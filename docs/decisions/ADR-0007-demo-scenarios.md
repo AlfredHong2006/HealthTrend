@@ -1,11 +1,10 @@
 # ADR-0007 — Demo scenarios: owned by the application, anchored to now
 
 **Status:** accepted, Milestone 2
-**Implements:** master plan §25, §43, §53
 
 ## Context
 
-Master plan §43: a recruiter should not need an iPhone, an Apple Health export or an account
+A visitor should not need an iPhone, an Apple Health export or an account
 to see what this product does. `GET /api/demo/{scenario}` exists to make that true.
 
 Two questions had to be answered before writing a line of it: where the generators live, and
@@ -110,8 +109,8 @@ verify. The catalogue declares itself synthetic as well.
 
 The latent path is piecewise-constant in velocity and integrated, so it is continuous with no
 jumps. `plateau` and `reversal` deliberately show the estimator lagging a turning point: that
-is a true property of a local-linear-trend model (`docs/mathematics.md` §8.6), and master plan
-§22 addresses it with change detection later. Showing it is more useful than hiding it.
+is a true property of a local-linear-trend model (`docs/mathematics.md` §8.6), and a later
+change-detection milestone addresses it. Showing it is more useful than hiding it.
 
 `noisy` uses a measurement standard deviation of 1.0 kg, well above the estimator's own
 `σ_obs` prior of 0.5 kg, so the filter is genuinely misspecified for that series and smooths

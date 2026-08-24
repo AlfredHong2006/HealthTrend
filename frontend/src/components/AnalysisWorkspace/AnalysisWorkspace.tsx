@@ -55,9 +55,16 @@ export function AnalysisWorkspace() {
     }
   }
 
+  // Switching mode, or editing the inputs of either mode, discards any result on screen: a
+  // result must never outlive the inputs it was produced from, whichever path produced it.
+  function invalidateResult() {
+    setResult(null);
+    setSubmitError(null);
+  }
+
   function selectMode(next: EntryMode) {
     setMode(next);
-    setSubmitError(null);
+    invalidateResult();
   }
 
   return (
@@ -86,16 +93,18 @@ export function AnalysisWorkspace() {
       </div>
 
       {mode === "manual" ? (
-        <MeasurementForm onSubmit={handleSubmit} submitting={submitting} submitError={submitError} />
+        <MeasurementForm
+          onSubmit={handleSubmit}
+          submitting={submitting}
+          submitError={submitError}
+          onInputsChanged={invalidateResult}
+        />
       ) : (
         <CsvImport
           onSubmit={handleSubmit}
           submitting={submitting}
           submitError={submitError}
-          onInputsChanged={() => {
-            setResult(null);
-            setSubmitError(null);
-          }}
+          onInputsChanged={invalidateResult}
         />
       )}
       {result && <AnalysisResult result={result} />}

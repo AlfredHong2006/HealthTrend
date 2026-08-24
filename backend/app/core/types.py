@@ -32,7 +32,7 @@ STATE_DIM: Final = 2
 Z_95: Final = 1.959963984540054
 """Two-sided 95% standard-normal quantile.
 
-Master plan section 16 writes this as ``1.96``; this is that value unrounded. Interval
+The usual rounded figure is ``1.96``; this is that value unrounded. Interval
 code references this constant rather than a literal so the choice is stated once.
 """
 
@@ -64,7 +64,7 @@ class CoreError(ValueError):
     ordinary value errors with a single ``except``.
 
     Error messages never contain weight values or timestamps: an error string can end
-    up in a log, and logs must not carry health data (master plan section 42).
+    up in a log, and logs must not carry health data (``docs/privacy.md``).
     """
 
 
@@ -188,8 +188,8 @@ class Observation:
         weight_kg: the measured value in kilograms.
         obs_variance: optional per-observation measurement variance in kg^2, overriding
             ``sigma_obs**2``. Reserved for the robust and adaptive observation models of
-            master plan section 21 and unused in Milestone 1, where it is always
-            ``None``.
+            a later milestone (``docs/mathematics.md`` section 8.3) and unused in
+            Milestone 1, where it is always ``None``.
     """
 
     timestamp: datetime
@@ -304,7 +304,7 @@ class StateEstimate:
 
     @property
     def w_ci95(self) -> tuple[float, float]:
-        """The 95% interval for the latent weight (master plan section 16)."""
+        """The 95% interval for the latent weight (``docs/mathematics.md``)."""
         return self.w_interval()
 
     def to_dict(self) -> dict[str, Any]:
@@ -329,7 +329,7 @@ class FilterStep:
     """Everything that happened when one observation was absorbed.
 
     Recorded for every observation so that later milestones can build the "why did the
-    estimate move?" inspector (master plan section 51), calibration diagnostics and an
+    estimate move?" inspector, calibration diagnostics and an
     RTS smoother without re-running or re-designing the filter. Milestone 1 records
     these but surfaces none of them.
 
@@ -519,12 +519,12 @@ class AnalysisResult:
     """Everything Milestone 1 produces from a series of weight measurements.
 
     This is the object every later layer consumes: the HTTP schema will mirror it, and
-    the contextual-ML experiment of master plan section 31 measures its forecast
+    a later contextual-ML experiment would measure its forecast
     residuals.
 
     Attributes:
         trajectory: the filtered (online) latent-weight path, one point per
-            observation. Not smoothed -- see ADR-0005 and master plan section 23.
+            observation. Not smoothed -- see ADR-0005.
         current: the latent weight, uncertainty and velocity as of the last
             observation.
         forecast: the probabilistic forecast path.

@@ -239,4 +239,30 @@ describe("AnalysisWorkspace", () => {
     expect(screen.queryByText("81.7 kg", { selector: "p" })).not.toBeInTheDocument();
     expect(screen.queryByRole("img", { name: /Weight trend chart/ })).not.toBeInTheDocument();
   });
+
+  it("clears a manually-entered analysis result when a row is edited afterward", async () => {
+    submitAnalysis.mockResolvedValueOnce(ESTABLISHED_RESULT);
+    render(<AnalysisWorkspace />);
+
+    fillOneRowAndSubmit();
+    expect(await screen.findByText("81.7 kg", { selector: "p" })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Weight (kg)"), { target: { value: "73.0" } });
+
+    expect(screen.queryByText("81.7 kg", { selector: "p" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: /Weight trend chart/ })).not.toBeInTheDocument();
+  });
+
+  it("clears the result when switching entry mode", async () => {
+    submitAnalysis.mockResolvedValueOnce(ESTABLISHED_RESULT);
+    render(<AnalysisWorkspace />);
+
+    fillOneRowAndSubmit();
+    expect(await screen.findByText("81.7 kg", { selector: "p" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Import CSV" }));
+
+    expect(screen.queryByText("81.7 kg", { selector: "p" })).not.toBeInTheDocument();
+    expect(screen.getByLabelText("CSV file")).toBeInTheDocument();
+  });
 });

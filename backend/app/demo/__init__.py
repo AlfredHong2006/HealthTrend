@@ -1,6 +1,6 @@
 """Synthetic product-demo scenarios.
 
-Master plan section 43: a recruiter should not need an iPhone, an Apple Health export or an
+ADR-0007: a visitor should not need an iPhone, an Apple Health export or an
 account to see what this product does. So the API ships believable generated series that
 exercise the shapes the estimator is supposed to handle.
 

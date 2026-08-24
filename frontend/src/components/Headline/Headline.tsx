@@ -8,7 +8,7 @@ interface HeadlineProps {
 
 /**
  * The single most important number on the page: the estimated underlying weight, not the
- * latest scale reading (master plan section 50, priority one).
+ * latest scale reading -- the first thing on the page.
  */
 export function Headline({ current }: HeadlineProps) {
   return (

@@ -4,7 +4,7 @@ This is the online pass: at every observation the estimate reflects only what wa
 at that instant. That is deliberately the quantity the product shows, because it is the
 answer to "what should I have believed at the time" rather than a retrospectively
 rewritten history. The retrospective view needs an RTS smoother, which is a later
-milestone (master plan section 23); the per-step priors and posteriors recorded here are
+milestone (see ADR-0005); the per-step priors and posteriors recorded here are
 exactly its input.
 
 Intervals between observations are real elapsed times, never step indices. Nothing in

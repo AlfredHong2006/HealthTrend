@@ -32,7 +32,7 @@ const MIN_ASPECT_HEIGHT = 260;
 
 /**
  * The graph: past observations, the filtered latent trend, and the widening forecast band,
- * joined so history and forecast read as one continuous story (master plan section 7).
+ * joined so history and forecast read as one continuous story.
  *
  * No mark here computes anything. Every position comes from `series`, which
  * {@link buildChartSeries} already shaped from backend values; this component only maps

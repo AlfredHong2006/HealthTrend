@@ -61,7 +61,7 @@ def run_analysis(
     Returns:
         An :class:`AnalysisResult`. With a single observation it reports that weight,
         a velocity of exactly zero, and a forecast whose interval is wide enough to say
-        nothing -- which is the honest answer, not a failure (master plan section 12).
+        nothing -- which is the honest answer, not a failure (ADR-0003).
 
     Raises:
         InsufficientDataError: if ``observations`` is empty.

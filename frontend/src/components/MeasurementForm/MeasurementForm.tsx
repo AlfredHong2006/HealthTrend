@@ -15,6 +15,13 @@ interface MeasurementFormProps {
   onSubmit: (observations: ObservationIn[]) => void;
   submitting: boolean;
   submitError: string | null;
+  /**
+   * Called whenever a row or the unit changes. The parent owns any analysis result derived
+   * from an earlier submission and only it can invalidate that; this form only knows that
+   * its inputs no longer match what was submitted. Optional because the form is usable on
+   * its own; `CsvImport` makes the same prop required for the same reason.
+   */
+  onInputsChanged?: () => void;
 }
 
 function emptyRow(id: number): DraftRow {
@@ -31,7 +38,12 @@ function emptyRow(id: number): DraftRow {
  * an unused trailing row does not block submission; a row with only one field filled is a
  * validation error, since that is data the user meant to enter but left incomplete.
  */
-export function MeasurementForm({ onSubmit, submitting, submitError }: MeasurementFormProps) {
+export function MeasurementForm({
+  onSubmit,
+  submitting,
+  submitError,
+  onInputsChanged,
+}: MeasurementFormProps) {
   const nextId = useRef(1);
   const [rows, setRows] = useState<DraftRow[]>([emptyRow(0)]);
   const [unit, setUnit] = useState<"kg" | "lb">("kg");
@@ -39,14 +51,22 @@ export function MeasurementForm({ onSubmit, submitting, submitError }: Measureme
 
   function updateRow(id: number, patch: Partial<Omit<DraftRow, "id">>) {
     setRows((current) => current.map((row) => (row.id === id ? { ...row, ...patch } : row)));
+    onInputsChanged?.();
   }
 
   function addRow() {
     setRows((current) => [...current, emptyRow(nextId.current++)]);
+    onInputsChanged?.();
   }
 
   function removeRow(id: number) {
     setRows((current) => current.filter((row) => row.id !== id));
+    onInputsChanged?.();
+  }
+
+  function selectUnit(next: "kg" | "lb") {
+    setUnit(next);
+    onInputsChanged?.();
   }
 
   function handleSubmit(event: FormEvent) {
@@ -105,7 +125,7 @@ export function MeasurementForm({ onSubmit, submitting, submitError }: Measureme
                 name="unit"
                 value={option}
                 checked={unit === option}
-                onChange={() => setUnit(option)}
+                onChange={() => selectUnit(option)}
               />
               {option}
             </label>

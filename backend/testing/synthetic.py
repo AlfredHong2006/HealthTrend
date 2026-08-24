@@ -1,14 +1,14 @@
 """Deterministic synthetic weight series with a known hidden trajectory.
 
 Real weight data never exposes the true latent weight, so the only way to check that the
-estimator recovers a trajectory is to generate one (master plan section 25). Every series
+estimator recovers a trajectory is to generate one. Every series
 here carries the truth alongside the observations, and every series is explicitly labelled
 synthetic -- enforced by :class:`SyntheticSeries`, not left to the caller's discipline.
 
 Milestone 1 needs only the scenarios its tests exercise: constant weight, gradual loss,
 irregular weigh-in times, simultaneous measurements, a single extreme outlier, and data
 drawn from the model's own assumptions for calibration. The wider scenario library of
-master plan section 25 belongs to the evaluation milestone.
+a wider scenario library belongs to the evaluation milestone.
 """
 
 from __future__ import annotations

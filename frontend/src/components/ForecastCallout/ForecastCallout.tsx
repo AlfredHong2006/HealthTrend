@@ -8,7 +8,7 @@ interface ForecastCalloutProps {
 }
 
 /**
- * The 30-day forecast: the primary consumer horizon (master plan section 9). The 7- and
+ * The 30-day forecast: the primary consumer horizon. The 7- and
  * 90-day horizons are still present in the response and readable from the graph and its
  * tooltip, but only one number is promoted to a headline figure here -- the page should
  * answer one question clearly, not publish a table of three.

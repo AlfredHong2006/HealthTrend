@@ -5,7 +5,7 @@
 
 import type { Forecast, ForecastPoint } from "@/lib/api/types";
 
-/** The forecast horizon promoted to a page-level headline (master plan section 9). */
+/** The forecast horizon promoted to a page-level headline. */
 export const HEADLINE_FORECAST_HORIZON_DAYS = 30;
 
 /**

@@ -1,7 +1,6 @@
 # ADR-0005 — Forecast origin, total elapsed time, and which interval is reported
 
 **Status:** accepted, Milestone 1
-**Implements:** master plan §7, §9, §16, §23
 
 Three related decisions about what a forecast actually means.
 
@@ -84,7 +83,7 @@ reading a scale would show, `y_{T+h} = w_{T+h} + ε`. The second is wider by exa
 Report the **latent** interval by default. `include_observation_noise=True` adds exactly `R` for the
 observation-space version; it is off everywhere in Milestone 1 (tests `P9`).
 
-Master plan §9 phrases the product output as "30-day estimated trend weight — likely range", and the
+The product phrases its output as "30-day estimated trend weight — likely range", and the
 whole premise of the product is that the trend is the meaningful quantity and the individual reading
 is noise. Reporting the reading's interval would reintroduce exactly the noise the product exists to
 remove.
@@ -117,7 +116,7 @@ tomorrow. It is also the only pass that exists yet.
 ### Consequences
 
 The filtered path lags a genuine turning point, which is visible and expected. An RTS smoother is
-master plan §23; the per-step priors and posteriors recorded in `FilterStep` are exactly its input,
+a later milestone; the per-step priors and posteriors recorded in `FilterStep` are exactly its input,
 so adding it requires no change to the filter. Whether the product should then *show* the smoothed
 path — and how to explain that history moved — is a product question deliberately left open.
 

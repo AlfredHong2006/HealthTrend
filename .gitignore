@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------
-# Privacy first (master plan §42). Real health data must never be committed.
+# Privacy first. Real health data must never be committed (docs/privacy.md).
 # These rules exist BEFORE any data file can be created.
 # ---------------------------------------------------------------------------
 private/

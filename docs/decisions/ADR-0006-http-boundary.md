@@ -1,7 +1,7 @@
 # ADR-0006 — The HTTP boundary: the clock, the error surface, and what may be logged
 
 **Status:** accepted, Milestone 2
-**Implements:** master plan §42, §53, §71, §79; extends [ADR-0005](ADR-0005-forecast-origin-and-interval-space.md)
+**Extends:** [ADR-0005](ADR-0005-forecast-origin-and-interval-space.md)
 
 ## Context
 
@@ -189,7 +189,7 @@ milestone has no grounds for.
 single most likely way this project would have leaked health data.
 
 **Letting the caller choose forecast horizons.** Rejected for this milestone. 7/30/90 are the
-published product horizons (master plan §9); a free horizon parameter widens the contract
+published product horizons; a free horizon parameter widens the contract
 before anything has been calibrated, and 90 days is already at the edge of where a model with
 no mean reversion means anything.
 
@@ -199,7 +199,7 @@ tuning until the answer looks nice. They are echoed in the response for transpar
 
 **Accepting a goal in the request.** Deferred with the rest of goal projection. Keeping it out
 means the estimator's goal neutrality stays structural: there is still no argument, field or
-config through which a preference could reach it (master plan §4).
+config through which a preference could reach it.
 
 **CORS configured now, "ready for the frontend".** Rejected. There is no browser client yet, so
 any origin policy written today would be a guess, and a permissive one added for convenience is

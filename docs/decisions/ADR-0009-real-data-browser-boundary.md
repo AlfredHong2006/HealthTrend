@@ -1,7 +1,7 @@
 # ADR-0009 — The real-data browser boundary: direct submission, CORS, and honest presentation
 
 **Status:** accepted, Milestone 4
-**Implements:** master plan §12, §42, §79; extends [ADR-0006](ADR-0006-http-boundary.md) and
+**Extends:** [ADR-0006](ADR-0006-http-boundary.md) and
 [ADR-0008](ADR-0008-frontend-contract-and-cors.md)
 
 ## Context
@@ -56,7 +56,7 @@ later concern this milestone does not decide.
 `app/main.py` registers `CORSMiddleware`. Origins come from `HEALTHTREND_ALLOWED_ORIGINS`
 (`app/config.py`), **fail-closed** — unset or empty means no origin is permitted, never "permit
 everything". No wildcard is ever emitted. `allow_credentials=False`, because nothing in this system
-has a cookie or a session to protect (master plan §42: no accounts in V1) and enabling it would be
+has a cookie or a session to protect (docs/privacy.md: no accounts in V1) and enabling it would be
 unused surface. `allow_methods=["POST"]`, `allow_headers=["Content-Type"]` — exactly what
 `submitAnalysis` sends.
 
@@ -141,7 +141,7 @@ these cases, so it is the exact structural condition, not an approximation of on
 renders unconditionally, because the estimated weight *is* the honest posterior at `n = 1` — `R_0`,
 the exact result of one Gaussian measurement (ADR-0003) — while a rate or forecast built from an
 unshrunk prior would present that prior as if it were a finding, which is exactly the false precision
-master plan §12 forbids.
+ADR-0003 rules out.
 
 ---
 

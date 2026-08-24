@@ -55,13 +55,19 @@ uv run ruff format --check .   # formatting
 uv run mypy app                # strict type checking
 ```
 
-Then start the server. `--no-access-log` disables uvicorn's built-in access log as privacy
-hardening: that log records request metadata — method, raw path, query string — never JSON bodies,
-but raw paths are caller-controlled strings, and the application writes its own metadata-only access
-log instead ([docs/privacy.md](docs/privacy.md)).
+Then start the server. `HEALTHTREND_ALLOWED_ORIGINS` is the CORS allow-list for the browser-side
+real-data pages (`/analyse`); it is empty by default, so nothing is permitted until you name the
+frontend's origin. `--no-access-log` disables uvicorn's built-in access log as privacy hardening:
+that log records request metadata — method, raw path, query string — never JSON bodies, but raw
+paths are caller-controlled strings, and the application writes its own metadata-only access log
+instead ([docs/privacy.md](docs/privacy.md)).
 
 ```
-uv run uvicorn app.main:app --no-access-log
+# bash / zsh
+HEALTHTREND_ALLOWED_ORIGINS=http://localhost:3000 uv run uvicorn app.main:app --no-access-log
+
+# PowerShell
+$env:HEALTHTREND_ALLOWED_ORIGINS = "http://localhost:3000"; uv run uvicorn app.main:app --no-access-log
 ```
 
 | Endpoint | Purpose |
@@ -112,15 +118,17 @@ npm run dev                    # http://localhost:3000
 ```
 
 Copy [frontend/.env.example](frontend/.env.example) to `.env.local` to point at a backend that
-is not on `localhost:8000`. The backend URL is read server-side only (every request to it happens
-from a Next.js server component, never from the browser), and there is no client-side data
-fetching, state library or caching layer: switching scenarios is a URL change
-(`/demo/{scenario}`), handled by the router.
+is not on `localhost:8000`. Two variables exist because two request paths exist:
 
-The demo pages (`/demo/{scenario}`) only fetch `GET /api/demo` and `GET /api/demo/{scenario}` from
-a server component. The `/analyse` page is the real-data path: it calls `POST /api/analyse` (and,
-for CSV import, `POST /api/ingest/csv`) directly from the browser. Opening `/` redirects to
-`/demo/gradual-loss`.
+- The demo pages (`/demo/{scenario}`) fetch `GET /api/demo` and `GET /api/demo/{scenario}` from a
+  Next.js server component using `HEALTHTREND_API_URL`, which never reaches the browser. On that
+  path there is no client-side data fetching, state library or caching layer: switching scenarios is
+  a URL change, handled by the router.
+- The `/analyse` page is the real-data path: it calls `POST /api/analyse` (and, for CSV import,
+  `POST /api/ingest/csv`) directly from the browser using `NEXT_PUBLIC_HEALTHTREND_API_URL`, which
+  is why the backend needs that origin in `HEALTHTREND_ALLOWED_ORIGINS` (see above).
+
+Opening `/` redirects to `/demo/gradual-loss`.
 
 ## Documentation
 

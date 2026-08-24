@@ -8,7 +8,7 @@ Two rules are enforced here:
 
 1. **Timestamps must be timezone-aware.** A naive ``datetime`` does not identify an
    instant, so it is rejected rather than guessed at. Normalising timezones is the
-   ingestion layer's job (master plan section 39); the core only accepts instants.
+   ingestion layer's job (ADR-0010); the core only accepts instants.
 2. **Elapsed time is epoch-independent.** :meth:`TimeAxis.elapsed_days` subtracts the
    two datetimes directly, so results never depend on the choice of epoch. The epoch
    exists only to provide an absolute numeric coordinate for plotting and export.

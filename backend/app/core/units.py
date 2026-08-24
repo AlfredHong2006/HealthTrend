@@ -36,7 +36,7 @@ def kg_to_lb(kilograms: float) -> float:
 
 
 def per_day_to_per_week(rate_kg_per_day: float) -> float:
-    """Convert a rate in kg/day to the kg/week figure shown to users (master plan section 17)."""
+    """Convert a rate in kg/day to the kg/week figure shown to users (ADR-0001)."""
     return rate_kg_per_day * DAYS_PER_WEEK
 
 

@@ -17,7 +17,7 @@ allowed to read, never what this API accepts.
 Still deliberately absent:
 
 * **Storage of any kind.** No database, no session, no cache. An analysis happens inside the
-  request and nothing about it is retained (master plan section 42).
+  request and nothing about it is retained (``docs/privacy.md``).
 * **Authentication.** No accounts in V1.
 """
 
