@@ -3,7 +3,9 @@
 Every equation below names the file and symbol that implements it. If an equation appears here
 and no code implements it, one of the two is wrong.
 
-Milestone 1 scope: latent weight, uncertainty, trend velocity, 30-day probabilistic forecast.
+Scope: latent weight, uncertainty, trend velocity, and probabilistic forecasts at 7, 30 and 90 days.
+None of it has changed since Milestone 1 — Milestones 2 to 5 put an HTTP boundary, a frontend, manual
+entry and CSV import *above* this layer without touching it, and the golden fixture is byte-identical.
 Trend classification, plateau probability, change detection, goal projection, robust filtering and
 smoothing are later milestones and appear nowhere in this document except as noted limitations.
 
@@ -45,7 +47,8 @@ y_t = H\mathbf{x}_t + \epsilon_t, \quad \epsilon_t \sim \mathcal{N}(0, R_t)$$
 
 `app/core/model.py` — `H`, `STATE_DIM`. $R_t = \sigma_{obs}^2$ via `ModelParams.obs_variance`, or a
 per-observation override via `Observation.variance` (reserved for later robust observation models,
-see §8.3; unused in Milestone 1).
+see §8.3). No caller sets it: `Observation.obs_variance` is not exposed by any request schema, so
+every observation currently resolves to the same $R$.
 
 ### Transition
 
@@ -219,15 +222,17 @@ $\text{width}(7) < \text{width}(30) < \text{width}(90)$).
 
 Intervals describe the **latent** weight, matching what the product means by "30-day estimated trend
 weight" (ADR-0005). `include_observation_noise=True` adds exactly $R$ to describe a future
-scale reading instead — a different question, and not what Milestone 1 reports (test `P9`).
+scale reading instead — a different question, and not what the product reports (test `P9`).
 
 Because of the splitting identity in §2, propagating in daily steps and in one jump agree exactly, so
 `forecast_path` can draw the band at any granularity and its final point equals `forecast_at`
 (tests `P4`). Horizon zero reproduces the state being forecast from, so the historical line and the
 forecast join without a visual discontinuity.
 
-The horizon is a parameter throughout. Milestone 1 exposes and validates 30 days; 7 and 90 need no
-additional mathematics.
+The horizon is a parameter throughout. The API publishes three fixed values — 7, 30 and 90 days
+(`FORECAST_HORIZONS_DAYS` in `app/schemas/analysis.py`) — which are these same equations evaluated at
+three values of $h$, drawn from one daily path so every published horizon lands on the grid exactly.
+Adding or moving a horizon needs no additional mathematics.
 
 ---
 
@@ -289,7 +294,7 @@ data.
 5. **Simultaneous observations are treated as independent.** Three weigh-ins minutes apart are
    highly correlated in reality, but the model absorbs each with variance $R$ and so shrinks
    $P_{ww}$ more than it should. Keeping every observation was the deliberate choice (ADR-0004); the
-   independence is an approximation, and the daily-median alternative is a Week 2 experiment.
+   independence is an approximation, and the daily-median alternative remains an open experiment.
 
 6. **A local-linear trend cannot represent a plateau or reversal as structure.** It tracks them by
    drifting velocity, which lags. Expected; a later change-detection milestone addresses it.

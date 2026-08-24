@@ -41,7 +41,7 @@ out/
 .tools/
 
 # ---------------------------------------------------------------------------
-# Environment and editors
+# Environment, editors and local agent tooling
 # ---------------------------------------------------------------------------
 .env
 .env.*
@@ -49,3 +49,7 @@ out/
 .DS_Store
 .idea/
 .vscode/
+
+# Claude Code's per-checkout settings, permissions and transcripts: local to one
+# developer's machine, never part of the project.
+.claude/

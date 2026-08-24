@@ -16,7 +16,10 @@ export default function DemoScenarioError({ reset }: DemoScenarioErrorProps) {
   return (
     <main className={styles.page}>
       <h1>The analysis service is unavailable</h1>
-      <p>HealthTrend could not reach the backend just now. This is a local demo issue, not yours.</p>
+      <p>
+        HealthTrend could not reach the analysis service just now. This is a problem on our side,
+        not with anything you did.
+      </p>
       <button type="button" onClick={reset} className={styles.retry}>
         Try again
       </button>

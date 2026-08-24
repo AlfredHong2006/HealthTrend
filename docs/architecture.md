@@ -136,8 +136,11 @@ backend/
     fixtures/             committed golden output
 ```
 
-Reserved names, deliberately absent until they are needed: `app/evaluation/`, `experiments/`,
-`sample_data/`.
+Reserved names, deliberately absent until they are needed: `app/evaluation/`, `experiments/`.
+
+`sample_data/` now exists, at the repository root: synthetic CSV files a reviewer can feed to
+`POST /api/ingest/csv` without supplying real measurements. It is the one place `.gitignore`
+permits a committed `.csv` (docs/privacy.md).
 
 `frontend/` is no longer reserved — see [below](#the-frontend) for its layout.
 

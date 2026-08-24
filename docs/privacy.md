@@ -100,37 +100,37 @@ validation response, a domain-error response, a 500 body, or any application log
 
 Nothing is stored. The analysis happens inside the request and the result is returned; there is no
 database, no session, no cache, no telemetry, and no retained upload. `create_app()` wires routes,
-error handlers and the access log, and nothing else.
+error handlers, the access log and the CORS middleware described below — and nothing else. There is
+no storage layer to configure, and therefore none to forget to secure.
 
-The public web version is arriving in stages. Milestone 3 delivered the synthetic-demo
-half: no user upload, so there was nothing for this section to say about real data reaching the
-frontend. The manual-entry milestone changes that: a user can now type their own measurements into
-the browser and submit them for analysis. What follows describes both paths, because they now have
-different privacy shapes.
-
-Nothing changes for the *server*: `create_app()` still wires only routes, error handlers, the access
-log and (as of the manual-entry milestone) the CORS middleware described below — still no database,
-no session, no cache, no telemetry, no retained upload, regardless of which frontend path called it.
+Three frontend paths reach that one server: the built-in synthetic demo scenarios, manual
+measurement entry, and CSV import. They have different privacy shapes in the *browser*, described
+below. On the server they are indistinguishable — the same stateless request, whichever page issued
+it, and the same guarantee regardless.
 
 ## The frontend
 
-Milestone 3's demo path — the five built-in synthetic scenarios — is unchanged: no upload control, no
-form, no file input, and nothing in `src/app/demo/**` writes to `localStorage`, `sessionStorage`,
-IndexedDB or a cookie.
+The demo path — the five built-in synthetic scenarios — carries no real data at all: no upload
+control, no form, no file input, and nothing in `src/app/demo/**` writes to `localStorage`,
+`sessionStorage`, IndexedDB or a cookie.
 
-The manual-entry page (`/analyse`) is the first place real health data can exist in the frontend, and
-it is held to the same "nothing needs it, which is stronger than a policy forbidding it" standard —
-enforced directly by a static guard, `frontend/src/lib/privacy/__tests__/no-persistence.test.ts`,
-which fails the build if any of those same four mechanisms appears anywhere under `frontend/src`.
-Entered measurements live only in that page's component state for the duration of the visit; there is
-no draft-saving, no restore-on-reload, and reloading or navigating away leaves nothing behind.
+The `/analyse` page is the only place real health data can exist in the frontend — whether typed into
+the form or read from an imported CSV file — and it is held to the same "nothing needs it, which is
+stronger than a policy forbidding it" standard, enforced directly by a static guard,
+`frontend/src/lib/privacy/__tests__/no-persistence.test.ts`, which fails the build if any of those
+same four mechanisms appears anywhere under `frontend/src`. Entered and imported measurements live
+only in that page's component state for the duration of the visit; there is no draft-saving, no
+restore-on-reload, and reloading or navigating away leaves nothing behind.
 
-**This is not on-device analysis.** Measurements typed into the form are sent, once, over HTTPS, to
-the FastAPI backend, and the backend computes the estimate — exactly as it does for demo scenarios.
-User-facing copy on the page says this plainly: *"Your measurements are sent to the HealthTrend
-analysis service for this analysis and are not stored."* It does not claim the data stays on the
-device, and it does not claim more security than the milestone actually provides (HTTPS transport and
-no server-side retention; deployment-level hardening is a separate, later concern).
+**This is not on-device analysis.** Measurements are sent, once, over HTTPS, to the FastAPI backend,
+which computes the estimate — exactly as it does for demo scenarios. That is true of typed rows and
+of an imported CSV file alike: the file is read in the browser only far enough to be uploaded to
+`POST /api/ingest/csv`, and the parsing happens on the server. User-facing copy on the page says so
+plainly: *"Your measurements are sent to the HealthTrend analysis service for this analysis and are
+not stored... Importing a CSV file works the same way: the file is read once, to produce measurements
+for this analysis, and is not kept afterwards."* It does not claim the data stays on the device, and
+it does not claim more security than is actually provided (HTTPS transport and no server-side
+retention; deployment-level hardening is a separate, later concern).
 
 - **No analytics, telemetry or third-party script**, on either path. Nothing in `frontend/` loads a
   script, font, stylesheet or tracking pixel from any origin other than this app's own and the
@@ -204,15 +204,16 @@ so wide it says nothing — which is the correct output from one measurement, no
 
 ## Claims
 
-Only claim what is implemented and measured. As of Milestone 3:
+Only claim what is implemented and measured. As of Milestone 5:
 
 - the model parameters are documented priors, not values fitted to data
 - calibration has been demonstrated only on data drawn from the model itself
 - there is no robustness to outliers, and the sensitivity is measured and recorded
 - no real health data has been used for any evaluation
-- **Milestones 2 and 3 changed no mathematics.** They put the existing estimator behind HTTP and then
-  behind a browser. Nothing about accuracy, calibration or robustness improved, and the golden
-  fixture from Milestone 1 is byte-identical — which is the evidence for that claim.
+- **Milestones 2 to 5 changed no mathematics.** They put the existing estimator behind HTTP, then
+  behind a browser, then behind manual entry and CSV import. Nothing about accuracy, calibration or
+  robustness improved, and the golden fixture from Milestone 1 is byte-identical — which is the
+  evidence for that claim.
 - the frontend renders numbers the backend computed and interprets none of them; it does not label
   anything "high confidence", "plateau" or "likely to continue" unless that classification exists as
   a defined backend result, which it does not yet

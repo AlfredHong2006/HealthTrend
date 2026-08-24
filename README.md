@@ -37,9 +37,10 @@ Apple Health parsing, trend classification, plateau detection, change detection,
 robust outlier handling, RTS smoothing, baseline comparison, calibration study, contextual machine
 learning, accounts, deployment.
 
-No accuracy or robustness claims are made at this stage. Milestones 2 and 3 changed no mathematics —
-they put the existing estimator behind HTTP and then behind a browser. The model parameters are
-documented priors, not values fitted to data — see [docs/mathematics.md](docs/mathematics.md).
+No accuracy or robustness claims are made at this stage. Milestones 2 to 5 changed no mathematics —
+they put the existing estimator behind HTTP, then behind a browser, then behind manual entry and
+CSV import. The model parameters are documented priors, not values fitted to data — see
+[docs/mathematics.md](docs/mathematics.md).
 
 ---
 
