@@ -1,10 +1,10 @@
-# Mathematics of the HealthTrend core
+﻿# Mathematics of the HealthTrend core
 
 Every equation below names the file and symbol that implements it. If an equation appears here
 and no code implements it, one of the two is wrong.
 
 Scope: latent weight, uncertainty, trend velocity, and probabilistic forecasts at 7, 30 and 90 days.
-None of it has changed since Milestone 1 — Milestones 2 to 5 put an HTTP boundary, a frontend, manual
+None of it has changed since Milestone 1 â€” Milestones 2 to 5 put an HTTP boundary, a frontend, manual
 entry and CSV import *above* this layer without touching it, and the golden fixture is byte-identical.
 Trend classification, plateau probability, change detection, goal projection, robust filtering and
 smoothing are later milestones and appear nowhere in this document except as noted limitations.
@@ -22,12 +22,12 @@ The core works in exactly one system of units. Conversions happen at the boundar
 | time | fractional days | $t$ | `TimeAxis.to_days`, `TimeAxis.elapsed_days` |
 | displayed rate | kg/week | $r$ | `StateEstimate.weekly_rate_kg` |
 | measurement noise SD | kg | $\sigma_{obs}$ | `ModelParams.sigma_obs_kg` |
-| process-noise intensity | kg·day<sup>−3/2</sup> | $\sigma_a$ | `ModelParams.sigma_accel` |
+| process-noise intensity | kgÂ·day<sup>âˆ’3/2</sup> | $\sigma_a$ | `ModelParams.sigma_accel` |
 | initial velocity prior SD | kg/day | $\sigma_{v0}$ | `ModelParams.sigma_v0` |
 
-$$r_t = 7\,v_t, \qquad \operatorname{sd}(r_t) = 7\operatorname{sd}(v_t)$$
+$$r_t = 7\,v_t, \qquad \mathrm{sd}(r_t) = 7\mathrm{sd}(v_t)$$
 
-`app/core/units.py` — `per_day_to_per_week`, `per_week_to_per_day`, `DAYS_PER_WEEK`.
+`app/core/units.py` â€” `per_day_to_per_week`, `per_week_to_per_day`, `DAYS_PER_WEEK`.
 The pound is the exact international avoirdupois pound, `KG_PER_LB = 0.45359237`.
 
 **Time is elapsed time, never a step index.** `TimeAxis.elapsed_days` subtracts two aware
@@ -45,18 +45,18 @@ $$\mathbf{x}_t = \begin{bmatrix} w_t \\ v_t \end{bmatrix}, \qquad
 H = \begin{bmatrix} 1 & 0 \end{bmatrix}, \qquad
 y_t = H\mathbf{x}_t + \epsilon_t, \quad \epsilon_t \sim \mathcal{N}(0, R_t)$$
 
-`app/core/model.py` — `H`, `STATE_DIM`. $R_t = \sigma_{obs}^2$ via `ModelParams.obs_variance`, or a
+`app/core/model.py` â€” `H`, `STATE_DIM`. $R_t = \sigma_{obs}^2$ via `ModelParams.obs_variance`, or a
 per-observation override via `Observation.variance` (reserved for later robust observation models,
-see §8.3). No caller sets it: `Observation.obs_variance` is not exposed by any request schema, so
+see Â§8.3). No caller sets it: `Observation.obs_variance` is not exposed by any request schema, so
 every observation currently resolves to the same $R$.
 
 ### Transition
 
 $$F(\Delta t) = \begin{bmatrix} 1 & \Delta t \\ 0 & 1 \end{bmatrix}, \qquad \Delta t \ge 0$$
 
-`app/core/model.py` — `transition_matrix`. Negative intervals raise `CoreError`; sorting is
+`app/core/model.py` â€” `transition_matrix`. Negative intervals raise `CoreError`; sorting is
 ingestion's responsibility. $\Delta t = 0$ gives the identity, which is what makes two weigh-ins
-recorded at the same instant reduce to two consecutive updates — exactly, not approximately
+recorded at the same instant reduce to two consecutive updates â€” exactly, not approximately
 (test `F7`).
 
 ### Process noise
@@ -66,11 +66,11 @@ continuous white-noise-acceleration (integrated Wiener) model:
 
 $$Q(\Delta t) = \sigma_a^2 \begin{bmatrix} \Delta t^3/3 & \Delta t^2/2 \\ \Delta t^2/2 & \Delta t \end{bmatrix}$$
 
-`app/core/model.py` — `process_noise`.
+`app/core/model.py` â€” `process_noise`.
 
 **Why this form and not a diagonal random walk.** It is the integral of the continuous-time
 noise through the dynamics, $Q(\Delta t) = \int_0^{\Delta t} F(s)\,Q_c\,F(s)^\top\,ds$ with
-$Q_c = \operatorname{diag}(0, \sigma_a^2)$, and every covariance generated that way satisfies the
+$Q_c = \mathrm{diag}(0, \sigma_a^2)$, and every covariance generated that way satisfies the
 time-splitting identity
 
 $$F(b)\,Q(a)\,F(b)^\top + Q(b) = Q(a+b)$$
@@ -83,7 +83,7 @@ Expanding the $(1,1)$ entry: $a^3/3 + a^2b + ab^2 + b^3/3 = (a+b)^3/3$; the $(1,
 $a^2/2 + ab + b^2/2 = (a+b)^2/2$; the $(2,2)$ entry gives $a + b$. So a 30-day gap yields
 *identically* the same distribution as thirty 1-day steps. That identity is what makes irregular
 weigh-in times principled rather than approximated, and it is asserted numerically in test `M4`
-and again inside the filter in `F6`. A diagonal $\operatorname{diag}(\sigma_w^2\Delta t,
+and again inside the filter in `F6`. A diagonal $\mathrm{diag}(\sigma_w^2\Delta t,
 \sigma_v^2\Delta t)$ does **not** satisfy it, which is why it was rejected (ADR-0002).
 
 ---
@@ -94,26 +94,26 @@ $$t_0 = \text{first observation time}, \qquad
 \hat{\mathbf{x}}_0 = \begin{bmatrix} y_0 \\ 0 \end{bmatrix}, \qquad
 P_0 = \begin{bmatrix} R_0 & 0 \\ 0 & \sigma_{v0}^2 \end{bmatrix}$$
 
-`app/core/model.py` — `initial_state`. Called by `run_filter`, which then filters observations
+`app/core/model.py` â€” `initial_state`. Called by `run_filter`, which then filters observations
 $1 \ldots n-1$.
 
 The first observation is **consumed by initialisation**, not by an update. Two consequences:
 
 - No double counting. Under a flat prior on $w$, one Gaussian measurement gives exactly
-  $w \mid y_0 \sim \mathcal{N}(y_0, R_0)$ — so $P_{0,ww} = R_0$ is the exact posterior, not an
+  $w \mid y_0 \sim \mathcal{N}(y_0, R_0)$ â€” so $P_{0,ww} = R_0$ is the exact posterior, not an
   arbitrary starting variance (test `F1`).
 - A single measurement carries no velocity information, so the velocity prior stands untouched with
   mean zero. With one data point the model reports the weight and declines to invent a trend
   (ADR-0003). It is also structurally incapable of being biased by a user's goal: the core
   has no parameter through which a goal could reach it.
 
-$\sigma_{v0}$ is a genuine prior choice, not derivable — see §8 and ADR-0003.
+$\sigma_{v0}$ is a genuine prior choice, not derivable â€” see Â§8 and ADR-0003.
 
 ---
 
 ## 4. Filter recursion
 
-`app/core/kalman.py` — `predict`, `update`. `app/core/filter.py` — `run_filter`.
+`app/core/kalman.py` â€” `predict`, `update`. `app/core/filter.py` â€” `run_filter`.
 
 ### Predict
 
@@ -130,10 +130,10 @@ $$\nu_t = y_t - H\hat{\mathbf{x}}_{t|t-1}, \qquad
 S_t = H P_{t|t-1} H^\top + R_t, \qquad
 K_t = P_{t|t-1}H^\top S_t^{-1}$$
 
-$S_t$ is scalar, so the "inverse" is a true division — no matrix inversion anywhere in the core.
+$S_t$ is scalar, so the "inverse" is a true division â€” no matrix inversion anywhere in the core.
 `KalmanUpdate.innovation`, `.innovation_var`, `.gain`.
 
-### Update — Joseph form
+### Update â€” Joseph form
 
 $$\hat{\mathbf{x}}_{t|t} = \hat{\mathbf{x}}_{t|t-1} + K_t\nu_t, \qquad
 P_{t|t} = (I - K_tH)P_{t|t-1}(I - K_tH)^\top + K_tR_tK_t^\top$$
@@ -146,7 +146,7 @@ $\max|P - P^\top| < 10^{-12}$ throughout.
 
 ### Covariance hygiene
 
-$P \leftarrow (P + P^\top)/2$ after every predict and update — `symmetrize`. The algebra guarantees
+$P \leftarrow (P + P^\top)/2$ after every predict and update â€” `symmetrize`. The algebra guarantees
 symmetry; floating point does not, and asymmetry compounds. `validate_covariance` checks shape,
 finiteness, symmetry, positive variances and a non-negative determinant; it is called from the tests
 on every recorded step rather than on the hot path.
@@ -158,7 +158,7 @@ $z_t = \nu_t/\sqrt{S_t}$, $K_t$, and the log-likelihood contribution
 
 $$\ell_t = -\tfrac{1}{2}\left(\log 2\pi + \log S_t + z_t^2\right)$$
 
-`FilterResult.loglik` is $\sum_t \ell_t$ over observations $1 \ldots n-1$ — the conditional
+`FilterResult.loglik` is $\sum_t \ell_t$ over observations $1 \ldots n-1$ â€” the conditional
 likelihood given $y_0$, since the first observation initialises a diffuse prior and has no
 predictive density. Not a product output. It is recorded so that parameters can be fitted by maximum
 likelihood later without restructuring anything.
@@ -169,7 +169,7 @@ likelihood later without restructuring anything.
 
 $$\hat w_t \pm z_{0.975}\sqrt{P_{t,ww}}, \qquad z_{0.975} = 1.959963984540054$$
 
-`types.py` — `Z_95`, `StateEstimate.w_interval`, `.w_ci95`, `.w_sd`. This multiplier is usually
+`types.py` â€” `Z_95`, `StateEstimate.w_interval`, `.w_ci95`, `.w_sd`. This multiplier is usually
 written as $1.96$; `Z_95` is that value unrounded, referenced as a named constant so the choice
 is stated once rather than scattered as a literal.
 
@@ -177,7 +177,7 @@ is stated once rather than scattered as a literal.
 
 ## 6. Forecast propagation
 
-`app/core/forecast.py` — `propagate`, `forecast_at`, `forecast_path`. A forecast is a prediction with
+`app/core/forecast.py` â€” `propagate`, `forecast_at`, `forecast_path`. A forecast is a prediction with
 no measurement after it, so these reuse `kalman.predict` rather than reimplementing propagation.
 Everything is analytic; the model is linear and Gaussian, so no simulation is needed.
 
@@ -202,15 +202,15 @@ P_{ww}(h) = P_{ww} + 2\tau P_{wv} + \tau^2 P_{vv} + \tfrac{1}{3}\sigma_a^2\tau^3
 `_propagated_point` computes `total_days = lead_days + horizon_days` and passes that to `predict`;
 `_lead_days` computes $\lambda$ and rejects $t_{org} < t_T$.
 
-When the origin defaults to the last observation, $\lambda = 0$ and $\tau = h$. When it does not —
-the user last weighed in five days ago and wants "30 days from now" — those five days are real
+When the origin defaults to the last observation, $\lambda = 0$ and $\tau = h$. When it does not â€”
+the user last weighed in five days ago and wants "30 days from now" â€” those five days are real
 elapsed time during which the trend both moved and became less certain, so they must be propagated
 through. The reported `horizon_days` stays $h$, because that is what the label means to the user;
 only the propagation uses $\tau$.
 
 Verified by tests `P5`: the closed form is checked directly against $\tau$ for four
 $(\lambda, h)$ combinations, a non-zero lead is required to change both mean and variance, and the
-whole path is checked to be offset by $\lambda$. Checking the closed form directly matters — a test
+whole path is checked to be offset by $\lambda$. Checking the closed form directly matters â€” a test
 that only compared two code paths could pass while both were wrong.
 
 ### The band, and why it widens
@@ -222,15 +222,15 @@ $\text{width}(7) < \text{width}(30) < \text{width}(90)$).
 
 Intervals describe the **latent** weight, matching what the product means by "30-day estimated trend
 weight" (ADR-0005). `include_observation_noise=True` adds exactly $R$ to describe a future
-scale reading instead — a different question, and not what the product reports (test `P9`).
+scale reading instead â€” a different question, and not what the product reports (test `P9`).
 
-Because of the splitting identity in §2, propagating in daily steps and in one jump agree exactly, so
+Because of the splitting identity in Â§2, propagating in daily steps and in one jump agree exactly, so
 `forecast_path` can draw the band at any granularity and its final point equals `forecast_at`
 (tests `P4`). Horizon zero reproduces the state being forecast from, so the historical line and the
 forecast join without a visual discontinuity.
 
-The horizon is a parameter throughout. The API publishes three fixed values — 7, 30 and 90 days
-(`FORECAST_HORIZONS_DAYS` in `app/schemas/analysis.py`) — which are these same equations evaluated at
+The horizon is a parameter throughout. The API publishes three fixed values â€” 7, 30 and 90 days
+(`FORECAST_HORIZONS_DAYS` in `app/schemas/analysis.py`) â€” which are these same equations evaluated at
 three values of $h$, drawn from one daily path so every published horizon lands on the grid exactly.
 Adding or moving a horizon needs no additional mathematics.
 
@@ -245,13 +245,13 @@ synthetic observations, true trend $-0.35$ kg/week from 80.0 kg, measurement noi
 | --- | --- |
 | true latent weight at day 59 | 77.05 kg |
 | estimated latent weight | 77.139 kg |
-| estimated weekly rate | −0.326 kg/week (true −0.35) |
+| estimated weekly rate | âˆ’0.326 kg/week (true âˆ’0.35) |
 | 30-day forecast | 75.74 kg |
-| 30-day 95% interval | 73.36 – 78.13 kg |
-| log-likelihood | −46.43 |
+| 30-day 95% interval | 73.36 â€“ 78.13 kg |
+| log-likelihood | âˆ’46.43 |
 
-The forecast interval spans ±2.4 kg. That width is dominated by velocity uncertainty carried over 30
-days, and it is the honest answer from 60 noisy readings — not a defect to tune away.
+The forecast interval spans Â±2.4 kg. That width is dominated by velocity uncertainty carried over 30
+days, and it is the honest answer from 60 noisy readings â€” not a defect to tune away.
 
 ---
 
@@ -267,10 +267,10 @@ data.
    biggest single influence on user-visible behaviour. `FilterResult.loglik` exists so they can be
    fitted by MLE later.
 
-   Priors are stated in product units and converted, because $\sigma_a$ in kg·day<sup>−3/2</sup> is
-   not humanly checkable. From $\operatorname{sd}(\Delta v) = \sigma_a\sqrt{\Delta t}$ over
+   Priors are stated in product units and converted, because $\sigma_a$ in kgÂ·day<sup>âˆ’3/2</sup> is
+   not humanly checkable. From $\mathrm{sd}(\Delta v) = \sigma_a\sqrt{\Delta t}$ over
    $\Delta t = 7$ days, expressed weekly: $d = 7\sigma_a\sqrt 7$, hence
-   $\sigma_a = d/(7\sqrt 7)$ — `sigma_accel_from_weekly_rate_drift` (test `U3`).
+   $\sigma_a = d/(7\sqrt 7)$ â€” `sigma_accel_from_weekly_rate_drift` (test `U3`).
 
 2. **Intervals are exact only for fixed parameters.** Once the $\sigma$ values are fitted from the
    same data, the 95% intervals understate uncertainty because they ignore parameter uncertainty.
@@ -280,12 +280,12 @@ data.
    displaces the estimate by exactly $K_w\delta$. Measured on the F10 scenario: $K_w = 0.165$, so a
    single mistyped $+10$ kg reading moves the latent estimate by **1.65 kg** and the reported weekly
    rate by **1.04 kg/week**. Two weeks later the rate is still 0.22 kg/week off a true
-   −0.38 kg/week — a trend reported 57% too steep. The transient is a damped *oscillation*, so it
+   âˆ’0.38 kg/week â€” a trend reported 57% too steep. The transient is a damped *oscillation*, so it
    does not decay monotonically. Tests `F10` record all of this as characterisation. A later
    robust-observation milestone addresses it; until then, do not describe this system as robust.
 
 4. **The model has no mean reversion, so it is only locally valid.** Latent weight is an integrated
-   random walk: its spread grows like $\sigma_a\sqrt{t^3/3}$ — about 1.6 kg over 50 days, about
+   random walk: its spread grows like $\sigma_a\sqrt{t^3/3}$ â€” about 1.6 kg over 50 days, about
    400 kg over 2000. Simulating from the model for 2000 days produces weights no body could have.
    This is a true property of a local-linear-trend model, not a simulator bug, and it is why the
    product forecasts 30 days rather than 3 years. Test `F11` records it, and calibration is measured
@@ -332,3 +332,4 @@ data.
 | $\bar w(h), P_{ww}(h)$ | `app/core/forecast.py` | `propagate`, `forecast_at` |
 | forecast band | `app/core/forecast.py` | `forecast_path` |
 | whole pipeline | `app/core/analyse.py` | `run_analysis` |
+
