@@ -48,25 +48,30 @@ export default async function DemoScenarioPage({ params }: DemoScenarioPageProps
         </Link>
       </header>
 
-      <section aria-label="Current estimate" className={styles.stats}>
-        <Headline current={analysis.current} />
-        <RateReadout current={analysis.current} />
-      </section>
+      {/* Grouped (rather than three siblings loose under `.page`'s own gap) so the estimate,
+          the chart and the forecast read as one composed result, not three unrelated blocks
+          -- the same grouping `AnalysisWorkspace` already gives its own result via `.result`. */}
+      <div className={styles.result}>
+        <section aria-label="Current estimate" className={styles.stats}>
+          <Headline current={analysis.current} />
+          <RateReadout current={analysis.current} />
+        </section>
 
-      <TrendChart
-        series={series}
-        summary={{
-          currentWeightKg: analysis.current.w_kg,
-          forecastHorizonDays: HEADLINE_FORECAST_HORIZON_DAYS,
-          forecastWeightKg: headlineForecast.w_kg,
-          forecastLowerKg: headlineForecast.w_lower95,
-          forecastUpperKg: headlineForecast.w_upper95,
-        }}
-      />
+        <TrendChart
+          series={series}
+          summary={{
+            currentWeightKg: analysis.current.w_kg,
+            forecastHorizonDays: HEADLINE_FORECAST_HORIZON_DAYS,
+            forecastWeightKg: headlineForecast.w_kg,
+            forecastLowerKg: headlineForecast.w_lower95,
+            forecastUpperKg: headlineForecast.w_upper95,
+          }}
+        />
 
-      <section aria-label="Forecast">
-        <ForecastCallout forecast={analysis.forecast} />
-      </section>
+        <section aria-label="Forecast">
+          <ForecastCallout forecast={analysis.forecast} />
+        </section>
+      </div>
     </main>
   );
 }

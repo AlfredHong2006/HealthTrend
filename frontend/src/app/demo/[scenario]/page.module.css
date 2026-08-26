@@ -33,8 +33,35 @@
   color: var(--ht-accent);
 }
 
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ht-space-8);
+}
+
 .stats {
   display: flex;
   flex-wrap: wrap;
   gap: var(--ht-space-8);
+}
+
+/* Tighter vertical rhythm and side padding below phone widths: the same gaps and padding
+   that read as generous breathing room on a 760px-wide desktop card just become distance
+   between the estimate, the chart and the forecast on a 320-430px phone. Nothing here
+   changes at 480px and up, so tablet/desktop is exactly as before. */
+@media (max-width: 479px) {
+  .page {
+    gap: var(--ht-space-6);
+    padding-left: var(--ht-space-3);
+    padding-right: var(--ht-space-3);
+    padding-bottom: var(--ht-space-8);
+  }
+
+  .result {
+    gap: var(--ht-space-4);
+  }
+
+  .stats {
+    gap: var(--ht-space-4);
+  }
 }

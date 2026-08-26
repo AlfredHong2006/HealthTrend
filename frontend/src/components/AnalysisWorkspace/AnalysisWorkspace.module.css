@@ -44,3 +44,20 @@
   color: var(--ht-text-muted);
   font-size: var(--ht-size-body);
 }
+
+/* Mirrors the same phone-width tightening in demo/[scenario]/page.module.css: the estimate,
+   chart and forecast should read as one composed result rather than three blocks separated by
+   desktop-card-sized gaps. Nothing changes at 480px and up. */
+@media (max-width: 479px) {
+  .workspace {
+    gap: var(--ht-space-6);
+  }
+
+  .result {
+    gap: var(--ht-space-4);
+  }
+
+  .stats {
+    gap: var(--ht-space-4);
+  }
+}

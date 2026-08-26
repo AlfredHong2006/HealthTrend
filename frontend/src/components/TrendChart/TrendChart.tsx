@@ -11,6 +11,7 @@ import { AreaClosed, Circle, Line, LinePath } from "@visx/shape";
 import { TooltipWithBounds, useTooltip } from "@visx/tooltip";
 import { buildHoverPoints, nearestHoverPoint, type HoverPoint } from "@/lib/chart/hover";
 import { formatFullDate, formatShortDate, formatWeightKg, formatWeightRangeKg } from "@/lib/chart/format";
+import { chartHeightFor, marginFor, MOBILE_BREAKPOINT } from "@/lib/chart/layout";
 import type { ChartSeries } from "@/lib/chart/series";
 import styles from "./TrendChart.module.css";
 
@@ -26,9 +27,6 @@ interface TrendChartProps {
   series: ChartSeries;
   summary: ChartSummary;
 }
-
-const MARGIN = { top: 16, right: 16, bottom: 32, left: 48 };
-const MIN_ASPECT_HEIGHT = 260;
 
 /**
  * The graph: past observations, the filtered latent trend, and the widening forecast band,
@@ -51,7 +49,7 @@ export function TrendChart({ series, summary }: TrendChartProps) {
         <ParentSize initialSize={{ width: 800, height: 336 }}>
           {({ width }) =>
             width > 0 ? (
-              <Chart width={width} height={Math.max(MIN_ASPECT_HEIGHT, width * 0.42)} series={series} ariaLabel={ariaLabel} />
+              <Chart width={width} height={chartHeightFor(width)} series={series} ariaLabel={ariaLabel} />
             ) : null
           }
         </ParentSize>
@@ -77,6 +75,7 @@ interface ChartProps {
 }
 
 function Chart({ width, height, series, ariaLabel }: ChartProps) {
+  const MARGIN = marginFor(width);
   const innerWidth = Math.max(0, width - MARGIN.left - MARGIN.right);
   const innerHeight = Math.max(0, height - MARGIN.top - MARGIN.bottom);
 
@@ -115,13 +114,35 @@ function Chart({ width, height, series, ariaLabel }: ChartProps) {
     });
   }
 
+  // A touch pointer has no hover state, so per the Pointer Events spec it fires
+  // `pointerleave` immediately after `pointerup` -- with an unconditional `hideTooltip` that
+  // erases the tap-to-inspect result the instant a finger lifts, before anyone can read it.
+  // Mouse/pen pointers keep the original hide-on-leave behaviour unchanged.
+  function handlePointerLeave(event: React.PointerEvent<SVGRectElement>) {
+    if (event.pointerType === "touch") return;
+    hideTooltip();
+  }
+
   if (innerWidth <= 0 || innerHeight <= 0) {
     return null;
   }
 
   return (
     <div className={styles.svgWrapper}>
-      <svg width={width} height={height} role="img" aria-label={ariaLabel}>
+      {/* viewBox (plus the 100%-sized CSS box in TrendChart.module.css) makes the SVG scale
+          to whatever box it actually lands in instead of rendering at a literal `width` pixel
+          size: on the server-rendered demo page, that box is briefly `initialSize` (800x336,
+          see ParentSize above) even on a narrow phone, before hydration measures the real
+          width. Without a viewBox that mismatch clips the chart to a cropped-looking sliver;
+          with it, the browser scales the same drawing down to fit -- exactly what happens on
+          every resize once the real ResizeObserver value replaces the guess. */}
+      <svg
+        width={width}
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label={ariaLabel}
+      >
         <Group left={MARGIN.left} top={MARGIN.top}>
           <GridRows
             scale={yScale}
@@ -207,7 +228,7 @@ function Chart({ width, height, series, ariaLabel }: ChartProps) {
             stroke="var(--ht-border)"
             tickStroke="var(--ht-border)"
             tickLabelProps={{ fill: "var(--ht-text-muted)", fontSize: 11 }}
-            numTicks={width < 480 ? 4 : 7}
+            numTicks={width < MOBILE_BREAKPOINT ? 4 : 7}
           />
           <AxisLeft
             scale={yScale}
@@ -221,8 +242,15 @@ function Chart({ width, height, series, ariaLabel }: ChartProps) {
             width={innerWidth}
             height={innerHeight}
             fill="transparent"
+            // `onPointerDown` matters on touch: a tap generates pointerdown but never
+            // pointermove, so without it the tooltip is simply unreachable by touch. Pairing
+            // it with `touchAction: "none"` stops the browser from claiming a touch-drag here
+            // for page scrolling, so dragging a finger across the chart scrubs the tooltip
+            // the same way moving a mouse does, instead of scrolling the page underneath it.
+            style={{ touchAction: "none" }}
+            onPointerDown={handlePointerMove}
             onPointerMove={handlePointerMove}
-            onPointerLeave={hideTooltip}
+            onPointerLeave={handlePointerLeave}
             aria-hidden="true"
           />
         </Group>
@@ -254,26 +282,34 @@ interface VisuallyHiddenSummaryProps {
  */
 function VisuallyHiddenSummary({ series, summary }: VisuallyHiddenSummaryProps) {
   const lastObservation = series.observations.at(-1);
+  // `.visuallyHidden` sets width/height:1px, which a <table> in the default auto layout
+  // treats as a minimum rather than a cap -- it still renders at its full content width
+  // (~450px here). Applied straight to the table that box is absolutely positioned yet wider
+  // than the mobile chart figure, so it pokes out and forces real horizontal page overflow.
+  // A wrapping div (which does respect width:1px) collapses the box; the table inside keeps
+  // its normal row/column structure for assistive tech.
   return (
-    <table className="visuallyHidden">
-      <caption>Weight trend data behind the chart above</caption>
-      <tbody>
-        <tr>
-          <th scope="row">Latest observation</th>
-          <td>{lastObservation ? formatWeightKg(lastObservation.weightKg) : "none"}</td>
-        </tr>
-        <tr>
-          <th scope="row">Estimated underlying weight</th>
-          <td>{formatWeightKg(summary.currentWeightKg)}</td>
-        </tr>
-        <tr>
-          <th scope="row">{summary.forecastHorizonDays}-day forecast</th>
-          <td>
-            {formatWeightKg(summary.forecastWeightKg)}, likely range{" "}
-            {formatWeightRangeKg(summary.forecastLowerKg, summary.forecastUpperKg)}
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div className="visuallyHidden">
+      <table>
+        <caption>Weight trend data behind the chart above</caption>
+        <tbody>
+          <tr>
+            <th scope="row">Latest observation</th>
+            <td>{lastObservation ? formatWeightKg(lastObservation.weightKg) : "none"}</td>
+          </tr>
+          <tr>
+            <th scope="row">Estimated underlying weight</th>
+            <td>{formatWeightKg(summary.currentWeightKg)}</td>
+          </tr>
+          <tr>
+            <th scope="row">{summary.forecastHorizonDays}-day forecast</th>
+            <td>
+              {formatWeightKg(summary.forecastWeightKg)}, likely range{" "}
+              {formatWeightRangeKg(summary.forecastLowerKg, summary.forecastUpperKg)}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   );
 }

@@ -8,6 +8,15 @@
   min-height: 260px;
 }
 
+/* Mirrors MOBILE_BREAKPOINT/MOBILE_MIN_HEIGHT in TrendChart.tsx: below 480px the chart itself
+   computes a shorter height (chartHeightFor), so this box must shrink to match, or the CSS
+   box and the SVG it contains would disagree and either clip or leave a gap. */
+@media (max-width: 479px) {
+  .canvas {
+    min-height: 210px;
+  }
+}
+
 .svgWrapper {
   position: relative;
   width: 100%;
@@ -16,6 +25,8 @@
 
 .svgWrapper svg {
   display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .tooltip {

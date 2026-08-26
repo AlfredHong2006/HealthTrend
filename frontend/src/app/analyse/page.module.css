@@ -38,3 +38,14 @@
 .demoLink:focus-visible {
   color: var(--ht-accent);
 }
+
+/* Mirrors demo/[scenario]/page.module.css: more width for content, less trailing empty
+   space, below phone widths. Nothing changes at 480px and up. */
+@media (max-width: 479px) {
+  .page {
+    gap: var(--ht-space-6);
+    padding-left: var(--ht-space-3);
+    padding-right: var(--ht-space-3);
+    padding-bottom: var(--ht-space-8);
+  }
+}
