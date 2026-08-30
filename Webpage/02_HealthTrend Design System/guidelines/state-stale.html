@@ -1,0 +1,46 @@
+<!-- @dsCard group="States" viewport="700x270" name="Stale estimate" subtitle="Hatch the region past the last reading; rule the boundary. The estimate ages, it does not move." -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../lib/format.js"></script>
+<script src="../_ds_bundle.js"></script></head>
+<body style="margin:0"><div id="root" style="padding:22px 24px"></div>
+<script type="text/babel">
+function htSeries(len, start, wk, sd, seed, staleAfter) {
+  let s = seed || 7; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const trend = [], raw = [];
+  // Half-width has TWO terms: the warm-up narrows it as readings accumulate, and
+  // days without a reading fan it back out. The trend line's slope is untouched
+  // by the second term — gaps widen the band, they do not move the line.
+  const warmUp = i => sd * (1 + 6 / (i + 6));
+  for (let i = 0; i < len; i++) {
+    const y = start + (wk / 7) * i;
+    const gap = staleAfter != null && i > staleAfter ? i - staleAfter : 0;
+    const hw = warmUp(gap ? staleAfter : i) * (1 + gap * 0.055);
+    trend.push({ y, lo68: y - hw, hi68: y + hw, lo95: y - hw * 1.96, hi95: y + hw * 1.96, label: 'day ' + (i + 1) });
+    if (i % 2 === 0 && !gap) raw.push({ i, y: y + (rnd() - 0.5) * 1.9 });
+  }
+  return { trend, raw };
+}
+const { TrajectoryChart, Badge, ConfidenceNote, HeroMetric } = window.HealthTrendDesignSystem_5b333a;
+const F = window.HTFormat;
+// One source for the gap: the drawn hatch, the badge and the sentence all derive
+// from STALE_DAYS, so the label cannot disagree with the geometry.
+const DAYS = 70, STALE_DAYS = 6, STALE_AFTER = DAYS - 1 - STALE_DAYS;
+function Demo() {
+  const s = htSeries(DAYS, 79.8, -0.22, 0.24, 9, STALE_AFTER);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-6)' }}>
+        <Badge tone="stale">{STALE_DAYS + ' days stale'}</Badge>
+        <span className="ht-qualifier" style={{ color: 'var(--data-stale)' }}>{F.staleness(STALE_DAYS)}</span>
+      </div>
+      <TrajectoryChart trend={s.trend} raw={s.raw} height={150} unit="kg" staleAfterIndex={STALE_AFTER}
+        showProjection={false} xTicks={[{ i: 0, label: 'Jun' }, { i: 35, label: 'Jul' }, { i: 66, label: 'Aug' }]} />
+      <ConfidenceNote level="stale" />
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script></body></html>

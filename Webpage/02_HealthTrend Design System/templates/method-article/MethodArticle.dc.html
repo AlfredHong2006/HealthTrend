@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Method article" description="Long-form Method page: serif prose at 34em, mono notation, margin notes, figure wells with the trajectory chart, numbered references." -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="background:#fff;min-height:100vh">
+<header style="border-bottom:1px solid var(--rule-1);position:sticky;top:0;background:#fff;z-index:30">
+<div style="max-width:1400px;margin:0 auto;padding:0 64px;height:56px;display:flex;align-items:center;gap:18px">
+<span style="font:400 19px var(--font-prose);letter-spacing:-0.02em;color:var(--ink-1)">HealthTrend</span>
+<span class="ht-qualifier" style="color:var(--ink-5)">/</span>
+<span class="ht-qualifier">Method</span>
+<span class="ht-qualifier" style="margin-left:auto">{{ revision }}</span>
+</div>
+</header>
+<div style="max-width:1000px;margin:0 auto;padding:0 64px 128px">
+<div style="display:flex;flex-direction:column;gap:32px;padding-top:128px">
+<h1 class="ht-display" style="max-width:22em">Estimating a weight trajectory from noisy daily measurements</h1>
+<div style="display:flex;gap:48px;flex-wrap:wrap;padding-top:16px;border-top:1px solid var(--rule-2)">
+<div style="display:flex;flex-direction:column;gap:4px"><span class="ht-eyebrow">Model</span><span class="ht-qualifier" style="color:var(--text-body)">Local linear trend</span></div>
+<div style="display:flex;flex-direction:column;gap:4px"><span class="ht-eyebrow">Estimator</span><span class="ht-qualifier" style="color:var(--text-body)">Kalman filter, fixed documented parameters</span></div>
+<div style="display:flex;flex-direction:column;gap:4px"><span class="ht-eyebrow">Revision</span><span class="ht-qualifier" style="color:var(--text-body)">{{ revision }}</span></div>
+<div style="display:flex;flex-direction:column;gap:4px"><span class="ht-eyebrow">Reading time</span><span class="ht-qualifier" style="color:var(--text-body)">{{ readingTime }}</span></div>
+</div>
+</div>
+<div class="ht-lede" style="max-width:34em;margin-top:64px">
+<p>A bathroom scale is an honest instrument answering a question you did not ask. It reports the mass of a body at one moment, including its water, its last meal and the hour of the morning. What you want to know is the slow quantity underneath: where the trajectory sits today, and how fast it is moving.</p>
+</div>
+<div style="margin-top:64px;padding-top:24px;border-top:1px solid var(--rule-2);display:flex;flex-direction:column;gap:12px;max-width:44em">
+<span class="ht-eyebrow">Section 1</span>
+<h2 class="ht-title">The measurement is not the state</h2>
+</div>
+<div class="ht-body" style="max-width:34em;margin-top:24px">
+<p>Write the thing you care about as a hidden state and the number on the scale as a noisy view of it. On day <em>t</em> the state has a level and a velocity; the reading adds independent measurement error on top.</p>
+</div>
+<x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.Equation" number="1" hint-size="100%,60px">x&#8348; = x&#8348;&#8331;&#8321; + v&#8348;&#8331;&#8321; + &eta;&#8348;,   v&#8348; = v&#8348;&#8331;&#8321; + &zeta;&#8348;,   y&#8348; = x&#8348; + &epsilon;&#8348;</x-import>
+<div class="ht-body" style="max-width:34em">
+<x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.MarginNote" marker="1" hint-size="220px,80px">Hydration, glycogen and gut contents dominate day-to-day variance, which is why a single morning can move by more than a fortnight of real change.</x-import>
+<p>Here <em>x</em> is trend weight, <em>v</em> its daily velocity, and the three noise terms carry three different admissions of ignorance: how fast the level may wander, how fast the velocity may change, and how badly a single reading may mislead.</p>
+<p>A seven-day mean is a special case of this with the velocity term deleted and the noise assumed constant. That is why it lags: it estimates the average of a window, and the average of a falling window is a value from the middle of it.</p>
+</div>
+<figure style="margin:64px 0;max-width:1000px">
+<div style="background:var(--surface-well);padding:24px">
+<x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.TrajectoryChart" trend="{{ trend }}" raw="{{ raw }}" projection="{{ projection }}" unit="kg" height="{{ figureHeight }}" xTicks="{{ xTicks }}" showBands="{{ showBands }}" hint-size="100%,300px"></x-import>
+<div style="margin-top:14px">
+<x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.ChartLegend" items="{{ legend }}" hint-size="100%,20px"></x-import>
+</div>
+</div>
+<x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.FigureCaption" label="Figure 1" source="Fixture series &mdash; invented data, shown for layout only" hint-size="24em,60px">The posterior mean with its 68% and 95% bands, the readings it saw, and a projection whose band widens because velocity itself is uncertain.</x-import>
+</figure>
+<div style="padding-top:24px;border-top:1px solid var(--rule-2);display:flex;flex-direction:column;gap:12px;max-width:44em">
+<span class="ht-eyebrow">Section 2</span>
+<h2 class="ht-title">What the filter actually computes</h2>
+</div>
+<div class="ht-body" style="max-width:34em;margin-top:24px">
+<p>Each morning the model carries a belief forward one day, widening it by the process noise; then it sees a reading and narrows it in proportion to how trustworthy that reading is relative to the belief.</p>
+</div>
+<x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.Equation" number="2" hint-size="100%,60px">K&#8348; = P&#8348;&#8331; / (P&#8348;&#8331; + &sigma;&sup2;&#8342;),   x&#770;&#8348; = x&#770;&#8348;&#8331; + K&#8348;(y&#8348; &minus; x&#770;&#8348;&#8331;)</x-import>
+<div class="ht-body" style="max-width:34em">
+<x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.MarginNote" marker="2" hint-size="220px,80px">When a day is skipped, only the first step runs: the band widens and the line continues on its last velocity.</x-import>
+<p>The gain <em>K</em> is the whole argument in one line. When readings are consistent, <em>K</em> is large and the estimate tracks them closely. When they scatter, <em>K</em> falls and a single two-kilogram morning barely registers.</p>
+<p>The shaded bands are this belief&rsquo;s posterior standard deviation, at 68% and 95%. They are credible intervals for the state &mdash; not the range in which tomorrow&rsquo;s reading will fall, which is wider.</p>
+</div>
+<div style="margin-top:64px;padding-top:24px;border-top:1px solid var(--rule-2)">
+<span class="ht-eyebrow">References</span>
+<div style="margin-top:16px;max-width:680px">
+<x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.Citation" marker="1" hint-size="100%,44px">Harvey, A. C. Forecasting, Structural Time Series Models and the Kalman Filter. Cambridge University Press, 1989.</x-import>
+<x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.Citation" marker="2" hint-size="100%,44px">Durbin, J. &amp; Koopman, S. J. Time Series Analysis by State Space Methods. 2nd ed., Oxford University Press, 2012.</x-import>
+</div>
+</div>
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1100,&quot;height&quot;:900},&quot;revision&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Revision 2.4 · 12 Aug 2026&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Header&quot;},&quot;readingTime&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;≈ 14 min&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Header&quot;},&quot;showBands&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Figure&quot;},&quot;figureHeight&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:200,&quot;max&quot;:420,&quot;step&quot;:20,&quot;default&quot;:300,&quot;unit&quot;:&quot;px&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Figure&quot;},&quot;days&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:30,&quot;max&quot;:240,&quot;step&quot;:30,&quot;default&quot;:120,&quot;unit&quot;:&quot;days&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Fixture series&quot;},&quot;startWeight&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:79.8,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Fixture series&quot;},&quot;weeklyRate&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:-0.27,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Fixture series&quot;}}">
+class Component extends DCLogic {
+  // FIXTURE DATA — deterministic, invented, for layout only. Never ship as product copy.
+  renderVals() {
+    const days = this.props.days ?? 120;
+    const start = this.props.startWeight ?? 79.8;
+    const perDay = (this.props.weeklyRate ?? -0.27) / 7;
+    let seed = 20260830;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const trend = [], raw = [];
+    for (let i = 0; i < days; i++) {
+      const y = start + perDay * i + Math.sin(i / 40) * 0.12;
+      const s = 0.13 + 0.42 * Math.exp(-i / 26);
+      const d = new Date(2026, 7, 30 - (days - 1 - i));
+      const measured = i % 7 === 3 && i > 30 ? null : y + (rnd() - 0.5) * 2.0;
+      trend.push({
+        y, lo68: y - s, hi68: y + s, lo95: y - s * 1.96, hi95: y + s * 1.96,
+        label: d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }),
+        rawY: measured == null ? undefined : measured,
+      });
+      if (measured != null) raw.push({ i, y: measured });
+    }
+    const projection = [];
+    let p = trend[trend.length - 1].y, sp = 0.2;
+    for (let j = 0; j < 30; j++) { p += perDay; sp += 0.035; projection.push({ y: p, lo: p - sp, hi: p + sp }); }
+    const xTicks = [];
+    for (let i = 0; i < days; i += 30) xTicks.push({ i, label: trend[i].label.split(' ').slice(-1)[0] });
+    return {
+      trend, raw, projection, xTicks,
+      showBands: this.props.showBands !== false,
+      figureHeight: this.props.figureHeight ?? 300,
+      revision: this.props.revision ?? 'Revision 2.4 \u00b7 12 Aug 2026',
+      readingTime: this.props.readingTime ?? '\u2248 14 min',
+      legend: [
+        { role: 'trend', label: 'Posterior mean' },
+        { role: 'band', label: '68% / 95% credible interval' },
+        { role: 'raw', label: 'Measurements' },
+        { role: 'projection', label: 'Projection' },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

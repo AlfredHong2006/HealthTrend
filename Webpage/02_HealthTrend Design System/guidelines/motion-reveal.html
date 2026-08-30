@@ -1,0 +1,21 @@
+<!-- @dsCard group="Motion" viewport="700x190" name="Reveal primitives" subtitle="Easing, duration, offset, stagger, threshold — the parts a sequence is built from." -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css"></head><body style="margin:0;background:var(--surface-page)"><div style="padding:22px 24px"><div style="display:grid;grid-template-columns:1.1fr 1fr;gap:var(--space-9)">
+<div style="display:flex;flex-direction:column;gap:var(--space-5)">
+<div style="display:grid;grid-template-columns:auto 1fr;gap:6px var(--space-6);align-items:baseline">
+<span class="ht-qualifier" style="font-family:var(--font-notation);font-size:10.5px">--dur-reveal</span><span class="ht-qualifier">480ms &middot; 620ms at section scale</span>
+<span class="ht-qualifier" style="font-family:var(--font-notation);font-size:10.5px">--ease-reveal</span><span class="ht-qualifier">cubic-bezier(.17,.62,.24,1) &mdash; no overshoot</span>
+<span class="ht-qualifier" style="font-family:var(--font-notation);font-size:10.5px">--reveal-offset-y</span><span class="ht-qualifier">14px &middot; 24px at section scale</span>
+<span class="ht-qualifier" style="font-family:var(--font-notation);font-size:10.5px">--stagger-1 / -2</span><span class="ht-qualifier">40ms siblings &middot; 70ms sections</span>
+<span class="ht-qualifier" style="font-family:var(--font-notation);font-size:10.5px">--stagger-cap</span><span class="ht-qualifier">6 &mdash; later items share the 6th delay</span>
+<span class="ht-qualifier" style="font-family:var(--font-notation);font-size:10.5px">--reveal-threshold</span><span class="ht-qualifier">0.28 of the element in view</span>
+</div></div>
+<div style="display:flex;flex-direction:column;gap:var(--space-6)">
+<div style="display:flex;flex-direction:column;gap:var(--space-4)">
+<span class="ht-eyebrow">FROM &rarr; TO</span>
+<div style="display:flex;align-items:center;gap:var(--space-6)">
+<span class="ht-body-sm" style="opacity:.28;transform:translateY(14px)">estimate</span>
+<span class="ht-qualifier" style="font-family:var(--font-notation);font-size:10.5px;color:var(--ink-5)">&rarr;</span>
+<span class="ht-body-sm">estimate</span></div></div>
+<div class="ht-qualifier" style="border-top:var(--line-hair);padding-top:var(--space-5);max-width:var(--measure-qualifier)">
+Fires once. Never gates information, never drives scroll. Under reduced motion the element renders in its final state with no transition.</div>
+</div></div></div></body></html>

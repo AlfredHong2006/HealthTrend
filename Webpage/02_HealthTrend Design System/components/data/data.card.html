@@ -1,0 +1,57 @@
+<!-- @dsCard group="Components" viewport="700x400" name="Trajectory chart &amp; data" subtitle="The hero chart with bands and projection, sparkline, legend, range strip, table." -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script></head>
+<body style="margin:0"><div id="root" style="padding:22px 24px"></div>
+<script type="text/babel">
+const { TrajectoryChart, Sparkline, ChartLegend, RangeStrip, MeasurementTable } = window.HealthTrendDesignSystem_5b333a;
+function series(n) {
+  const trend = [], raw = [];
+  let v = 84.6;
+  for (let i = 0; i < n; i++) {
+    v -= 0.055 + Math.sin(i / 14) * 0.02;
+    const s = 0.16 + 0.5 * Math.exp(-i / 22);
+    trend.push({ y: v, lo68: v - s, hi68: v + s, lo95: v - s * 1.96, hi95: v + s * 1.96,
+      label: 'day ' + (i + 1), rawY: i % 3 ? undefined : v + Math.sin(i * 2.7) * 0.8 });
+    if (i % 1 === 0) raw.push({ i, y: v + Math.sin(i * 2.3) * 0.75 + Math.cos(i * 1.1) * 0.35 });
+  }
+  const proj = [];
+  let p = v;
+  for (let j = 0; j < 24; j++) { p -= 0.055; proj.push({ y: p, lo: p - 0.25 - j * 0.045, hi: p + 0.25 + j * 0.045 }); }
+  return { trend, raw, proj };
+}
+function Demo() {
+  const { trend, raw, proj } = React.useMemo(() => series(90), []);
+  const [win, setWin] = React.useState([0.55, 1]);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <TrajectoryChart trend={trend} raw={raw} projection={proj} height={230} unit="kg"
+        xTicks={[{ i: 0, label: 'Jun' }, { i: 30, label: 'Jul' }, { i: 61, label: 'Aug' }, { i: 100, label: 'Sep' }]} />
+      <ChartLegend items={[
+        { role: 'trend', label: 'Estimated trajectory' },
+        { role: 'band', label: '68% / 95% interval' },
+        { role: 'raw', label: 'Scale measurements' },
+        { role: 'projection', label: 'Projection, 24 days' },
+      ]} />
+      <RangeStrip series={trend.map(p => p.y)} from={win[0]} to={win[1]} onChange={setWin} height={44} ticks={['2025','2026','now']} />
+      <div style={{ display: 'flex', gap: 40, alignItems: 'flex-start', paddingTop: 8 }}>
+        <div style={{ flex: '0 0 300px' }}>
+          <MeasurementTable dense rows={[
+            { date: 'Mon 24 Aug', reading: '82.1', trend: '81.42', residual: '+0.68' },
+            { date: 'Sun 23 Aug', reading: '81.6', trend: '81.47', residual: '+0.13' },
+            { date: 'Sat 22 Aug', reading: null, trend: '81.53', residual: null },
+            { date: 'Fri 21 Aug', reading: '83.0', trend: '81.58', residual: '+1.42' },
+          ]} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span className="ht-eyebrow">Last 30 days</span>
+          <Sparkline trend={trend.slice(-30)} width={180} height={44} />
+        </div>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<Demo />);
+</script></body></html>
