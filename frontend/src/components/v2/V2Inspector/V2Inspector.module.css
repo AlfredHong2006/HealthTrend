@@ -1,0 +1,392 @@
+/* The inspection surface: hairlines and typography, never a card. In its default state this
+   is two lines of text -- the rail's job at rest is to offer depth, not to display it. */
+.inspector {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding-top: var(--v2-space-4);
+  border-top: 1px solid var(--v2-rule);
+}
+
+/* The way into the detail stack. It is the one control on this surface that has to announce
+   itself, so it is a row rather than a line of prose: a title, the tiers behind it, and a
+   chevron, with the whole row reacting to hover, press and focus. */
+.enter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--v2-space-4);
+  width: 100%;
+  min-height: 48px;
+  padding: var(--v2-space-3) 0;
+  font: inherit;
+  color: var(--v2-ink);
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--v2-rule);
+  cursor: pointer;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.enterText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.enterTitle {
+  font-size: var(--v2-size-body);
+  font-weight: 600;
+  transition: color 140ms ease;
+}
+
+/* Naming the three tiers is most of the discoverability: it says this is a way into something
+   with contents, not a link to one more paragraph. */
+.enterTiers {
+  font-size: var(--v2-size-small);
+  color: var(--v2-ink-muted);
+}
+
+.enter:hover,
+.enter:active {
+  background: var(--v2-raised);
+  border-bottom-color: var(--v2-rule-strong);
+}
+
+.enter:hover .enterTitle,
+.enter:focus-visible .enterTitle {
+  color: var(--v2-trend);
+}
+
+/* Drawn rather than typed, so it can nudge on hover and match the hairline weight around it. */
+.chevron {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-right: 2px;
+  border-right: 1.5px solid var(--v2-ink-faint);
+  border-bottom: 1.5px solid var(--v2-ink-faint);
+  transform: rotate(-45deg);
+  transition: transform 160ms ease, border-color 160ms ease;
+}
+
+.enter:hover .chevron,
+.enter:focus-visible .chevron {
+  border-color: var(--v2-trend);
+  transform: translateX(3px) rotate(-45deg);
+}
+
+.methodLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--v2-space-4);
+  min-height: 44px;
+  padding: var(--v2-space-3) 0;
+  font-size: var(--v2-size-small);
+  color: var(--v2-ink-muted);
+  border-bottom: 1px solid var(--v2-rule);
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.methodLink:hover,
+.methodLink:focus-visible {
+  color: var(--v2-trend);
+  background: var(--v2-raised);
+}
+
+/* Stated here rather than inherited from V1's global rule, so the V2 route keeps its own
+   focus colour along with its own tokens. */
+.enter:focus-visible,
+.methodLink:focus-visible {
+  outline: 2px solid var(--v2-focus);
+  outline-offset: 2px;
+  border-radius: var(--v2-radius);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: border-color 160ms ease;
+  }
+
+  .enter:hover .chevron,
+  .enter:focus-visible .chevron {
+    transform: rotate(-45deg);
+  }
+}
+
+/* ---- Detail ---- */
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-3);
+  animation: pushIn 200ms ease both;
+}
+
+@keyframes pushIn {
+  from {
+    opacity: 0;
+    transform: translateX(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detail {
+    animation: none;
+  }
+}
+
+.back {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--v2-space-2);
+  align-self: flex-start;
+  padding: 0;
+  font: inherit;
+  font-size: var(--v2-size-small);
+  color: var(--v2-ink-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 140ms ease;
+}
+
+.back:hover {
+  color: var(--v2-ink);
+}
+
+/* Direct access to every tier, so reaching Statistics never means reading Why and Evidence
+   first. Text and a rule, not a tab strip. */
+.switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--v2-space-4);
+  border-bottom: 1px solid var(--v2-rule);
+}
+
+.switch {
+  padding: 0 0 var(--v2-space-2);
+  margin-bottom: -1px;
+  font: inherit;
+  font-size: var(--v2-size-small);
+  color: var(--v2-ink-faint);
+  background: none;
+  border: none;
+  border-bottom: 1px solid transparent;
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.switch:hover {
+  color: var(--v2-ink);
+}
+
+.switchOn {
+  color: var(--v2-ink);
+  border-bottom-color: var(--v2-ink);
+}
+
+.detailTitle {
+  font-size: var(--v2-size-prose);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+/* The title is a landing target for programmatic focus, not something anyone can tab to, so it
+   draws no ring: the whole panel visibly changed, and a box around a heading after a mouse click
+   reads as a defect. Assistive technology still announces it, which is the point. */
+.detailTitle:focus {
+  outline: none;
+}
+
+.detailBody {
+  min-width: 0;
+}
+
+.prose {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-3);
+  min-width: 0;
+  font-size: var(--v2-size-body);
+  line-height: 1.6;
+  color: var(--v2-ink-muted);
+  text-wrap: pretty;
+}
+
+.subhead {
+  margin-top: var(--v2-space-2);
+  font-size: var(--v2-size-micro);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--v2-ink-faint);
+}
+
+.subhead:first-child {
+  margin-top: 0;
+}
+
+/* The one comparison this tier exists for, given the weight of a figure rather than a row. */
+.figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: var(--v2-space-3);
+  padding-bottom: var(--v2-space-1);
+}
+
+/* `column-reverse` rather than reordered markup: a definition list wants its `dt` before its
+   `dd`, and assistive technology should hear the label before the value. */
+.figure {
+  display: flex;
+  flex-direction: column-reverse;
+  /* In a reversed column, main-end is the top: this pins every value to the top of its cell so
+     the three of them share a baseline even when one label wraps to two lines. */
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+/* Value on top, label under it -- the same order the summary figures use, and the only
+   arrangement whose values stay on one baseline when a label wraps to two lines. */
+.figureValue {
+  font-size: var(--v2-size-prose);
+  color: var(--v2-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.figureLabel {
+  margin-top: 2px;
+  font-size: var(--v2-size-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--v2-ink-faint);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--v2-space-4);
+  padding: var(--v2-space-2) 0;
+  border-bottom: 1px solid var(--v2-rule);
+  font-size: var(--v2-size-small);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.rowLabel {
+  color: var(--v2-ink-muted);
+  min-width: 0;
+}
+
+.rowValue {
+  color: var(--v2-ink);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  min-width: 0;
+}
+
+.secondary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-2);
+  padding-top: var(--v2-space-2);
+  border-top: 1px solid var(--v2-rule);
+}
+
+.disclose {
+  align-self: flex-start;
+  padding: 0;
+  font: inherit;
+  font-size: var(--v2-size-small);
+  color: var(--v2-ink-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 140ms ease;
+}
+
+.disclose:hover {
+  color: var(--v2-ink);
+}
+
+/* Wide content scrolls inside its own box rather than pushing the page sideways. */
+.tableWrap {
+  overflow-x: auto;
+  min-width: 0;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--v2-size-small);
+}
+
+.table th,
+.table td {
+  padding: var(--v2-space-2) var(--v2-space-3) var(--v2-space-2) 0;
+  text-align: left;
+  border-bottom: 1px solid var(--v2-rule);
+  white-space: nowrap;
+}
+
+.table thead th {
+  font-size: var(--v2-size-micro);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--v2-ink-faint);
+}
+
+.table tbody th {
+  font-weight: 400;
+  color: var(--v2-ink-muted);
+}
+
+.table tbody td {
+  color: var(--v2-ink);
+}
+
+.table tr:last-child th,
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+.inlineMethodLink {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--v2-space-2);
+  margin-top: var(--v2-space-1);
+  font-size: var(--v2-size-small);
+  color: var(--v2-ink-muted);
+  transition: color 140ms ease;
+}
+
+.inlineMethodLink:hover,
+.inlineMethodLink:focus-visible {
+  color: var(--v2-trend);
+}
+
+@media (max-width: 559px) {
+  .row {
+    gap: var(--v2-space-3);
+  }
+}

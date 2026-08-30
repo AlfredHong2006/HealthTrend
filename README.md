@@ -198,17 +198,36 @@ series-relative view.
 | [docs/mathematics.md](docs/mathematics.md) | Every equation, and the code symbol that implements it |
 | [docs/architecture.md](docs/architecture.md) | Layer boundaries and the dependency rules |
 | [docs/privacy.md](docs/privacy.md) | What must never be committed or logged |
-| [docs/decisions/](docs/decisions/) | Architecture decision records (ADR-0001 to ADR-0010) |
+| [docs/evaluation/report.md](docs/evaluation/report.md) | What the estimator was measured to do, including where it loses |
+| [docs/evaluation/results.md](docs/evaluation/results.md) | The measurements themselves (generated) |
+| [docs/decisions/](docs/decisions/) | Architecture decision records (ADR-0001 to ADR-0011) |
 
 ## Limitations
 
-The estimator is demonstrated on five synthetic scenarios. **No accuracy or robustness claims are
-made**: the parameters are priors chosen and documented up front, not values fitted to data, and the
-model has not been calibrated or benchmarked against a real dataset.
+The parameters are priors chosen and documented up front, not values fitted to data, and **the model
+has never been calibrated or benchmarked against a real dataset. No real health data has been used
+for any evaluation.**
+
+Milestone 6 evaluated the estimator on synthetic data, where the hidden trajectory is known. It
+confirmed the arithmetic against an independent computation, and confirmed that when the data really
+does come from the model, the 95% intervals cover about 95% of the time — on regular and on irregular
+weighing schedules alike. It also found the limits, which are worth stating plainly:
+
+- on a **flat** trajectory, the 30-day forecast is about seven times worse than a tuned moving
+  average; on a **plateau**, about six times worse. The estimator extrapolates a velocity that is
+  mostly noise, and a method with no notion of a trend is right for exactly that reason.
+- the intervals are calibrated when the model holds and are not when it does not: on a genuine level
+  shift, the 30-day interval covers the truth **48%** of the time against a nominal 95%.
+- the process-noise parameter is not identifiable from a month of data at any weighing frequency,
+  which is why the parameters remain documented priors rather than per-user fits.
+
+So: the implementation is verified, on synthetic data. The model is not, and there are known regimes
+where simpler methods do better. [docs/evaluation/report.md](docs/evaluation/report.md) has the full
+account.
 
 Not implemented: Apple Health parsing, trend classification, plateau detection, change detection,
-goal projection, robust outlier handling, RTS smoothing, baseline comparison, calibration study,
-contextual machine learning, accounts.
+goal projection, robust outlier handling, RTS smoothing, real-data evaluation, contextual machine
+learning, accounts.
 
 ## Not a medical device
 

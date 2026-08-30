@@ -258,7 +258,8 @@ days, and it is the honest answer from 60 noisy readings â€” not a defect t
 ## 8. Assumptions and limitations
 
 These are stated because they are load-bearing, and none of them has been validated against real
-data.
+data. Milestone 6 measured several of them on synthetic data; where it did, the number is given
+below and the working is in [evaluation/report.md](evaluation/report.md).
 
 1. **The parameter defaults are priors, not fitted values.** $\sigma_{obs} = 0.5$ kg,
    weekly-rate drift $d = 0.15$ kg/week per week (giving $\sigma_a \approx 0.0081$), and an initial
@@ -266,6 +267,13 @@ data.
    plausible, documented, and unfitted. They determine how hard the product smooths, so they are the
    biggest single influence on user-visible behaviour. `FilterResult.loglik` exists so they can be
    fitted by MLE later.
+
+   Milestone 6 measured what fitting them would achieve, and the answer argues for leaving them
+   alone. Over 30 daily readings the maximum-likelihood estimate of $\sigma_a$ lands on the floor of
+   its search space in 54% of replicates, with a typical estimate about ninety times too small;
+   $\sigma_{obs}$, by contrast, recovers with bias indistinguishable from zero by 120 readings. A
+   per-user fit on a month of data would not estimate trend flexibility, it would report the shape of
+   its own search space.
 
    Priors are stated in product units and converted, because $\sigma_a$ in kgÂ·day<sup>âˆ’3/2</sup> is
    not humanly checkable. From $\mathrm{sd}(\Delta v) = \sigma_a\sqrt{\Delta t}$ over
@@ -299,13 +307,31 @@ data.
 6. **A local-linear trend cannot represent a plateau or reversal as structure.** It tracks them by
    drifting velocity, which lags. Expected; a later change-detection milestone addresses it.
 
+   Milestone 6 put a number on the lag's cost. On a synthetic plateau — steady loss for 60 days, then
+   flat — the 30-day forecast error is about six times worse than a tuned exponentially-weighted
+   moving average (1.11 kg against 0.18 kg), because the estimator extrapolates a trend that has
+   ended. On a flat trajectory it is about seven times worse than a tuned moving average (0.48 kg
+   against 0.07 kg), extrapolating a velocity that is mostly noise. On a genuine level jump, the
+   30-day 95% interval covers the truth 48% of the time. These are the honest limits of a locally
+   linear model, measured rather than asserted.
+
 7. **The trajectory is filtered, not smoothed.** Each point reflects only data available at that
    instant. The retrospective view needs an RTS smoother; the per-step priors and
    posteriors recorded in `FilterStep` are exactly its input.
 
-8. **Calibration is demonstrated only on data drawn from the model itself.** Test `F11` shows mean
-   $z^2 \approx 1$ and about 95% interval coverage when the model is true by construction. That
-   validates the implementation, not the model choice. Real-data evaluation is a later milestone.
+8. **Calibration is demonstrated only on synthetic data, and only holds where the model does.**
+   Test `F11` shows mean $z^2 \approx 1$ and about 95% interval coverage when the model is true by
+   construction. Milestone 6's E2 extended that to 500 series on a regular schedule and 500
+   more on a deliberately irregular one: latent-weight coverage 94.9%, velocity coverage
+   94.9%, mean $z^2 = 1.006$, mean
+   normalised estimation error squared 2.00 against a nominal 2. Irregular spacing costs nothing,
+   which is the splitting identity of §2 working as claimed.
+
+   That validates the implementation, not the model choice — and E5 measured what happens when the
+   choice is wrong: coverage falls to 48% on a level jump and to 88% on 5% contaminated readings,
+   and rises to 100% on deterministic trajectories where the intervals are simply too wide.
+   Real-data evaluation remains a later milestone; no real health data has been used for any
+   evaluation.
 
 ---
 

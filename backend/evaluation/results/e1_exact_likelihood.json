@@ -1,0 +1,329 @@
+{
+  "_config": {
+    "experiment": "e1",
+    "grid": {
+      "forecast_horizons_days": [
+        7.0,
+        30.0,
+        90.0
+      ],
+      "gap_patterns": [
+        "daily",
+        "twice_daily",
+        "weekly",
+        "irregular",
+        "duplicated"
+      ],
+      "lengths": [
+        2,
+        3,
+        5,
+        10,
+        60,
+        300
+      ],
+      "param_factors": [
+        0.25,
+        1.0,
+        4.0
+      ]
+    },
+    "params": {
+      "initial_weekly_rate_spread_kg_per_week": 1.0,
+      "sigma_accel": 0.00809924,
+      "sigma_obs_kg": 0.5,
+      "sigma_v0": 0.142857,
+      "weekly_rate_drift_kg_per_week": 0.15
+    },
+    "scale": "full",
+    "seed_ranges": {
+      "e1": {
+        "base": 1000000,
+        "end": 1050000,
+        "span": 50000
+      }
+    }
+  },
+  "results": {
+    "gate_passed": true,
+    "ill_conditioned_cases": [
+      {
+        "condition_number": 9209610000.0,
+        "filter_rel_diff": 3.42545e-08,
+        "gap_pattern": "weekly",
+        "lean_rel_diff": 3.42545e-08,
+        "n_obs": 300,
+        "params": "obs*0.25 accel*0.25 v0*4",
+        "recursion_rel_diff": 0.0
+      },
+      {
+        "condition_number": 9789010000.0,
+        "filter_rel_diff": 3.10404e-08,
+        "gap_pattern": "weekly",
+        "lean_rel_diff": 3.10404e-08,
+        "n_obs": 300,
+        "params": "obs*0.25 accel*1 v0*4",
+        "recursion_rel_diff": 1.35441e-15
+      },
+      {
+        "condition_number": 5556680000.0,
+        "filter_rel_diff": 2.28361e-08,
+        "gap_pattern": "irregular",
+        "lean_rel_diff": 2.28361e-08,
+        "n_obs": 300,
+        "params": "obs*0.25 accel*0.25 v0*4",
+        "recursion_rel_diff": 9.134e-16
+      },
+      {
+        "condition_number": 7345030000.0,
+        "filter_rel_diff": 2.10218e-08,
+        "gap_pattern": "irregular",
+        "lean_rel_diff": 2.10218e-08,
+        "n_obs": 300,
+        "params": "obs*0.25 accel*4 v0*1",
+        "recursion_rel_diff": 1.54514e-15
+      },
+      {
+        "condition_number": 16215000000.0,
+        "filter_rel_diff": 1.87271e-08,
+        "gap_pattern": "weekly",
+        "lean_rel_diff": 1.87271e-08,
+        "n_obs": 300,
+        "params": "obs*0.25 accel*4 v0*4",
+        "recursion_rel_diff": 0.0
+      },
+      {
+        "condition_number": 5956660000.0,
+        "filter_rel_diff": 1.71625e-08,
+        "gap_pattern": "irregular",
+        "lean_rel_diff": 1.71625e-08,
+        "n_obs": 300,
+        "params": "obs*0.25 accel*1 v0*4",
+        "recursion_rel_diff": 1.42465e-15
+      },
+      {
+        "condition_number": 7030900000.0,
+        "filter_rel_diff": 6.91701e-09,
+        "gap_pattern": "irregular",
+        "lean_rel_diff": 6.91701e-09,
+        "n_obs": 300,
+        "params": "obs*0.25 accel*4 v0*0.25",
+        "recursion_rel_diff": 1.07303e-15
+      },
+      {
+        "condition_number": 10508100000.0,
+        "filter_rel_diff": 3.0668e-09,
+        "gap_pattern": "weekly",
+        "lean_rel_diff": 3.0668e-09,
+        "n_obs": 300,
+        "params": "obs*0.25 accel*4 v0*1",
+        "recursion_rel_diff": 2.02265e-16
+      },
+      {
+        "condition_number": 943724000.0,
+        "filter_rel_diff": 2.86814e-09,
+        "gap_pattern": "weekly",
+        "lean_rel_diff": 2.86814e-09,
+        "n_obs": 300,
+        "params": "obs*0.25 accel*1 v0*0.25",
+        "recursion_rel_diff": 1.23474e-15
+      },
+      {
+        "condition_number": 10155300000.0,
+        "filter_rel_diff": 2.33192e-09,
+        "gap_pattern": "weekly",
+        "lean_rel_diff": 2.33192e-09,
+        "n_obs": 300,
+        "params": "obs*0.25 accel*4 v0*0.25",
+        "recursion_rel_diff": 4.04911e-16
+      },
+      {
+        "condition_number": 12434600000.0,
+        "filter_rel_diff": 1.36576e-09,
+        "gap_pattern": "irregular",
+        "lean_rel_diff": 1.36576e-09,
+        "n_obs": 300,
+        "params": "obs*0.25 accel*4 v0*4",
+        "recursion_rel_diff": 7.72502e-16
+      },
+      {
+        "condition_number": 628990000.0,
+        "filter_rel_diff": 7.42914e-10,
+        "gap_pattern": "weekly",
+        "lean_rel_diff": 7.42915e-10,
+        "n_obs": 300,
+        "params": "obs*0.25 accel*0.25 v0*1",
+        "recursion_rel_diff": 1.04349e-15
+      },
+      {
+        "condition_number": 460251000.0,
+        "filter_rel_diff": 6.83459e-10,
+        "gap_pattern": "irregular",
+        "lean_rel_diff": 6.8346e-10,
+        "n_obs": 300,
+        "params": "obs*0.25 accel*1 v0*0.25",
+        "recursion_rel_diff": 1.167e-15
+      },
+      {
+        "condition_number": 779169000.0,
+        "filter_rel_diff": 6.7793e-10,
+        "gap_pattern": "irregular",
+        "lean_rel_diff": 6.7793e-10,
+        "n_obs": 300,
+        "params": "obs*0.25 accel*1 v0*1",
+        "recursion_rel_diff": 1.29699e-16
+      },
+      {
+        "condition_number": 189781000.0,
+        "filter_rel_diff": 6.01784e-10,
+        "gap_pattern": "daily",
+        "lean_rel_diff": 6.01783e-10,
+        "n_obs": 300,
+        "params": "obs*0.25 accel*1 v0*4",
+        "recursion_rel_diff": 4.41943e-16
+      },
+      {
+        "condition_number": 347296000.0,
+        "filter_rel_diff": 5.19125e-10,
+        "gap_pattern": "irregular",
+        "lean_rel_diff": 5.19125e-10,
+        "n_obs": 300,
+        "params": "obs*1 accel*0.25 v0*4",
+        "recursion_rel_diff": 0.0
+      },
+      {
+        "condition_number": 943724000.0,
+        "filter_rel_diff": 4.40338e-10,
+        "gap_pattern": "weekly",
+        "lean_rel_diff": 4.40338e-10,
+        "n_obs": 300,
+        "params": "obs*1 accel*4 v0*1",
+        "recursion_rel_diff": 1.56162e-16
+      },
+      {
+        "condition_number": 576613000.0,
+        "filter_rel_diff": 3.00453e-10,
+        "gap_pattern": "weekly",
+        "lean_rel_diff": 3.00453e-10,
+        "n_obs": 300,
+        "params": "obs*1 accel*0.25 v0*4",
+        "recursion_rel_diff": 1.29576e-16
+      },
+      {
+        "condition_number": 372351000.0,
+        "filter_rel_diff": 2.58944e-10,
+        "gap_pattern": "irregular",
+        "lean_rel_diff": 2.58944e-10,
+        "n_obs": 300,
+        "params": "obs*0.25 accel*0.25 v0*1",
+        "recursion_rel_diff": 4.57336e-16
+      },
+      {
+        "condition_number": 628990000.0,
+        "filter_rel_diff": 2.0193e-10,
+        "gap_pattern": "weekly",
+        "lean_rel_diff": 2.01931e-10,
+        "n_obs": 300,
+        "params": "obs*1 accel*1 v0*4",
+        "recursion_rel_diff": 4.23735e-16
+      }
+    ],
+    "max_condition_number": 16215000000.0,
+    "max_recursion_rel_diff": 2.07001e-14,
+    "n_cases": 810,
+    "n_ill_conditioned": 29,
+    "n_oracle_failures": 0,
+    "n_recursion_failures": 0,
+    "n_well_conditioned": 781,
+    "oracle_agrees_where_conditioned": true,
+    "oracle_condition_limit": 100000000.0,
+    "oracle_failures": [],
+    "oracle_relative_tolerance": 1e-08,
+    "recursion_failures": [],
+    "recursion_relative_tolerance": 1e-10,
+    "recursions_agree": true,
+    "well_conditioned_maxima": {
+      "filter_abs_diff": 4.65343e-07,
+      "filter_rel_diff": 4.27652e-10,
+      "forecast_mean_abs_diff": 1.21986e-08,
+      "forecast_observation_noise_abs_diff": 9.09495e-13,
+      "forecast_variance_rel_diff": 9.07907e-10,
+      "lean_abs_diff": 4.65344e-07,
+      "lean_rel_diff": 4.27653e-10,
+      "recursion_abs_diff": 2.04636e-12,
+      "recursion_rel_diff": 2.07001e-14
+    },
+    "well_conditioned_worst_cases": {
+      "filter_abs_diff": {
+        "condition_number": 93571200.0,
+        "gap_pattern": "weekly",
+        "n_obs": 300,
+        "params": "obs*0.25 accel*0.25 v0*0.25",
+        "value": 4.65343e-07
+      },
+      "filter_rel_diff": {
+        "condition_number": 93571200.0,
+        "gap_pattern": "weekly",
+        "n_obs": 300,
+        "params": "obs*0.25 accel*0.25 v0*0.25",
+        "value": 4.27652e-10
+      },
+      "forecast_mean_abs_diff": {
+        "condition_number": 52905800.0,
+        "gap_pattern": "irregular",
+        "n_obs": 60,
+        "params": "obs*0.25 accel*4 v0*4",
+        "value": 1.21986e-08
+      },
+      "forecast_observation_noise_abs_diff": {
+        "condition_number": 3.01538,
+        "gap_pattern": "twice_daily",
+        "n_obs": 3,
+        "params": "obs*4 accel*0.25 v0*4",
+        "value": 9.09495e-13
+      },
+      "forecast_variance_rel_diff": {
+        "condition_number": 71848600.0,
+        "gap_pattern": "weekly",
+        "n_obs": 60,
+        "params": "obs*0.25 accel*0.25 v0*4",
+        "value": 9.07907e-10
+      },
+      "lean_abs_diff": {
+        "condition_number": 93571200.0,
+        "gap_pattern": "weekly",
+        "n_obs": 300,
+        "params": "obs*0.25 accel*0.25 v0*0.25",
+        "value": 4.65344e-07
+      },
+      "lean_rel_diff": {
+        "condition_number": 93571200.0,
+        "gap_pattern": "weekly",
+        "n_obs": 300,
+        "params": "obs*0.25 accel*0.25 v0*0.25",
+        "value": 4.27653e-10
+      },
+      "recursion_abs_diff": {
+        "condition_number": 46881100.0,
+        "gap_pattern": "duplicated",
+        "n_obs": 300,
+        "params": "obs*0.25 accel*1 v0*4",
+        "value": 2.04636e-12
+      },
+      "recursion_rel_diff": {
+        "condition_number": 176053.0,
+        "gap_pattern": "irregular",
+        "n_obs": 10,
+        "params": "obs*0.25 accel*1 v0*4",
+        "value": 2.07001e-14
+      }
+    },
+    "worst_recursion_case": {
+      "condition_number": 176053.0,
+      "gap_pattern": "irregular",
+      "n_obs": 10,
+      "params": "obs*0.25 accel*1 v0*4",
+      "value": 2.07001e-14
+    }
+  }
+}

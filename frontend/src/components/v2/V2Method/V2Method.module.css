@@ -1,0 +1,177 @@
+/* A reading page, not a dashboard: one column at a comfortable measure, hairlines between
+   sections, and no boxes anywhere. The measure widens for the appendix, which needs room for
+   equations rather than for prose. */
+.method {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-8);
+  min-width: 0;
+  max-width: 46rem;
+}
+
+.masthead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-3);
+}
+
+.eyebrow {
+  font-size: var(--v2-size-micro);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--v2-ink-faint);
+}
+
+.title {
+  font-size: clamp(1.75rem, 1.2rem + 1.8vw, 2.5rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+.standfirst {
+  font-size: var(--v2-size-prose);
+  line-height: 1.6;
+  color: var(--v2-ink-muted);
+  text-wrap: pretty;
+}
+
+.contents {
+  padding-top: var(--v2-space-4);
+  border-top: 1px solid var(--v2-rule);
+}
+
+.contentsList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--v2-space-1) var(--v2-space-6);
+  list-style: none;
+}
+
+.contentsLink {
+  display: flex;
+  gap: var(--v2-space-3);
+  padding: var(--v2-space-1) 0;
+  font-size: var(--v2-size-small);
+  color: var(--v2-ink-muted);
+  transition: color 140ms ease;
+}
+
+.contentsLink:hover,
+.contentsLink:focus-visible {
+  color: var(--v2-trend);
+}
+
+.contentsIndex {
+  min-width: 1ch;
+  color: var(--v2-ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-4);
+  padding-top: var(--v2-space-6);
+  border-top: 1px solid var(--v2-rule);
+  scroll-margin-top: var(--v2-space-6);
+}
+
+.sectionTitle {
+  display: flex;
+  gap: var(--v2-space-3);
+  font-size: var(--v2-size-prose);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.sectionIndex {
+  min-width: 1ch;
+  color: var(--v2-ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.sectionBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-3);
+  min-width: 0;
+  font-size: var(--v2-size-body);
+  line-height: 1.65;
+  color: var(--v2-ink-muted);
+  text-wrap: pretty;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-2);
+  padding-left: 1.15em;
+}
+
+.list li {
+  list-style: disc;
+}
+
+.note {
+  font-size: var(--v2-size-small);
+  color: var(--v2-ink-faint);
+}
+
+.appendixIntro {
+  color: var(--v2-ink);
+}
+
+.tableWrap {
+  overflow-x: auto;
+  min-width: 0;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--v2-size-small);
+  line-height: 1.5;
+}
+
+.table th,
+.table td {
+  padding: var(--v2-space-3) var(--v2-space-4) var(--v2-space-3) 0;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--v2-rule);
+}
+
+.table thead th {
+  font-size: var(--v2-size-micro);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--v2-ink-faint);
+  white-space: nowrap;
+}
+
+.table tbody th {
+  font-weight: 500;
+  color: var(--v2-ink);
+}
+
+.table tr:last-child th,
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.numeric {
+  color: var(--v2-ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The appendix earns a wider measure than the prose: equations, not sentences. */
+@media (min-width: 900px) {
+  .method {
+    max-width: 52rem;
+  }
+}

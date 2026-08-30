@@ -5,11 +5,11 @@ guards the layers added on top of it, by the same method and for the same reason
 dependency that points the wrong way is cheap to add and expensive to remove once anything
 relies on it.
 
-Four rules, each with a concrete cost if broken:
+Five rules, each with a concrete cost if broken:
 
-1. **No production module imports ``testing``.** That package is test-support code, it is
-   allowed randomness the application should not casually acquire, and shipping a package
-   named ``testing`` in a deployment artefact is indefensible. It is also why
+1. **No production module imports ``testing`` or ``evaluation``.** Both are non-production
+   packages, both are allowed randomness the application should not casually acquire, and
+   shipping either in a deployment artefact is indefensible. It is also why
    :mod:`app.demo` has its own generators instead of borrowing the ones in
    ``testing/synthetic.py``.
 2. **Only ``app.api`` imports FastAPI.** Everything below it stays callable from a script or
@@ -19,6 +19,11 @@ Four rules, each with a concrete cost if broken:
    a list of core observations, so it can be generated and inspected on its own.
 4. **Nothing below ``app.api`` imports ``app.api``.** The direction is ``api -> services ->
    core``, and the moment it becomes a cycle the layers stop meaning anything.
+5. **``evaluation`` sees the core and nothing else of the application.** The M6 harness
+   measures the estimator, so it imports ``app.core`` and ``testing``. If it could reach
+   the services or the API it could start measuring HTTP behaviour, request validation or
+   the forecast-origin policy -- none of which is what the study claims to be about -- and
+   an evaluation that quietly changes what it measures is worse than none. Test ``EV9``.
 """
 
 from __future__ import annotations
@@ -30,10 +35,18 @@ import pytest
 
 BACKEND_DIR = Path(__file__).parents[1]
 APP_DIR = BACKEND_DIR / "app"
+EVALUATION_DIR = BACKEND_DIR / "evaluation"
 
 APP_FILES = sorted(APP_DIR.rglob("*.py"))
+EVALUATION_FILES = sorted(EVALUATION_DIR.rglob("*.py"))
 
 WEB_FRAMEWORK_ROOTS = frozenset({"fastapi", "starlette", "uvicorn"})
+
+NON_PRODUCTION_ROOTS = frozenset({"testing", "evaluation"})
+
+# What the evaluation harness is allowed to import from the project. `app.core` is the
+# thing being measured; `testing` supplies the synthetic series with known truth.
+EVALUATION_ALLOWED_PROJECT_ROOTS = ("app.core", "testing", "evaluation")
 
 
 def imported_modules(path: Path) -> list[str]:
@@ -61,10 +74,11 @@ def test_there_are_app_files_to_check():
 
 
 @pytest.mark.parametrize("path", APP_FILES, ids=relative)
-def test_no_production_module_imports_the_testing_package(path: Path):
+def test_no_production_module_imports_a_non_production_package(path: Path):
     for module in imported_modules(path):
-        assert module.split(".")[0] != "testing", (
-            f"{relative(path)} imports {module}: `testing` is test-support code and must "
+        root = module.split(".")[0]
+        assert root not in NON_PRODUCTION_ROOTS, (
+            f"{relative(path)} imports {module}: `{root}` is non-production code and must "
             f"not be reachable from the application. See app/demo/__init__.py."
         )
 
@@ -98,6 +112,37 @@ def test_nothing_below_the_api_layer_imports_the_api_layer(path: Path):
         assert not module.startswith("app.api"), (
             f"{relative(path)} imports {module}: the dependency direction is "
             f"api -> services -> core."
+        )
+
+
+# --- EV9: the evaluation harness ------------------------------------------------
+
+
+def test_there_are_evaluation_files_to_check():
+    """Guard against the evaluation scan passing because it found nothing."""
+    assert len(EVALUATION_FILES) >= 5
+    names = {path.name for path in EVALUATION_FILES}
+    assert {"common.py", "constants.py", "run.py"} <= names
+
+
+@pytest.mark.parametrize("path", EVALUATION_FILES, ids=relative)
+def test_ev9_the_evaluation_package_never_imports_a_web_framework(path: Path):
+    for module in imported_modules(path):
+        assert module.split(".")[0] not in WEB_FRAMEWORK_ROOTS, (
+            f"{relative(path)} imports {module}: the evaluation harness measures the "
+            f"numerical core, and has no business holding an HTTP dependency."
+        )
+
+
+@pytest.mark.parametrize("path", EVALUATION_FILES, ids=relative)
+def test_ev9_the_evaluation_package_reaches_only_the_core(path: Path):
+    for module in imported_modules(path):
+        if not module.startswith(("app.", "tests.")):
+            continue
+        assert module.startswith(EVALUATION_ALLOWED_PROJECT_ROOTS), (
+            f"{relative(path)} imports {module}: the evaluation harness may import "
+            f"app.core and testing only. Measuring the services or the API layer would "
+            f"change what the study is about without changing what it claims."
         )
 
 

@@ -55,13 +55,17 @@ convention = "pep257"
 # docs/mathematics.md and the code, which is the point of writing it this way. Tests
 # assert against those same equations, so they use the same names.
 "app/core/**" = ["N803", "N806"]
+# The evaluation package works in the same notation for the same reason: it recomputes
+# the model's covariances independently to check them. Docstrings and annotations stay
+# enforced there -- only the matrix names are exempt.
+"evaluation/**" = ["N803", "N806"]
 
 # ---------------------------------------------------------------------------
 # Type checking
 # ---------------------------------------------------------------------------
 [tool.mypy]
 python_version = "3.11"
-files = ["app", "testing"]
+files = ["app", "testing", "evaluation"]
 strict = true
 warn_unreachable = true
 enable_error_code = ["redundant-expr", "truthy-bool", "ignore-without-code"]

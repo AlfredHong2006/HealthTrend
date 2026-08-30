@@ -204,18 +204,53 @@ so wide it says nothing — which is the correct output from one measurement, no
 
 ## Claims
 
-Only claim what is implemented and measured. As of Milestone 5:
+Only claim what is implemented and measured. As of Milestone 6:
 
 - the model parameters are documented priors, not values fitted to data
-- calibration has been demonstrated only on data drawn from the model itself
-- there is no robustness to outliers, and the sensitivity is measured and recorded
-- no real health data has been used for any evaluation
-- **Milestones 2 to 5 changed no mathematics.** They put the existing estimator behind HTTP, then
-  behind a browser, then behind manual entry and CSV import. Nothing about accuracy, calibration or
-  robustness improved, and the golden fixture from Milestone 1 is byte-identical — which is the
-  evidence for that claim.
+- **no real health data has been used for any evaluation.** Milestone 6 ran five experiments; every
+  one of them is a simulation.
+- there is no robustness to outliers. The sensitivity is measured and recorded, and Milestone 6 adds
+  a coverage number for it: on 5% contaminated readings the one-step 95% interval covers 88%.
+- **Milestones 2 to 5 changed no mathematics**, and neither did Milestone 6. Each put the existing
+  estimator behind something new — HTTP, a browser, manual entry, CSV import, then a measuring
+  instrument. The golden fixture from Milestone 1 is still byte-identical, which is the evidence.
 - the frontend renders numbers the backend computed and interprets none of them; it does not label
   anything "high confidence", "plateau" or "likely to continue" unless that classification exists as
   a defined backend result, which it does not yet
 
-Do not describe the system as validated, robust, or accurate until there are experiments that say so.
+Milestone 6 measured the estimator. What it established, with the numbers in
+[evaluation/results.md](evaluation/results.md) and the reading in
+[evaluation/report.md](evaluation/report.md):
+
+- the log-likelihood and forecast moments are arithmetically correct. The two recursions agree
+  across all 810 cases of the battery; an independent computation adjudicated 781 of them and
+  agreed; the remaining 29 are ill conditioned for that computation, and an exact-arithmetic spot
+  check kept as a permanent test supports the diagnosis that the double-precision oracle, not the
+  filter, is the party losing accuracy there
+- on synthetic data drawn from the model's own assumptions, the 95% intervals cover about 95% of the
+  time — for latent weight and for velocity, over 500 series on a regular schedule and 500 more on
+  an irregular one
+- irregular weigh-in spacing costs no calibration, as the process-noise construction claimed
+- the process-noise parameter is not identifiable from a month of data at any weighing frequency,
+  which is a measured argument against fitting parameters per user
+- the initial-velocity prior materially affects reported uncertainty for roughly the first ten
+  readings and is negligible by thirty
+
+And what it established that is *unflattering*, which belongs here just as much:
+
+- **the estimator is not uniformly better than a moving average.** On a flat trajectory its 30-day
+  forecast is about seven times worse; on a plateau, about six times worse. In both cases it
+  extrapolates a velocity that is mostly noise.
+- **and it is not uniformly better than the tuned alternatives either.** On the 30-day metric a
+  tuned Holt beats it in six of E5's eight regimes and a Kalman filter fitted to the regime in five,
+  including the ordinary steady-loss regime. No method in that comparison wins everywhere, the
+  shipped estimator included, and every baseline was tuned on the shape it was then tested on.
+- **the intervals are calibrated when the model holds and are not when it does not.** On a genuine
+  level shift the 30-day interval covers the truth 48% of the time against a nominal 95%. On
+  deterministic trajectories it over-covers at 100% — too wide rather than too narrow, which is the
+  safer failure but is still not calibration.
+
+So: the *implementation* is validated, on synthetic data, and said so precisely. The *model* is not,
+and Milestone 6 found specific regimes where it is the wrong one. Do not describe the system as
+accurate or robust; do not describe its intervals as calibrated without saying on what. Nothing here
+licenses a claim about real weight data, because no experiment has touched any.

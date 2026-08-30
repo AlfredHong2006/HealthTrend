@@ -1,0 +1,161 @@
+/* Scientific and editorial: a serif face, a comfortable measure, real space around every
+   equation. This is the deep end of Method, and it should read like a technical reference that
+   was set properly -- not like a specification pasted into a page. */
+.appendix {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-3);
+  min-width: 0;
+  font-family: var(--v2-font-serif);
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--v2-ink-muted);
+  text-wrap: pretty;
+}
+
+.part {
+  margin-top: var(--v2-space-6);
+  font-family: var(--v2-font-sans);
+  font-size: var(--v2-size-micro);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--v2-ink-faint);
+}
+
+.part:first-child {
+  margin-top: 0;
+}
+
+/* An equation is allowed to scroll inside its own box; it must never widen the page. Only a
+   matrix is genuinely unbreakable -- the rest wraps at its operators, the way a printed
+   equation does. Consecutive equations share one rule rather than stacking two hairlines. */
+.eqWrap {
+  overflow-x: auto;
+  padding: var(--v2-space-4) 0;
+  border-top: 1px solid var(--v2-rule);
+  border-bottom: 1px solid var(--v2-rule);
+}
+
+.eqWrap + .eqWrap {
+  border-top: none;
+}
+
+/* Deliberately not a flex container: flex blockifies its children, which would strip
+   `vertical-align` from every <sub> and <sup> and drop every subscript onto the baseline. */
+.eq {
+  min-width: 0;
+  font-size: 1.125rem;
+  line-height: 2;
+  color: var(--v2-ink);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.variable {
+  font-style: italic;
+  font-family: var(--v2-font-serif);
+}
+
+.operator {
+  margin: 0 0.34em;
+  font-style: normal;
+}
+
+.script {
+  font-size: 0.68em;
+  font-style: normal;
+  line-height: 0;
+}
+
+.gap {
+  display: inline-block;
+  width: 2.75em;
+}
+
+.matrix {
+  display: inline-flex;
+  align-items: stretch;
+  margin: 0 0.15em;
+  vertical-align: middle;
+}
+
+.matrixGrid {
+  display: inline-grid;
+  gap: 0.15em 0.8em;
+  padding: 0.15em 0.35em;
+  justify-items: center;
+}
+
+.matrixCell {
+  white-space: nowrap;
+}
+
+.bracketLeft,
+.bracketRight {
+  width: 0.32em;
+  border: 1px solid currentColor;
+}
+
+.bracketLeft {
+  border-right: none;
+}
+
+.bracketRight {
+  border-left: none;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  min-width: 0;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.table th,
+.table td {
+  padding: var(--v2-space-2) var(--v2-space-4) var(--v2-space-2) 0;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--v2-rule);
+}
+
+.table thead th {
+  font-family: var(--v2-font-sans);
+  font-size: var(--v2-size-micro);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--v2-ink-faint);
+  white-space: nowrap;
+}
+
+.table tbody th {
+  font-weight: 400;
+  color: var(--v2-ink);
+}
+
+.table tr:last-child th,
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.mono {
+  font-family: var(--v2-font-mono);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 559px) {
+  .eq {
+    font-size: 1.0625rem;
+  }
+
+  .gap {
+    width: 1.75em;
+  }
+}

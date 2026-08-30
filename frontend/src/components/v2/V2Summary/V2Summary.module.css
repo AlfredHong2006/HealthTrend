@@ -1,0 +1,290 @@
+/* One continuous analytical surface. Separation is hairlines and space, never a border-box
+   with a radius and a shadow -- the design direction rules out the rail decaying into a stack
+   of SaaS cards, and this is the part most likely to drift that way. */
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-4);
+  min-width: 0;
+}
+
+.eyebrow {
+  font-size: var(--v2-size-micro);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--v2-ink-faint);
+}
+
+.lead {
+  min-width: 0;
+}
+
+/* Smaller than a hero number by design: the canvas already flags this value on the weight
+   axis, so the rail states it once, clearly, without competing with the chart. */
+.leadValue {
+  font-size: clamp(2rem, 1.5rem + 1.6vw, 2.75rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.leadCaption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--v2-space-1) var(--v2-space-3);
+  margin-top: var(--v2-space-2);
+  font-size: var(--v2-size-small);
+  color: var(--v2-ink);
+}
+
+.leadRange {
+  color: var(--v2-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--v2-space-4);
+  padding-top: var(--v2-space-4);
+  border-top: 1px solid var(--v2-rule);
+}
+
+.figure {
+  min-width: 0;
+}
+
+/* A single hairline between the two figures: the separation a card would have provided, at a
+   fraction of the visual weight. */
+.pair > .figure + .figure {
+  padding-left: var(--v2-space-4);
+  border-left: 1px solid var(--v2-rule);
+}
+
+.figureValue {
+  font-size: var(--v2-size-metric);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.figureLabel {
+  margin-top: var(--v2-space-1);
+  font-size: var(--v2-size-small);
+  color: var(--v2-ink);
+}
+
+.figureDetail {
+  margin-top: 2px;
+  font-size: var(--v2-size-small);
+  color: var(--v2-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.provenance {
+  padding-top: var(--v2-space-3);
+  border-top: 1px solid var(--v2-rule);
+  font-size: var(--v2-size-small);
+  line-height: 1.55;
+  color: var(--v2-ink-muted);
+  font-variant-numeric: tabular-nums;
+  text-wrap: pretty;
+}
+
+/* ---- Goal ---- */
+
+.goalIdle {
+  display: flex;
+}
+
+.goalAdd {
+  padding: var(--v2-space-1) 0;
+  font: inherit;
+  font-size: var(--v2-size-small);
+  color: var(--v2-ink-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 140ms ease;
+}
+
+.goalAdd:hover {
+  color: var(--v2-trend);
+}
+
+.goal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-2);
+  min-width: 0;
+}
+
+.goalHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--v2-space-3);
+}
+
+.goalTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--v2-space-2);
+  font-size: var(--v2-size-small);
+  font-weight: 500;
+  color: var(--v2-ink);
+}
+
+.goalTag {
+  font-size: var(--v2-size-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--v2-ink-faint);
+}
+
+.goalToggle {
+  flex: none;
+  padding: 2px var(--v2-space-2);
+  font: inherit;
+  font-size: var(--v2-size-small);
+  color: var(--v2-ink-muted);
+  background: none;
+  border: 1px solid var(--v2-rule);
+  border-radius: var(--v2-radius);
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.goalToggle:hover {
+  color: var(--v2-ink);
+  border-color: var(--v2-rule-strong);
+}
+
+.goalReadout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--v2-space-1) var(--v2-space-3);
+}
+
+.goalValue {
+  font-size: var(--v2-size-body);
+  color: var(--v2-goal);
+  font-variant-numeric: tabular-nums;
+}
+
+.goalMeta {
+  font-size: var(--v2-size-small);
+  color: var(--v2-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.goalRate {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--v2-space-1) var(--v2-space-3);
+  font-size: var(--v2-size-small);
+  color: var(--v2-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.goalRateItem {
+  white-space: nowrap;
+}
+
+.goalForm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--v2-space-3);
+  padding-top: var(--v2-space-2);
+  animation: disclose 180ms ease both;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-1);
+  min-width: 0;
+  flex: 1 1 150px;
+}
+
+.fieldLabel {
+  font-size: var(--v2-size-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--v2-ink-faint);
+}
+
+.input {
+  width: 100%;
+  min-width: 0;
+  padding: var(--v2-space-2);
+  font: inherit;
+  font-size: var(--v2-size-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--v2-ink);
+  background: var(--v2-raised);
+  border: 1px solid var(--v2-rule-strong);
+  border-radius: var(--v2-radius);
+}
+
+.goalClear {
+  flex: none;
+  padding: var(--v2-space-2) var(--v2-space-3);
+  font: inherit;
+  font-size: var(--v2-size-small);
+  color: var(--v2-ink-muted);
+  background: none;
+  border: 1px solid var(--v2-rule);
+  border-radius: var(--v2-radius);
+  cursor: pointer;
+}
+
+.goalClear:hover {
+  color: var(--v2-ink);
+  border-color: var(--v2-rule-strong);
+}
+
+.goalNote {
+  flex: 1 1 100%;
+  font-size: var(--v2-size-micro);
+  line-height: 1.5;
+  color: var(--v2-ink-faint);
+}
+
+@keyframes disclose {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .goalForm {
+    animation: none;
+  }
+}
+
+@media (max-width: 559px) {
+  .summary {
+    gap: var(--v2-space-3);
+  }
+
+  .pair {
+    gap: var(--v2-space-3);
+    padding-top: var(--v2-space-3);
+  }
+
+  .pair > .figure + .figure {
+    padding-left: var(--v2-space-3);
+  }
+}

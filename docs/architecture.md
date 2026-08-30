@@ -128,15 +128,34 @@ backend/
       routes.py           /health, /api/analyse, /api/demo, /api/demo/{scenario}, /api/ingest/csv
     main.py               create_app()
   testing/
-    synthetic.py          deterministic seeded generators, for the core tests only
+    synthetic.py          deterministic seeded generators, for tests and the evaluation harness
+  evaluation/             Milestone 6: the evaluation harness. Not part of the application.
+    constants.py          quantiles, computed rather than transcribed
+    common.py             seed blocks, provenance, committed-result serialisation
+    exact_likelihood.py   an independent O(n^3) likelihood, used as an oracle
+    mle.py                the fitting objective, optimiser and profile intervals
+    metrics.py            coverage, NIS, NEES, cluster-robust intervals
+    baselines.py          time-aware LOCF, moving average, EWMA, Holt
+    scenarios.py          the eight comparison regimes
+    experiments/          E1, E2, E3+E4, E5 -- one module each
+    run.py                `python -m evaluation.run <e1|e2|e34|e5|all|tables>`
+    results/              committed full-scale results, one JSON per experiment
   tests/
     core/                 one module per core concern, plus purity + golden
     api/                  the HTTP boundary, plus the golden HTTP response
+    evaluation/           the harness, test IDs EV1-EV10
     test_layering.py      the dependency rules above
     fixtures/             committed golden output
 ```
 
-Reserved names, deliberately absent until they are needed: `app/evaluation/`, `experiments/`.
+`evaluation/` sits beside `app/` rather than inside it, and `app/evaluation/` and `experiments/` are
+no longer reserved. The reason is concrete: everything under `app/` is forbidden from importing
+`testing`, and `testing/synthetic.py` is where the generators carrying a known hidden trajectory
+live — so a harness inside `app/` could not use the generators this document's own attachment table
+names for the purpose. Two layering rules replace the convention: no module under `app/` may import
+`evaluation`, and no module under `evaluation/` may import a web framework or anything above
+`app.core`. See [ADR-0011](decisions/ADR-0011-evaluation-harness.md) and
+[docs/evaluation/report.md](evaluation/report.md).
 
 `sample_data/` now exists, at the repository root: synthetic CSV files a reviewer can feed to
 `POST /api/ingest/csv` without supplying real measurements. It is the one place `.gitignore`

@@ -1,0 +1,249 @@
+/* The canvas is a field, not a card: no border, no shadow, no radius around the plot. The
+   only rules on this surface are hairlines that separate the readout from the plot and the
+   plot from its key -- the chart itself is meant to supply the page's visual structure. */
+.canvas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-3);
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--v2-space-3) var(--v2-space-5);
+  padding-bottom: var(--v2-space-3);
+  border-bottom: 1px solid var(--v2-rule);
+}
+
+/* Two by two while the canvas is narrow; one instrument line -- date, estimate, interval,
+   reading -- once there is room for it. The switch happens at a viewport width where the
+   canvas is comfortably wider than the line, so the readout never has to shrink below its
+   own content and push the page sideways. */
+.readout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--v2-space-2) var(--v2-space-4);
+  min-width: 0;
+}
+
+@media (min-width: 720px) {
+  .readout {
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    grid-template-columns: none;
+    column-gap: var(--v2-space-5);
+  }
+
+  .cellValue {
+    white-space: nowrap;
+  }
+}
+
+.cell {
+  min-width: 0;
+}
+
+.cellLabel {
+  font-size: var(--v2-size-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--v2-ink-faint);
+}
+
+.cellValue {
+  margin-top: 1px;
+  font-size: var(--v2-size-body);
+  color: var(--v2-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--v2-space-2) var(--v2-space-5);
+}
+
+.controlGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--v2-space-1);
+}
+
+.controlLabel {
+  margin-right: var(--v2-space-1);
+  font-size: var(--v2-size-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--v2-ink-faint);
+}
+
+.control {
+  padding: 3px var(--v2-space-2);
+  font: inherit;
+  font-size: var(--v2-size-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--v2-ink-muted);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--v2-radius);
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease, background-color 140ms ease;
+}
+
+.control:hover {
+  color: var(--v2-ink);
+  border-color: var(--v2-rule);
+}
+
+.controlOn {
+  color: var(--v2-ink);
+  border-color: var(--v2-rule-strong);
+  background: var(--v2-raised);
+}
+
+.plotShell {
+  position: relative;
+  min-width: 0;
+  border-radius: var(--v2-radius);
+}
+
+/* The inspection control is a visually hidden range input, so the focus ring has to be drawn
+   by the surface it drives -- otherwise a keyboard user moves a crosshair with no visible
+   indication of what has focus. */
+.plotShell:focus-within {
+  outline: 2px solid var(--v2-focus);
+  outline-offset: 4px;
+}
+
+.plot {
+  height: clamp(320px, 54vh, 540px);
+  min-width: 0;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.goalLabel {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.dividerLabel {
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.flagText {
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.chipText {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--v2-space-2) var(--v2-space-4);
+  padding-top: var(--v2-space-2);
+  border-top: 1px solid var(--v2-rule);
+  font-size: var(--v2-size-small);
+  color: var(--v2-ink-muted);
+}
+
+.key {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--v2-space-2);
+}
+
+.keyMark {
+  display: inline-block;
+  width: 16px;
+  flex: none;
+}
+
+.keyObservation {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--v2-observation);
+}
+
+.keyTrend {
+  height: 2px;
+  background: var(--v2-trend);
+}
+
+.keyBand {
+  height: 9px;
+  background: var(--v2-trend-band);
+}
+
+.keyForecast {
+  height: 2px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--v2-forecast) 0 5px,
+    transparent 5px 9px
+  );
+}
+
+.keyGoal {
+  height: 0;
+  border-top: 1px dashed var(--v2-goal);
+}
+
+@media (max-width: 959px) {
+  .plot {
+    height: clamp(280px, 44vh, 420px);
+  }
+}
+
+/* A phone gets a chart that is prominent but scrolls away: it is not sticky here, and it does
+   not permanently occupy half the viewport (docs/design/V2_DESIGN.md -- real-device usability
+   takes priority over conceptual symmetry with desktop). */
+@media (max-width: 559px) {
+  .head {
+    gap: var(--v2-space-3);
+  }
+
+  /* The summary directly above already states the estimate and its interval on a phone, so the
+     readout stays out of the way until the crosshair gives it something else to say. */
+  .readout {
+    display: none;
+    gap: var(--v2-space-2) var(--v2-space-3);
+  }
+
+  .readoutActive {
+    display: grid;
+  }
+
+  .cellValue {
+    font-size: var(--v2-size-small);
+  }
+
+  .controls {
+    gap: var(--v2-space-2) var(--v2-space-4);
+  }
+
+  .plot {
+    height: clamp(248px, 40vh, 340px);
+  }
+
+  .legend {
+    gap: var(--v2-space-1) var(--v2-space-3);
+    font-size: var(--v2-size-micro);
+  }
+}

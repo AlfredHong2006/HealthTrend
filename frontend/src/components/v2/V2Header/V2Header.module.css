@@ -1,0 +1,95 @@
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--v2-space-3) var(--v2-space-6);
+  padding-bottom: var(--v2-space-4);
+  border-bottom: 1px solid var(--v2-rule);
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-1);
+  min-width: 0;
+}
+
+.wordmark {
+  display: flex;
+  align-items: baseline;
+  gap: var(--v2-space-2);
+  font-size: var(--v2-size-body);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.stage {
+  font-size: var(--v2-size-micro);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--v2-ink-faint);
+  padding: 2px var(--v2-space-2);
+  border: 1px solid var(--v2-rule-strong);
+  border-radius: var(--v2-radius);
+  text-transform: uppercase;
+}
+
+.provenance {
+  font-size: var(--v2-size-small);
+  color: var(--v2-ink-muted);
+}
+
+.nav {
+  min-width: 0;
+}
+
+.navList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--v2-space-1) var(--v2-space-4);
+  list-style: none;
+}
+
+.navLink {
+  display: inline-block;
+  padding: var(--v2-space-1) 0;
+  font-size: var(--v2-size-small);
+  color: var(--v2-ink-muted);
+  border-bottom: 1px solid transparent;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.navLink:hover,
+.navLink:focus-visible {
+  color: var(--v2-ink);
+}
+
+.navLinkActive {
+  color: var(--v2-ink);
+  border-bottom-color: var(--v2-ink);
+}
+
+@media (max-width: 559px) {
+  .header {
+    gap: var(--v2-space-3);
+  }
+
+  .navList {
+    gap: var(--v2-space-1) var(--v2-space-3);
+  }
+}
+
+/* A hairline before the destination link, so the scenario switcher and the two V2
+   destinations read as two different kinds of navigation rather than one long list. */
+.navDivider {
+  padding-left: var(--v2-space-4);
+  border-left: 1px solid var(--v2-rule);
+}
+
+@media (max-width: 559px) {
+  .navDivider {
+    padding-left: var(--v2-space-3);
+  }
+}

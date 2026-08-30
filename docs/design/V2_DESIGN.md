@@ -86,24 +86,46 @@ trajectory — trend weight and current rate.
 
 ## Explanation and drill-down
 
-The analysis interaction supports:
+Two different jobs, and they do not share a surface.
+
+**Analysis** answers *what does this say about my data*. **Method** answers *how does HealthTrend
+calculate this*. The analysis rail carries analysis-specific content only.
+
+The analysis rail is:
 
 ```
-Conclusion
+Summary
 → Why
 → Evidence
 → Statistics
-→ Mathematics
 ```
 
-Desktop may use a rail plus a detail stack. Mobile may use natural vertical disclosure or a dedicated
-detail view.
+**Only one deep tier occupies the rail at a time.** The rail's default state is a short summary and
+an affordance to go deeper; choosing a tier *replaces* that affordance rather than lengthening the
+rail, and a back control returns. Reaching Statistics must never mean scrolling through Why and
+Evidence on the way, so the tiers are directly reachable from one another. This is a detail stack,
+not an accordion, and mobile uses the same pushed detail rather than one long expanded document.
 
-The **mathematics tier prioritizes readability**: real equations, an explanation in words, what each
-parameter means, the assumptions in force, and code provenance where appropriate. Do not squeeze
-equations into a cramped, terminal-like panel. The reference material already exists in
-[../mathematics.md](../mathematics.md) — including the equation-to-code index — and the product tier
-should feel like that document, rendered well.
+Each tier stays specific to the analysis on screen. In particular **Why** means *why this estimate,
+for this series* — the latest reading beside the estimate for the same instant, the difference
+between them, the published measurement-noise assumption, the rate and how the projection follows
+from it. It does not mean a general account of how the model works: that reads identically on every
+series, and generic model documentation must not live on the everyday analysis screen.
+
+**Method is a separate V2 destination**, not a tier — a page of its own, reached by ordinary
+in-product navigation so browser Back behaves normally. Its order is a ramp: what HealthTrend
+estimates, how a reading changes the estimate, what the uncertainty means, how forecasting works,
+the model parameters, the assumptions and limitations, and last a **Mathematical Appendix**.
+
+The appendix holds the full equations — latent state, observation model, transition and process
+noise, the Kalman prediction and Joseph update, interval construction, forecast propagation, the
+weekly-rate conversion, and equation-to-code provenance. It **prioritizes readability**: real
+equations with room to breathe, matrices that render cleanly, editorial and scientific typography,
+presented as a deliberate technical reference rather than one wall of symbols. Do not squeeze
+equations into a cramped, terminal-like panel, and do not weaken the mathematics to make the page
+look calmer. The reference material already exists in [../mathematics.md](../mathematics.md) —
+including the equation-to-code index — and the appendix should feel like that document, rendered
+well.
 
 ## Typography and density
 
@@ -215,8 +237,12 @@ assume it, and no reserved space is user-visible.
 Goals belong in the product. **Do not lock URL query parameters as the permanent persistence
 architecture.** Persistent goals are decided alongside the future accounts and persistence milestone.
 
-Prototype goal state is **synthetic or ephemeral only** — held in component state for the duration of
-the visit. No `localStorage`, no URL-as-permanent-storage, no backend goal schema.
+Prototype goal state is **ephemeral only** — held in component state for the duration of the visit.
+No `localStorage`, no URL-as-permanent-storage, no backend goal schema.
+
+There is **no goal until the user adds one**: no default target, no example reference line, and no
+goal block on the screen — only a restrained control offering to add one. Everything a goal unlocks
+(the reference line, the distance, the rate comparison) appears at that moment and not before.
 
 ## Locked decisions for the first V2 prototype
 
@@ -230,6 +256,10 @@ Settled. Do not reopen these while prototyping.
   `/demo/[scenario]` or `/analyse`.
 - **The prototype brings its own V2 layout and shell.** Do not alter V1's global 760px shell or its
   shared tokens merely to prototype V2.
-- **Goal state is synthetic or ephemeral**, as above.
+- **Goal state is ephemeral, and there is no goal until the user adds one.** No example target, no
+  default reference line: a goal nobody chose is a product decision made by a default.
+- **Method is a separate destination, never a rail tier.** The everyday analysis screen carries no
+  generic model documentation, and the full equations live in a Mathematical Appendix within Method.
+- **The rail is a detail stack, not an accordion.** One deep tier at a time, with a back control.
 - **`FilterStep` exposure is deferred.** The prototype uses the current API only, unchanged.
 - **ADR and README updates are deferred** until a V2 direction is accepted for production.

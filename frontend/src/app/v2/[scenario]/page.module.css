@@ -1,0 +1,26 @@
+/* The V2 canvas is meant to feel open rather than boxed inside a dashboard card, so the page
+   is a wide, generously padded field rather than V1's 760px column. The cap exists only so a
+   very large monitor does not stretch a line of prose to an unreadable measure. */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-6);
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: var(--v2-space-6) var(--v2-space-6) var(--v2-space-10);
+}
+
+@media (max-width: 959px) {
+  .page {
+    gap: var(--v2-space-5);
+    padding: var(--v2-space-5) var(--v2-space-4) var(--v2-space-8);
+  }
+}
+
+@media (max-width: 559px) {
+  .page {
+    gap: var(--v2-space-4);
+    padding: var(--v2-space-4) var(--v2-space-3) var(--v2-space-8);
+  }
+}

@@ -1,0 +1,89 @@
+/**
+ * V2 prototype design tokens.
+ *
+ * Scoped to `.htV2` rather than `:root` on purpose: the locked prototype decisions in
+ * docs/design/V2_DESIGN.md say the prototype brings its own layout and shell and must not
+ * alter V1's global tokens or its 760px shell to prototype V2. Nothing here escapes the V2
+ * route, and V1 continues to read `src/app/tokens.css` exactly as before.
+ *
+ * The palette is deliberately a *sibling* of V1's, not a replacement: the same warm paper and
+ * ink, the same green estimate and amber forecast, tightened slightly for an instrument. As
+ * in V1 there are no judgement colours -- colour identifies what a mark **is** (a reading, an
+ * estimate, a forecast, a goal reference), never whether the news is good. A maintenance
+ * user's flat rate is a success, not a warning.
+ */
+
+.htV2 {
+  --v2-bg: #fbfaf8;
+  --v2-raised: #ffffff;
+  --v2-ink: #1a1917;
+  --v2-ink-muted: #67615a;
+  --v2-ink-faint: #979088;
+  --v2-rule: #e7e3dd;
+  --v2-rule-strong: #d5cfc5;
+
+  /* Series identity. */
+  --v2-trend: #2f5d50;
+  --v2-trend-band: rgba(47, 93, 80, 0.13);
+  --v2-forecast: #8a6a3f;
+  --v2-forecast-band: rgba(138, 106, 63, 0.12);
+  --v2-observation: #bbb3a5;
+  --v2-goal: #5a6478;
+
+  /* Instrument furniture: the crosshair, the divider, the value flag. */
+  --v2-crosshair: #8b8479;
+  --v2-flag-ink: #ffffff;
+  --v2-focus: #1a5fb4;
+
+  --v2-font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --v2-font-serif: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --v2-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+  --v2-size-lead: clamp(2.375rem, 1.5rem + 2.8vw, 3.5rem);
+  --v2-size-metric: clamp(1.375rem, 1rem + 1.4vw, 1.75rem);
+  --v2-size-prose: 1.0625rem;
+  --v2-size-body: 0.9375rem;
+  --v2-size-small: 0.8125rem;
+  --v2-size-micro: 0.6875rem;
+
+  --v2-space-1: 0.25rem;
+  --v2-space-2: 0.5rem;
+  --v2-space-3: 0.75rem;
+  --v2-space-4: 1rem;
+  --v2-space-5: 1.25rem;
+  --v2-space-6: 1.5rem;
+  --v2-space-8: 2rem;
+  --v2-space-10: 2.5rem;
+
+  /* Restrained on purpose: the design direction rules out card grids and rounded-rectangle
+     dashboards, so a radius exists only for the few controls that need a hit target. */
+  --v2-radius: 3px;
+
+  color: var(--v2-ink);
+  background: var(--v2-bg);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-color-scheme: dark) {
+  .htV2 {
+    --v2-bg: #131211;
+    --v2-raised: #1c1b18;
+    --v2-ink: #f1eee8;
+    --v2-ink-muted: #aca396;
+    --v2-ink-faint: #7b746a;
+    --v2-rule: #2e2b26;
+    --v2-rule-strong: #423d36;
+
+    --v2-trend: #78bda9;
+    --v2-trend-band: rgba(120, 189, 169, 0.15);
+    --v2-forecast: #d6ad70;
+    --v2-forecast-band: rgba(214, 173, 112, 0.14);
+    --v2-observation: #5f594f;
+    --v2-goal: #9aa6c0;
+
+    --v2-crosshair: #8d8578;
+    --v2-flag-ink: #131211;
+    --v2-focus: #6cb0ff;
+  }
+}

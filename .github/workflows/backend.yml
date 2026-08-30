@@ -32,8 +32,11 @@ jobs:
       - name: Formatting
         run: uv run ruff format --check .
 
+      # Bare `mypy` checks every package in pyproject's `files`: app, testing and
+      # evaluation. Naming `app` here would have left the other two strict-checked only
+      # when someone remembered to run it locally.
       - name: Type check
-        run: uv run mypy app
+        run: uv run mypy
 
       - name: Tests
         run: uv run pytest -q

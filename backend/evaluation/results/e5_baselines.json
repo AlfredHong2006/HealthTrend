@@ -1,0 +1,3527 @@
+{
+  "_config": {
+    "experiment": "e5",
+    "grid": {
+      "burn_in_index": 10,
+      "forecast_horizon_days": 30.0,
+      "methods": [
+        "locf",
+        "moving_average",
+        "ewma",
+        "holt",
+        "kalman_shipped",
+        "kalman_fitted"
+      ],
+      "n_test_series": 100,
+      "n_train_series": 30,
+      "reference_method": "kalman_shipped",
+      "regimes": [
+        "model_correct",
+        "flat",
+        "steady_loss",
+        "plateau",
+        "curvature",
+        "jump",
+        "irregular",
+        "outliers"
+      ]
+    },
+    "params": {
+      "initial_weekly_rate_spread_kg_per_week": 1.0,
+      "sigma_accel": 0.00809924,
+      "sigma_obs_kg": 0.5,
+      "sigma_v0": 0.142857,
+      "weekly_rate_drift_kg_per_week": 0.15
+    },
+    "scale": "full",
+    "seed_ranges": {
+      "e5_test": {
+        "base": 3100000,
+        "end": 3150000,
+        "span": 50000
+      },
+      "e5_train": {
+        "base": 3000000,
+        "end": 3050000,
+        "span": 50000
+      }
+    }
+  },
+  "results": {
+    "burn_in_index": 10,
+    "forecast_horizon_days": 30.0,
+    "n_beating_shipped": 31,
+    "n_comparisons": 80,
+    "n_losing_to_shipped": 44,
+    "n_simple_baselines_beating_shipped": 20,
+    "regimes": {
+      "curvature": {
+        "forecast30": {
+          "achieved_horizon_days": {
+            "max": 30.0,
+            "mean": 30.0,
+            "min": 30.0
+          },
+          "mae": {
+            "ewma": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.357039,
+                "ci_lo": 0.236315,
+                "mean": 0.296677,
+                "n_clusters": 100,
+                "sd": 0.304211,
+                "se": 0.0304211
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.829751,
+                "ci_lo": 0.789716,
+                "mean": 0.809733,
+                "n_clusters": 100,
+                "sd": 0.100882,
+                "se": 0.0100882
+              }
+            },
+            "holt": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.155753,
+                "ci_lo": 0.0986685,
+                "mean": 0.127211,
+                "n_clusters": 100,
+                "sd": 0.143846,
+                "se": 0.0143846
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.677364,
+                "ci_lo": 0.603171,
+                "mean": 0.640267,
+                "n_clusters": 100,
+                "sd": 0.186957,
+                "se": 0.0186957
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.0609703,
+                "ci_lo": 0.0166483,
+                "mean": 0.0388093,
+                "n_clusters": 100,
+                "sd": 0.111686,
+                "se": 0.0111686
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.590385,
+                "ci_lo": 0.513346,
+                "mean": 0.551866,
+                "n_clusters": 100,
+                "sd": 0.19413,
+                "se": 0.019413
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 0.558384,
+                "ci_lo": 0.467729,
+                "mean": 0.513057,
+                "n_clusters": 100,
+                "sd": 0.228438,
+                "se": 0.0228438
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.302452,
+                "ci_lo": 0.14458,
+                "mean": 0.223516,
+                "n_clusters": 100,
+                "sd": 0.39782,
+                "se": 0.039782
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.785405,
+                "ci_lo": 0.68774,
+                "mean": 0.736572,
+                "n_clusters": 100,
+                "sd": 0.246104,
+                "se": 0.0246104
+              }
+            },
+            "moving_average": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.349125,
+                "ci_lo": 0.231454,
+                "mean": 0.290289,
+                "n_clusters": 100,
+                "sd": 0.296517,
+                "se": 0.0296517
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.823139,
+                "ci_lo": 0.783553,
+                "mean": 0.803346,
+                "n_clusters": 100,
+                "sd": 0.0997519,
+                "se": 0.00997519
+              }
+            }
+          }
+        },
+        "kalman_intervals": {
+          "forecast30_coverage": {
+            "kalman_fitted": {
+              "ci_hi": 1.00264,
+              "ci_lo": 0.984027,
+              "mean": 0.993333,
+              "n_clusters": 100,
+              "sd": 0.0469018,
+              "se": 0.00469018
+            },
+            "kalman_shipped": {
+              "ci_hi": 1.0,
+              "ci_lo": 1.0,
+              "mean": 1.0,
+              "n_clusters": 100,
+              "sd": 0.0,
+              "se": 0.0
+            }
+          },
+          "note": "Only the two Kalman variants state an interval. LOCF, moving average, EWMA and Holt produce point predictions with no error model, so no coverage is reported for them rather than one being invented.",
+          "one_step_coverage": {
+            "kalman_fitted": {
+              "ci_hi": 0.953503,
+              "ci_lo": 0.945406,
+              "mean": 0.949455,
+              "n_clusters": 100,
+              "sd": 0.0204025,
+              "se": 0.00204025
+            },
+            "kalman_shipped": {
+              "ci_hi": 0.958033,
+              "ci_lo": 0.949421,
+              "mean": 0.953727,
+              "n_clusters": 100,
+              "sd": 0.0217021,
+              "se": 0.00217021
+            }
+          }
+        },
+        "n_test_series": 100,
+        "one_step": {
+          "mae": {
+            "ewma": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.02821,
+                "ci_lo": 0.0231413,
+                "mean": 0.0256757,
+                "n_clusters": 100,
+                "sd": 0.0127725,
+                "se": 0.00127725
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.462623,
+                "ci_lo": 0.451335,
+                "mean": 0.456979,
+                "n_clusters": 100,
+                "sd": 0.0284437,
+                "se": 0.00284437
+              }
+            },
+            "holt": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.00613668,
+                "ci_lo": 0.0029664,
+                "mean": 0.00455154,
+                "n_clusters": 100,
+                "sd": 0.00798873,
+                "se": 0.000798873
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.44178,
+                "ci_lo": 0.429929,
+                "mean": 0.435855,
+                "n_clusters": 100,
+                "sd": 0.0298646,
+                "se": 0.00298646
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.00206151,
+                "ci_lo": -0.00362096,
+                "mean": -0.00284124,
+                "n_clusters": 100,
+                "sd": 0.00392963,
+                "se": 0.000392963
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.434033,
+                "ci_lo": 0.422891,
+                "mean": 0.428462,
+                "n_clusters": 100,
+                "sd": 0.0280778,
+                "se": 0.00280778
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 0.436941,
+                "ci_lo": 0.425665,
+                "mean": 0.431303,
+                "n_clusters": 100,
+                "sd": 0.0284126,
+                "se": 0.00284126
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.138756,
+                "ci_lo": 0.127026,
+                "mean": 0.132891,
+                "n_clusters": 100,
+                "sd": 0.0295583,
+                "se": 0.00295583
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.57326,
+                "ci_lo": 0.555128,
+                "mean": 0.564194,
+                "n_clusters": 100,
+                "sd": 0.0456905,
+                "se": 0.00456905
+              }
+            },
+            "moving_average": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.0236444,
+                "ci_lo": 0.018724,
+                "mean": 0.0211842,
+                "n_clusters": 100,
+                "sd": 0.0123988,
+                "se": 0.00123988
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.458309,
+                "ci_lo": 0.446666,
+                "mean": 0.452487,
+                "n_clusters": 100,
+                "sd": 0.0293395,
+                "se": 0.00293395
+              }
+            }
+          },
+          "mse": {
+            "ewma": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.0353603,
+                "ci_lo": 0.0321713,
+                "mean": 0.0337658,
+                "n_clusters": 100,
+                "sd": 0.00803612,
+                "se": 0.000803612
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.334164,
+                "ci_lo": 0.319194,
+                "mean": 0.326679,
+                "n_clusters": 100,
+                "sd": 0.0377219,
+                "se": 0.00377219
+              }
+            },
+            "holt": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.00769989,
+                "ci_lo": 0.00495236,
+                "mean": 0.00632613,
+                "n_clusters": 100,
+                "sd": 0.00692346,
+                "se": 0.000692346
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.306887,
+                "ci_lo": 0.291592,
+                "mean": 0.29924,
+                "n_clusters": 100,
+                "sd": 0.0385397,
+                "se": 0.00385397
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.00308329,
+                "ci_lo": -0.00408144,
+                "mean": -0.00358237,
+                "n_clusters": 100,
+                "sd": 0.00251523,
+                "se": 0.000251523
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.29654,
+                "ci_lo": 0.282122,
+                "mean": 0.289331,
+                "n_clusters": 100,
+                "sd": 0.0363323,
+                "se": 0.00363323
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 0.300325,
+                "ci_lo": 0.285502,
+                "mean": 0.292913,
+                "n_clusters": 100,
+                "sd": 0.0373522,
+                "se": 0.00373522
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.216873,
+                "ci_lo": 0.197322,
+                "mean": 0.207098,
+                "n_clusters": 100,
+                "sd": 0.0492666,
+                "se": 0.00492666
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.514817,
+                "ci_lo": 0.485205,
+                "mean": 0.500011,
+                "n_clusters": 100,
+                "sd": 0.0746186,
+                "se": 0.00746186
+              }
+            },
+            "moving_average": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.0291927,
+                "ci_lo": 0.0253668,
+                "mean": 0.0272797,
+                "n_clusters": 100,
+                "sd": 0.00964089,
+                "se": 0.000964089
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.328056,
+                "ci_lo": 0.31233,
+                "mean": 0.320193,
+                "n_clusters": 100,
+                "sd": 0.0396287,
+                "se": 0.00396287
+              }
+            }
+          }
+        },
+        "regime": "curvature",
+        "test_seed_range": [
+          3100400,
+          3100499
+        ],
+        "tuned": {
+          "ewma": {
+            "tau_days": 4.0,
+            "train_mse": 0.326784
+          },
+          "holt": {
+            "tau_level_days": 4.0,
+            "tau_trend_days": 28.0,
+            "train_mse": 0.299836
+          },
+          "kalman_fitted": {
+            "sigma_accel": 0.00437596,
+            "sigma_accel_at_floor": false,
+            "sigma_obs_kg": 0.498996,
+            "sigma_v0": 0.142857,
+            "train_loglik": -2885.35
+          },
+          "moving_average": {
+            "train_mse": 0.31981,
+            "window_days": 7.0
+          },
+          "train_n_series": 30,
+          "train_seed_range": [
+            3000120,
+            3000149
+          ]
+        }
+      },
+      "flat": {
+        "forecast30": {
+          "achieved_horizon_days": {
+            "max": 30.0,
+            "mean": 30.0,
+            "min": 30.0
+          },
+          "mae": {
+            "ewma": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.365126,
+                "ci_lo": -0.441397,
+                "mean": -0.403262,
+                "n_clusters": 100,
+                "sd": 0.192193,
+                "se": 0.0192193
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.0805822,
+                "ci_lo": 0.0670951,
+                "mean": 0.0738386,
+                "n_clusters": 100,
+                "sd": 0.0339857,
+                "se": 0.00339857
+              }
+            },
+            "holt": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.356227,
+                "ci_lo": -0.431799,
+                "mean": -0.394013,
+                "n_clusters": 100,
+                "sd": 0.190431,
+                "se": 0.0190431
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.0918128,
+                "ci_lo": 0.0743616,
+                "mean": 0.0830872,
+                "n_clusters": 100,
+                "sd": 0.0439751,
+                "se": 0.00439751
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.280878,
+                "ci_lo": -0.360257,
+                "mean": -0.320567,
+                "n_clusters": 100,
+                "sd": 0.200026,
+                "se": 0.0200026
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.172227,
+                "ci_lo": 0.140839,
+                "mean": 0.156533,
+                "n_clusters": 100,
+                "sd": 0.0790921,
+                "se": 0.00790921
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 0.516699,
+                "ci_lo": 0.437502,
+                "mean": 0.4771,
+                "n_clusters": 100,
+                "sd": 0.199568,
+                "se": 0.0199568
+              }
+            },
+            "locf": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.0181091,
+                "ci_lo": -0.115231,
+                "mean": -0.0666702,
+                "n_clusters": 100,
+                "sd": 0.244737,
+                "se": 0.0244737
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.445251,
+                "ci_lo": 0.375609,
+                "mean": 0.41043,
+                "n_clusters": 100,
+                "sd": 0.175488,
+                "se": 0.0175488
+              }
+            },
+            "moving_average": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.367309,
+                "ci_lo": -0.446941,
+                "mean": -0.407125,
+                "n_clusters": 100,
+                "sd": 0.200663,
+                "se": 0.0200663
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.077292,
+                "ci_lo": 0.062659,
+                "mean": 0.0699755,
+                "n_clusters": 100,
+                "sd": 0.0368734,
+                "se": 0.00368734
+              }
+            }
+          }
+        },
+        "kalman_intervals": {
+          "forecast30_coverage": {
+            "kalman_fitted": {
+              "ci_hi": 1.00273,
+              "ci_lo": 0.970603,
+              "mean": 0.986667,
+              "n_clusters": 100,
+              "sd": 0.0809595,
+              "se": 0.00809595
+            },
+            "kalman_shipped": {
+              "ci_hi": 1.0,
+              "ci_lo": 1.0,
+              "mean": 1.0,
+              "n_clusters": 100,
+              "sd": 0.0,
+              "se": 0.0
+            }
+          },
+          "note": "Only the two Kalman variants state an interval. LOCF, moving average, EWMA and Holt produce point predictions with no error model, so no coverage is reported for them rather than one being invented.",
+          "one_step_coverage": {
+            "kalman_fitted": {
+              "ci_hi": 0.954692,
+              "ci_lo": 0.94658,
+              "mean": 0.950636,
+              "n_clusters": 100,
+              "sd": 0.0204407,
+              "se": 0.00204407
+            },
+            "kalman_shipped": {
+              "ci_hi": 0.956709,
+              "ci_lo": 0.948564,
+              "mean": 0.952636,
+              "n_clusters": 100,
+              "sd": 0.0205239,
+              "se": 0.00205239
+            }
+          }
+        },
+        "n_test_series": 100,
+        "one_step": {
+          "mae": {
+            "ewma": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.0190118,
+                "ci_lo": -0.0228403,
+                "mean": -0.020926,
+                "n_clusters": 100,
+                "sd": 0.00964723,
+                "se": 0.000964723
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.418349,
+                "ci_lo": 0.406601,
+                "mean": 0.412475,
+                "n_clusters": 100,
+                "sd": 0.0296021,
+                "se": 0.00296021
+              }
+            },
+            "holt": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.0190798,
+                "ci_lo": -0.022886,
+                "mean": -0.0209829,
+                "n_clusters": 100,
+                "sd": 0.00959119,
+                "se": 0.000959119
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.418291,
+                "ci_lo": 0.406546,
+                "mean": 0.412418,
+                "n_clusters": 100,
+                "sd": 0.0295955,
+                "se": 0.00295955
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.0111847,
+                "ci_lo": -0.0141098,
+                "mean": -0.0126472,
+                "n_clusters": 100,
+                "sd": 0.00737088,
+                "se": 0.000737088
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.426784,
+                "ci_lo": 0.414724,
+                "mean": 0.420754,
+                "n_clusters": 100,
+                "sd": 0.0303876,
+                "se": 0.00303876
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 0.439687,
+                "ci_lo": 0.427115,
+                "mean": 0.433401,
+                "n_clusters": 100,
+                "sd": 0.0316801,
+                "se": 0.00316801
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.149467,
+                "ci_lo": 0.135423,
+                "mean": 0.142445,
+                "n_clusters": 100,
+                "sd": 0.0353912,
+                "se": 0.00353912
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.586752,
+                "ci_lo": 0.56494,
+                "mean": 0.575846,
+                "n_clusters": 100,
+                "sd": 0.0549622,
+                "se": 0.00549622
+              }
+            },
+            "moving_average": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.0216985,
+                "ci_lo": -0.0256482,
+                "mean": -0.0236733,
+                "n_clusters": 100,
+                "sd": 0.0099527,
+                "se": 0.00099527
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.415645,
+                "ci_lo": 0.40381,
+                "mean": 0.409728,
+                "n_clusters": 100,
+                "sd": 0.0298231,
+                "se": 0.00298231
+              }
+            }
+          },
+          "mse": {
+            "ewma": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.0259348,
+                "ci_lo": -0.029462,
+                "mean": -0.0276984,
+                "n_clusters": 100,
+                "sd": 0.00888819,
+                "se": 0.000888819
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.27581,
+                "ci_lo": 0.260413,
+                "mean": 0.268111,
+                "n_clusters": 100,
+                "sd": 0.0387982,
+                "se": 0.00387982
+              }
+            },
+            "holt": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.026016,
+                "ci_lo": -0.0294709,
+                "mean": -0.0277434,
+                "n_clusters": 100,
+                "sd": 0.00870606,
+                "se": 0.000870606
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.275762,
+                "ci_lo": 0.26037,
+                "mean": 0.268066,
+                "n_clusters": 100,
+                "sd": 0.0387856,
+                "se": 0.00387856
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.0159648,
+                "ci_lo": -0.0183413,
+                "mean": -0.0171531,
+                "n_clusters": 100,
+                "sd": 0.00598853,
+                "se": 0.000598853
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.286408,
+                "ci_lo": 0.270905,
+                "mean": 0.278657,
+                "n_clusters": 100,
+                "sd": 0.039068,
+                "se": 0.0039068
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 0.304155,
+                "ci_lo": 0.287464,
+                "mean": 0.29581,
+                "n_clusters": 100,
+                "sd": 0.04206,
+                "se": 0.004206
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.237657,
+                "ci_lo": 0.212252,
+                "mean": 0.224955,
+                "n_clusters": 100,
+                "sd": 0.0640172,
+                "se": 0.00640172
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.53984,
+                "ci_lo": 0.501688,
+                "mean": 0.520764,
+                "n_clusters": 100,
+                "sd": 0.0961392,
+                "se": 0.00961392
+              }
+            },
+            "moving_average": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.0293737,
+                "ci_lo": -0.0330143,
+                "mean": -0.031194,
+                "n_clusters": 100,
+                "sd": 0.00917379,
+                "se": 0.000917379
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.272075,
+                "ci_lo": 0.257157,
+                "mean": 0.264616,
+                "n_clusters": 100,
+                "sd": 0.0375911,
+                "se": 0.00375911
+              }
+            }
+          }
+        },
+        "regime": "flat",
+        "test_seed_range": [
+          3100100,
+          3100199
+        ],
+        "tuned": {
+          "ewma": {
+            "tau_days": 14.0,
+            "train_mse": 0.26841
+          },
+          "holt": {
+            "tau_level_days": 14.0,
+            "tau_trend_days": 480.0,
+            "train_mse": 0.268352
+          },
+          "kalman_fitted": {
+            "sigma_accel": 0.000684616,
+            "sigma_accel_at_floor": false,
+            "sigma_obs_kg": 0.504121,
+            "sigma_v0": 0.142857,
+            "train_loglik": -2828.19
+          },
+          "moving_average": {
+            "train_mse": 0.265408,
+            "window_days": 28.0
+          },
+          "train_n_series": 30,
+          "train_seed_range": [
+            3000030,
+            3000059
+          ]
+        }
+      },
+      "irregular": {
+        "forecast30": {
+          "achieved_horizon_days": {
+            "max": 33.5,
+            "mean": 32.1667,
+            "min": 30.75
+          },
+          "mae": {
+            "ewma": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 1.11234,
+                "ci_lo": 0.992128,
+                "mean": 1.05223,
+                "n_clusters": 100,
+                "sd": 0.302922,
+                "se": 0.0302922
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 1.70194,
+                "ci_lo": 1.60608,
+                "mean": 1.65401,
+                "n_clusters": 100,
+                "sd": 0.24156,
+                "se": 0.024156
+              }
+            },
+            "holt": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.194442,
+                "ci_lo": -0.281758,
+                "mean": -0.2381,
+                "n_clusters": 100,
+                "sd": 0.220026,
+                "se": 0.0220026
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.397626,
+                "ci_lo": 0.329719,
+                "mean": 0.363672,
+                "n_clusters": 100,
+                "sd": 0.171116,
+                "se": 0.0171116
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.376254,
+                "ci_lo": -0.46443,
+                "mean": -0.420342,
+                "n_clusters": 100,
+                "sd": 0.222192,
+                "se": 0.0222192
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.199167,
+                "ci_lo": 0.163693,
+                "mean": 0.18143,
+                "n_clusters": 100,
+                "sd": 0.089389,
+                "se": 0.0089389
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 0.64842,
+                "ci_lo": 0.555124,
+                "mean": 0.601772,
+                "n_clusters": 100,
+                "sd": 0.235095,
+                "se": 0.0235095
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 1.09934,
+                "ci_lo": 0.972578,
+                "mean": 1.03596,
+                "n_clusters": 100,
+                "sd": 0.319436,
+                "se": 0.0319436
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 1.69349,
+                "ci_lo": 1.58197,
+                "mean": 1.63773,
+                "n_clusters": 100,
+                "sd": 0.281024,
+                "se": 0.0281024
+              }
+            },
+            "moving_average": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 1.17558,
+                "ci_lo": 1.06072,
+                "mean": 1.11815,
+                "n_clusters": 100,
+                "sd": 0.289423,
+                "se": 0.0289423
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 1.76133,
+                "ci_lo": 1.67852,
+                "mean": 1.71992,
+                "n_clusters": 100,
+                "sd": 0.208668,
+                "se": 0.0208668
+              }
+            }
+          }
+        },
+        "kalman_intervals": {
+          "forecast30_coverage": {
+            "kalman_fitted": {
+              "ci_hi": 0.948027,
+              "ci_lo": 0.878639,
+              "mean": 0.913333,
+              "n_clusters": 100,
+              "sd": 0.17485,
+              "se": 0.017485
+            },
+            "kalman_shipped": {
+              "ci_hi": 1.0,
+              "ci_lo": 1.0,
+              "mean": 1.0,
+              "n_clusters": 100,
+              "sd": 0.0,
+              "se": 0.0
+            }
+          },
+          "note": "Only the two Kalman variants state an interval. LOCF, moving average, EWMA and Holt produce point predictions with no error model, so no coverage is reported for them rather than one being invented.",
+          "one_step_coverage": {
+            "kalman_fitted": {
+              "ci_hi": 0.958796,
+              "ci_lo": 0.946404,
+              "mean": 0.9526,
+              "n_clusters": 100,
+              "sd": 0.0312248,
+              "se": 0.00312248
+            },
+            "kalman_shipped": {
+              "ci_hi": 0.970422,
+              "ci_lo": 0.960778,
+              "mean": 0.9656,
+              "n_clusters": 100,
+              "sd": 0.0243011,
+              "se": 0.00243011
+            }
+          }
+        },
+        "n_test_series": 100,
+        "one_step": {
+          "mae": {
+            "ewma": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.135369,
+                "ci_lo": 0.118052,
+                "mean": 0.12671,
+                "n_clusters": 100,
+                "sd": 0.043637,
+                "se": 0.0043637
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.628978,
+                "ci_lo": 0.606982,
+                "mean": 0.61798,
+                "n_clusters": 100,
+                "sd": 0.0554274,
+                "se": 0.00554274
+              }
+            },
+            "holt": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.0098408,
+                "ci_lo": -0.00904632,
+                "mean": 0.000397241,
+                "n_clusters": 100,
+                "sd": 0.0475934,
+                "se": 0.00475934
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.503291,
+                "ci_lo": 0.480043,
+                "mean": 0.491667,
+                "n_clusters": 100,
+                "sd": 0.0585832,
+                "se": 0.00585832
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.0627628,
+                "ci_lo": -0.0747515,
+                "mean": -0.0687572,
+                "n_clusters": 100,
+                "sd": 0.0302101,
+                "se": 0.00302101
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.43118,
+                "ci_lo": 0.413845,
+                "mean": 0.422512,
+                "n_clusters": 100,
+                "sd": 0.0436821,
+                "se": 0.00436821
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 0.501442,
+                "ci_lo": 0.481097,
+                "mean": 0.49127,
+                "n_clusters": 100,
+                "sd": 0.0512673,
+                "se": 0.00512673
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.1636,
+                "ci_lo": 0.143638,
+                "mean": 0.153619,
+                "n_clusters": 100,
+                "sd": 0.0503027,
+                "se": 0.00503027
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.65797,
+                "ci_lo": 0.631807,
+                "mean": 0.644889,
+                "n_clusters": 100,
+                "sd": 0.0659269,
+                "se": 0.00659269
+              }
+            },
+            "moving_average": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.127675,
+                "ci_lo": 0.11141,
+                "mean": 0.119542,
+                "n_clusters": 100,
+                "sd": 0.0409872,
+                "se": 0.00409872
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.620753,
+                "ci_lo": 0.600871,
+                "mean": 0.610812,
+                "n_clusters": 100,
+                "sd": 0.0501006,
+                "se": 0.00501006
+              }
+            }
+          },
+          "mse": {
+            "ewma": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.238848,
+                "ci_lo": 0.210198,
+                "mean": 0.224523,
+                "n_clusters": 100,
+                "sd": 0.0721963,
+                "se": 0.00721963
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.633798,
+                "ci_lo": 0.590935,
+                "mean": 0.612367,
+                "n_clusters": 100,
+                "sd": 0.108009,
+                "se": 0.0108009
+              }
+            },
+            "holt": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.006857,
+                "ci_lo": -0.0202375,
+                "mean": -0.00669026,
+                "n_clusters": 100,
+                "sd": 0.0682751,
+                "se": 0.00682751
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.397923,
+                "ci_lo": 0.364384,
+                "mean": 0.381154,
+                "n_clusters": 100,
+                "sd": 0.0845152,
+                "se": 0.00845152
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.101633,
+                "ci_lo": -0.118544,
+                "mean": -0.110089,
+                "n_clusters": 100,
+                "sd": 0.0426148,
+                "se": 0.00426148
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.288134,
+                "ci_lo": 0.267377,
+                "mean": 0.277755,
+                "n_clusters": 100,
+                "sd": 0.0523056,
+                "se": 0.00523056
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 0.403869,
+                "ci_lo": 0.371819,
+                "mean": 0.387844,
+                "n_clusters": 100,
+                "sd": 0.0807612,
+                "se": 0.00807612
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.295414,
+                "ci_lo": 0.256679,
+                "mean": 0.276046,
+                "n_clusters": 100,
+                "sd": 0.09761,
+                "se": 0.009761
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.689791,
+                "ci_lo": 0.63799,
+                "mean": 0.66389,
+                "n_clusters": 100,
+                "sd": 0.130534,
+                "se": 0.0130534
+              }
+            },
+            "moving_average": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.228807,
+                "ci_lo": 0.200114,
+                "mean": 0.21446,
+                "n_clusters": 100,
+                "sd": 0.0723034,
+                "se": 0.00723034
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.622599,
+                "ci_lo": 0.582009,
+                "mean": 0.602304,
+                "n_clusters": 100,
+                "sd": 0.102281,
+                "se": 0.0102281
+              }
+            }
+          }
+        },
+        "regime": "irregular",
+        "test_seed_range": [
+          3100600,
+          3100699
+        ],
+        "tuned": {
+          "ewma": {
+            "tau_days": 2.0,
+            "train_mse": 0.619913
+          },
+          "holt": {
+            "tau_level_days": 28.0,
+            "tau_trend_days": 28.0,
+            "train_mse": 0.366662
+          },
+          "kalman_fitted": {
+            "sigma_accel": 7.24223e-05,
+            "sigma_accel_at_floor": false,
+            "sigma_obs_kg": 0.493057,
+            "sigma_v0": 0.142857,
+            "train_loglik": -1470.67
+          },
+          "moving_average": {
+            "train_mse": 0.617694,
+            "window_days": 14.0
+          },
+          "train_n_series": 30,
+          "train_seed_range": [
+            3000180,
+            3000209
+          ]
+        }
+      },
+      "jump": {
+        "forecast30": {
+          "achieved_horizon_days": {
+            "max": 30.0,
+            "mean": 30.0,
+            "min": 30.0
+          },
+          "mae": {
+            "ewma": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.165768,
+                "ci_lo": 0.0253337,
+                "mean": 0.095551,
+                "n_clusters": 100,
+                "sd": 0.353879,
+                "se": 0.0353879
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 2.45735,
+                "ci_lo": 2.39716,
+                "mean": 2.42726,
+                "n_clusters": 100,
+                "sd": 0.151679,
+                "se": 0.0151679
+              }
+            },
+            "holt": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.512267,
+                "ci_lo": -0.581249,
+                "mean": -0.546758,
+                "n_clusters": 100,
+                "sd": 0.173825,
+                "se": 0.0173825
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 1.84818,
+                "ci_lo": 1.72172,
+                "mean": 1.78495,
+                "n_clusters": 100,
+                "sd": 0.318667,
+                "se": 0.0318667
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.465525,
+                "ci_lo": -0.673464,
+                "mean": -0.569494,
+                "n_clusters": 100,
+                "sd": 0.523981,
+                "se": 0.0523981
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 1.89465,
+                "ci_lo": 1.62978,
+                "mean": 1.76221,
+                "n_clusters": 100,
+                "sd": 0.667434,
+                "se": 0.0667434
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 2.3914,
+                "ci_lo": 2.27201,
+                "mean": 2.33171,
+                "n_clusters": 100,
+                "sd": 0.300854,
+                "se": 0.0300854
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.141701,
+                "ci_lo": -0.0291252,
+                "mean": 0.0562877,
+                "n_clusters": 100,
+                "sd": 0.430462,
+                "se": 0.0430462
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 2.44609,
+                "ci_lo": 2.3299,
+                "mean": 2.388,
+                "n_clusters": 100,
+                "sd": 0.292802,
+                "se": 0.0292802
+              }
+            },
+            "moving_average": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.148203,
+                "ci_lo": 0.00963997,
+                "mean": 0.0789213,
+                "n_clusters": 100,
+                "sd": 0.349162,
+                "se": 0.0349162
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 2.44141,
+                "ci_lo": 2.37985,
+                "mean": 2.41063,
+                "n_clusters": 100,
+                "sd": 0.155137,
+                "se": 0.0155137
+              }
+            }
+          }
+        },
+        "kalman_intervals": {
+          "forecast30_coverage": {
+            "kalman_fitted": {
+              "ci_hi": 1.0,
+              "ci_lo": 1.0,
+              "mean": 1.0,
+              "n_clusters": 100,
+              "sd": 0.0,
+              "se": 0.0
+            },
+            "kalman_shipped": {
+              "ci_hi": 0.512997,
+              "ci_lo": 0.447003,
+              "mean": 0.48,
+              "n_clusters": 100,
+              "sd": 0.166296,
+              "se": 0.0166296
+            }
+          },
+          "note": "Only the two Kalman variants state an interval. LOCF, moving average, EWMA and Holt produce point predictions with no error model, so no coverage is reported for them rather than one being invented.",
+          "one_step_coverage": {
+            "kalman_fitted": {
+              "ci_hi": 0.958027,
+              "ci_lo": 0.951973,
+              "mean": 0.955,
+              "n_clusters": 100,
+              "sd": 0.0152545,
+              "se": 0.00152545
+            },
+            "kalman_shipped": {
+              "ci_hi": 0.91172,
+              "ci_lo": 0.902098,
+              "mean": 0.906909,
+              "n_clusters": 100,
+              "sd": 0.0242466,
+              "se": 0.00242466
+            }
+          }
+        },
+        "n_test_series": 100,
+        "one_step": {
+          "mae": {
+            "ewma": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.0177826,
+                "ci_lo": -0.0255101,
+                "mean": -0.0216463,
+                "n_clusters": 100,
+                "sd": 0.0194722,
+                "se": 0.00194722
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.498071,
+                "ci_lo": 0.485362,
+                "mean": 0.491716,
+                "n_clusters": 100,
+                "sd": 0.0320242,
+                "se": 0.00320242
+              }
+            },
+            "holt": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.0265836,
+                "ci_lo": -0.0335001,
+                "mean": -0.0300419,
+                "n_clusters": 100,
+                "sd": 0.0174287,
+                "se": 0.00174287
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.489697,
+                "ci_lo": 0.476945,
+                "mean": 0.483321,
+                "n_clusters": 100,
+                "sd": 0.032134,
+                "se": 0.0032134
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.010565,
+                "ci_lo": -0.0162749,
+                "mean": -0.0134199,
+                "n_clusters": 100,
+                "sd": 0.0143882,
+                "se": 0.00143882
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.506303,
+                "ci_lo": 0.493582,
+                "mean": 0.499943,
+                "n_clusters": 100,
+                "sd": 0.0320563,
+                "se": 0.00320563
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 0.51965,
+                "ci_lo": 0.507075,
+                "mean": 0.513363,
+                "n_clusters": 100,
+                "sd": 0.0316882,
+                "se": 0.00316882
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.0739209,
+                "ci_lo": 0.0582633,
+                "mean": 0.0660921,
+                "n_clusters": 100,
+                "sd": 0.0394554,
+                "se": 0.00394554
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.590116,
+                "ci_lo": 0.568794,
+                "mean": 0.579455,
+                "n_clusters": 100,
+                "sd": 0.0537276,
+                "se": 0.00537276
+              }
+            },
+            "moving_average": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.00934999,
+                "ci_lo": -0.0194779,
+                "mean": -0.0144139,
+                "n_clusters": 100,
+                "sd": 0.0255212,
+                "se": 0.00255212
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.505902,
+                "ci_lo": 0.491996,
+                "mean": 0.498949,
+                "n_clusters": 100,
+                "sd": 0.0350428,
+                "se": 0.00350428
+              }
+            }
+          },
+          "mse": {
+            "ewma": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.0375093,
+                "ci_lo": -0.0480897,
+                "mean": -0.0427995,
+                "n_clusters": 100,
+                "sd": 0.0266612,
+                "se": 0.00266612
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.436361,
+                "ci_lo": 0.416569,
+                "mean": 0.426465,
+                "n_clusters": 100,
+                "sd": 0.0498741,
+                "se": 0.00498741
+              }
+            },
+            "holt": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.0593419,
+                "ci_lo": -0.0695987,
+                "mean": -0.0644703,
+                "n_clusters": 100,
+                "sd": 0.025846,
+                "se": 0.0025846
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.414868,
+                "ci_lo": 0.39472,
+                "mean": 0.404794,
+                "n_clusters": 100,
+                "sd": 0.0507707,
+                "se": 0.00507707
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.0337958,
+                "ci_lo": -0.0414606,
+                "mean": -0.0376282,
+                "n_clusters": 100,
+                "sd": 0.0193145,
+                "se": 0.00193145
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.44197,
+                "ci_lo": 0.421303,
+                "mean": 0.431637,
+                "n_clusters": 100,
+                "sd": 0.0520783,
+                "se": 0.00520783
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 0.479932,
+                "ci_lo": 0.458597,
+                "mean": 0.469265,
+                "n_clusters": 100,
+                "sd": 0.0537613,
+                "se": 0.00537613
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.0987615,
+                "ci_lo": 0.0718358,
+                "mean": 0.0852987,
+                "n_clusters": 100,
+                "sd": 0.0678497,
+                "se": 0.00678497
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.573366,
+                "ci_lo": 0.535761,
+                "mean": 0.554563,
+                "n_clusters": 100,
+                "sd": 0.0947609,
+                "se": 0.00947609
+              }
+            },
+            "moving_average": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.0247968,
+                "ci_lo": -0.0390778,
+                "mean": -0.0319373,
+                "n_clusters": 100,
+                "sd": 0.0359866,
+                "se": 0.00359866
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.448103,
+                "ci_lo": 0.426552,
+                "mean": 0.437327,
+                "n_clusters": 100,
+                "sd": 0.0543052,
+                "se": 0.00543052
+              }
+            }
+          }
+        },
+        "regime": "jump",
+        "test_seed_range": [
+          3100500,
+          3100599
+        ],
+        "tuned": {
+          "ewma": {
+            "tau_days": 2.0,
+            "train_mse": 0.438588
+          },
+          "holt": {
+            "tau_level_days": 2.0,
+            "tau_trend_days": 28.0,
+            "train_mse": 0.417128
+          },
+          "kalman_fitted": {
+            "sigma_accel": 0.0317469,
+            "sigma_accel_at_floor": false,
+            "sigma_obs_kg": 0.561695,
+            "sigma_v0": 0.142857,
+            "train_loglik": -3618.83
+          },
+          "moving_average": {
+            "train_mse": 0.446705,
+            "window_days": 3.0
+          },
+          "train_n_series": 30,
+          "train_seed_range": [
+            3000150,
+            3000179
+          ]
+        }
+      },
+      "model_correct": {
+        "forecast30": {
+          "achieved_horizon_days": {
+            "max": 30.0,
+            "mean": 30.0,
+            "min": 30.0
+          },
+          "mae": {
+            "ewma": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 3.47643,
+                "ci_lo": 2.43744,
+                "mean": 2.95694,
+                "n_clusters": 100,
+                "sd": 2.61814,
+                "se": 0.261814
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 4.49019,
+                "ci_lo": 3.4273,
+                "mean": 3.95874,
+                "n_clusters": 100,
+                "sd": 2.67838,
+                "se": 0.267838
+              }
+            },
+            "holt": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.128509,
+                "ci_lo": 0.0155808,
+                "mean": 0.0720451,
+                "n_clusters": 100,
+                "sd": 0.284567,
+                "se": 0.0284567
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 1.17108,
+                "ci_lo": 0.97662,
+                "mean": 1.07385,
+                "n_clusters": 100,
+                "sd": 0.490025,
+                "se": 0.0490025
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.00657494,
+                "ci_lo": -0.00516299,
+                "mean": 0.000705978,
+                "n_clusters": 100,
+                "sd": 0.0295783,
+                "se": 0.00295783
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 1.09465,
+                "ci_lo": 0.910379,
+                "mean": 1.00251,
+                "n_clusters": 100,
+                "sd": 0.46433,
+                "se": 0.046433
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 1.09467,
+                "ci_lo": 0.908947,
+                "mean": 1.00181,
+                "n_clusters": 100,
+                "sd": 0.46799,
+                "se": 0.046799
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 3.40532,
+                "ci_lo": 2.38082,
+                "mean": 2.89307,
+                "n_clusters": 100,
+                "sd": 2.58162,
+                "se": 0.258162
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 4.41897,
+                "ci_lo": 3.37078,
+                "mean": 3.89487,
+                "n_clusters": 100,
+                "sd": 2.64133,
+                "se": 0.264133
+              }
+            },
+            "moving_average": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 3.59651,
+                "ci_lo": 2.52824,
+                "mean": 3.06237,
+                "n_clusters": 100,
+                "sd": 2.69192,
+                "se": 0.269192
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 4.61051,
+                "ci_lo": 3.51785,
+                "mean": 4.06418,
+                "n_clusters": 100,
+                "sd": 2.75339,
+                "se": 0.275339
+              }
+            }
+          }
+        },
+        "kalman_intervals": {
+          "forecast30_coverage": {
+            "kalman_fitted": {
+              "ci_hi": 0.982677,
+              "ci_lo": 0.930657,
+              "mean": 0.956667,
+              "n_clusters": 100,
+              "sd": 0.131084,
+              "se": 0.0131084
+            },
+            "kalman_shipped": {
+              "ci_hi": 0.973143,
+              "ci_lo": 0.913524,
+              "mean": 0.943333,
+              "n_clusters": 100,
+              "sd": 0.150234,
+              "se": 0.0150234
+            }
+          },
+          "note": "Only the two Kalman variants state an interval. LOCF, moving average, EWMA and Holt produce point predictions with no error model, so no coverage is reported for them rather than one being invented.",
+          "one_step_coverage": {
+            "kalman_fitted": {
+              "ci_hi": 0.951771,
+              "ci_lo": 0.943501,
+              "mean": 0.947636,
+              "n_clusters": 100,
+              "sd": 0.0208397,
+              "se": 0.00208397
+            },
+            "kalman_shipped": {
+              "ci_hi": 0.953594,
+              "ci_lo": 0.945861,
+              "mean": 0.949727,
+              "n_clusters": 100,
+              "sd": 0.0194873,
+              "se": 0.00194873
+            }
+          }
+        },
+        "n_test_series": 100,
+        "one_step": {
+          "mae": {
+            "ewma": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.0855796,
+                "ci_lo": 0.0687992,
+                "mean": 0.0771894,
+                "n_clusters": 100,
+                "sd": 0.0422847,
+                "se": 0.00422847
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.524323,
+                "ci_lo": 0.503007,
+                "mean": 0.513665,
+                "n_clusters": 100,
+                "sd": 0.0537147,
+                "se": 0.00537147
+              }
+            },
+            "holt": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.00834372,
+                "ci_lo": 0.00522353,
+                "mean": 0.00678362,
+                "n_clusters": 100,
+                "sd": 0.00786253,
+                "se": 0.000786253
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.449813,
+                "ci_lo": 0.436705,
+                "mean": 0.443259,
+                "n_clusters": 100,
+                "sd": 0.0330324,
+                "se": 0.00330324
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.000155012,
+                "ci_lo": -0.000251685,
+                "mean": -4.83362e-05,
+                "n_clusters": 100,
+                "sd": 0.00102483,
+                "se": 0.000102483
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.442724,
+                "ci_lo": 0.43013,
+                "mean": 0.436427,
+                "n_clusters": 100,
+                "sd": 0.0317335,
+                "se": 0.00317335
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 0.442753,
+                "ci_lo": 0.430197,
+                "mean": 0.436475,
+                "n_clusters": 100,
+                "sd": 0.031639,
+                "se": 0.0031639
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.143403,
+                "ci_lo": 0.130116,
+                "mean": 0.13676,
+                "n_clusters": 100,
+                "sd": 0.0334817,
+                "se": 0.00334817
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.583251,
+                "ci_lo": 0.56322,
+                "mean": 0.573235,
+                "n_clusters": 100,
+                "sd": 0.0504756,
+                "se": 0.00504756
+              }
+            },
+            "moving_average": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.0901092,
+                "ci_lo": 0.0634162,
+                "mean": 0.0767627,
+                "n_clusters": 100,
+                "sd": 0.0672634,
+                "se": 0.00672634
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.528044,
+                "ci_lo": 0.498432,
+                "mean": 0.513238,
+                "n_clusters": 100,
+                "sd": 0.0746188,
+                "se": 0.00746188
+              }
+            }
+          },
+          "mse": {
+            "ewma": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.131263,
+                "ci_lo": 0.104132,
+                "mean": 0.117698,
+                "n_clusters": 100,
+                "sd": 0.0683671,
+                "se": 0.00683671
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.435141,
+                "ci_lo": 0.401814,
+                "mean": 0.418478,
+                "n_clusters": 100,
+                "sd": 0.08398,
+                "se": 0.008398
+              }
+            },
+            "holt": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.01161,
+                "ci_lo": 0.00751662,
+                "mean": 0.00956333,
+                "n_clusters": 100,
+                "sd": 0.0103149,
+                "se": 0.00103149
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.318799,
+                "ci_lo": 0.301888,
+                "mean": 0.310344,
+                "n_clusters": 100,
+                "sd": 0.0426123,
+                "se": 0.00426123
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.000227217,
+                "ci_lo": -0.000231428,
+                "mean": -2.10537e-06,
+                "n_clusters": 100,
+                "sd": 0.00115573,
+                "se": 0.000115573
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.308893,
+                "ci_lo": 0.292664,
+                "mean": 0.300778,
+                "n_clusters": 100,
+                "sd": 0.0408958,
+                "se": 0.00408958
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 0.30886,
+                "ci_lo": 0.2927,
+                "mean": 0.30078,
+                "n_clusters": 100,
+                "sd": 0.0407216,
+                "se": 0.00407216
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.230646,
+                "ci_lo": 0.206485,
+                "mean": 0.218565,
+                "n_clusters": 100,
+                "sd": 0.0608848,
+                "se": 0.00608848
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.536916,
+                "ci_lo": 0.501775,
+                "mean": 0.519346,
+                "n_clusters": 100,
+                "sd": 0.0885514,
+                "se": 0.00885514
+              }
+            },
+            "moving_average": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.139212,
+                "ci_lo": 0.0966659,
+                "mean": 0.117939,
+                "n_clusters": 100,
+                "sd": 0.107211,
+                "se": 0.0107211
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.441455,
+                "ci_lo": 0.395984,
+                "mean": 0.418719,
+                "n_clusters": 100,
+                "sd": 0.114581,
+                "se": 0.0114581
+              }
+            }
+          }
+        },
+        "regime": "model_correct",
+        "test_seed_range": [
+          3100000,
+          3100099
+        ],
+        "tuned": {
+          "ewma": {
+            "tau_days": 1.0,
+            "train_mse": 0.406108
+          },
+          "holt": {
+            "tau_level_days": 4.0,
+            "tau_trend_days": 7.0,
+            "train_mse": 0.30285
+          },
+          "kalman_fitted": {
+            "sigma_accel": 0.00866295,
+            "sigma_accel_at_floor": false,
+            "sigma_obs_kg": 0.492505,
+            "sigma_v0": 0.142857,
+            "train_loglik": -2926.63
+          },
+          "moving_average": {
+            "train_mse": 0.411623,
+            "window_days": 3.0
+          },
+          "train_n_series": 30,
+          "train_seed_range": [
+            3000000,
+            3000029
+          ]
+        }
+      },
+      "outliers": {
+        "forecast30": {
+          "achieved_horizon_days": {
+            "max": 30.0,
+            "mean": 30.0,
+            "min": 30.0
+          },
+          "mae": {
+            "ewma": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 1.00228,
+                "ci_lo": 0.814895,
+                "mean": 0.90859,
+                "n_clusters": 100,
+                "sd": 0.4722,
+                "se": 0.04722
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 1.72721,
+                "ci_lo": 1.65562,
+                "mean": 1.69141,
+                "n_clusters": 100,
+                "sd": 0.180385,
+                "se": 0.0180385
+              }
+            },
+            "holt": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.267049,
+                "ci_lo": -0.42057,
+                "mean": -0.34381,
+                "n_clusters": 100,
+                "sd": 0.386855,
+                "se": 0.0386855
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.477662,
+                "ci_lo": 0.400367,
+                "mean": 0.439015,
+                "n_clusters": 100,
+                "sd": 0.194775,
+                "se": 0.0194775
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.471666,
+                "ci_lo": -0.647397,
+                "mean": -0.559531,
+                "n_clusters": 100,
+                "sd": 0.442822,
+                "se": 0.0442822
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.242414,
+                "ci_lo": 0.204173,
+                "mean": 0.223293,
+                "n_clusters": 100,
+                "sd": 0.0963625,
+                "se": 0.00963625
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 0.873493,
+                "ci_lo": 0.692157,
+                "mean": 0.782825,
+                "n_clusters": 100,
+                "sd": 0.456947,
+                "se": 0.0456947
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.994669,
+                "ci_lo": 0.771058,
+                "mean": 0.882863,
+                "n_clusters": 100,
+                "sd": 0.563474,
+                "se": 0.0563474
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 1.7789,
+                "ci_lo": 1.55248,
+                "mean": 1.66569,
+                "n_clusters": 100,
+                "sd": 0.570546,
+                "se": 0.0570546
+              }
+            },
+            "moving_average": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 1.00526,
+                "ci_lo": 0.814801,
+                "mean": 0.910029,
+                "n_clusters": 100,
+                "sd": 0.479926,
+                "se": 0.0479926
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 1.72575,
+                "ci_lo": 1.65995,
+                "mean": 1.69285,
+                "n_clusters": 100,
+                "sd": 0.165803,
+                "se": 0.0165803
+              }
+            }
+          }
+        },
+        "kalman_intervals": {
+          "forecast30_coverage": {
+            "kalman_fitted": {
+              "ci_hi": 1.00328,
+              "ci_lo": 0.990053,
+              "mean": 0.996667,
+              "n_clusters": 100,
+              "sd": 0.0333333,
+              "se": 0.00333333
+            },
+            "kalman_shipped": {
+              "ci_hi": 0.968303,
+              "ci_lo": 0.918364,
+              "mean": 0.943333,
+              "n_clusters": 100,
+              "sd": 0.125842,
+              "se": 0.0125842
+            }
+          },
+          "note": "Only the two Kalman variants state an interval. LOCF, moving average, EWMA and Holt produce point predictions with no error model, so no coverage is reported for them rather than one being invented.",
+          "one_step_coverage": {
+            "kalman_fitted": {
+              "ci_hi": 0.951424,
+              "ci_lo": 0.948939,
+              "mean": 0.950182,
+              "n_clusters": 100,
+              "sd": 0.00626115,
+              "se": 0.000626115
+            },
+            "kalman_shipped": {
+              "ci_hi": 0.881996,
+              "ci_lo": 0.871458,
+              "mean": 0.876727,
+              "n_clusters": 100,
+              "sd": 0.0265537,
+              "se": 0.00265537
+            }
+          }
+        },
+        "n_test_series": 100,
+        "one_step": {
+          "mae": {
+            "ewma": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.0239548,
+                "ci_lo": 0.0174242,
+                "mean": 0.0206895,
+                "n_clusters": 100,
+                "sd": 0.0164564,
+                "se": 0.00164564
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.67916,
+                "ci_lo": 0.664341,
+                "mean": 0.671751,
+                "n_clusters": 100,
+                "sd": 0.0373425,
+                "se": 0.00373425
+              }
+            },
+            "holt": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.012074,
+                "ci_lo": -0.0229423,
+                "mean": -0.0175082,
+                "n_clusters": 100,
+                "sd": 0.0273868,
+                "se": 0.00273868
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.64072,
+                "ci_lo": 0.626386,
+                "mean": 0.633553,
+                "n_clusters": 100,
+                "sd": 0.0361219,
+                "se": 0.00361219
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.0429216,
+                "ci_lo": -0.0499779,
+                "mean": -0.0464498,
+                "n_clusters": 100,
+                "sd": 0.0177811,
+                "se": 0.00177811
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.611581,
+                "ci_lo": 0.597642,
+                "mean": 0.604611,
+                "n_clusters": 100,
+                "sd": 0.0351246,
+                "se": 0.00351246
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 0.658754,
+                "ci_lo": 0.643368,
+                "mean": 0.651061,
+                "n_clusters": 100,
+                "sd": 0.0387697,
+                "se": 0.00387697
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.244746,
+                "ci_lo": 0.227938,
+                "mean": 0.236342,
+                "n_clusters": 100,
+                "sd": 0.0423536,
+                "se": 0.00423536
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.899621,
+                "ci_lo": 0.875186,
+                "mean": 0.887403,
+                "n_clusters": 100,
+                "sd": 0.0615741,
+                "se": 0.00615741
+              }
+            },
+            "moving_average": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.0266283,
+                "ci_lo": 0.0192199,
+                "mean": 0.0229241,
+                "n_clusters": 100,
+                "sd": 0.0186685,
+                "se": 0.00186685
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.682117,
+                "ci_lo": 0.665853,
+                "mean": 0.673985,
+                "n_clusters": 100,
+                "sd": 0.0409838,
+                "se": 0.00409838
+              }
+            }
+          },
+          "mse": {
+            "ewma": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.0340032,
+                "ci_lo": 0.0229516,
+                "mean": 0.0284774,
+                "n_clusters": 100,
+                "sd": 0.0278487,
+                "se": 0.00278487
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 1.22681,
+                "ci_lo": 1.17577,
+                "mean": 1.20129,
+                "n_clusters": 100,
+                "sd": 0.128633,
+                "se": 0.0128633
+              }
+            },
+            "holt": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.0447383,
+                "ci_lo": -0.0638173,
+                "mean": -0.0542778,
+                "n_clusters": 100,
+                "sd": 0.0480769,
+                "se": 0.00480769
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 1.14056,
+                "ci_lo": 1.0965,
+                "mean": 1.11853,
+                "n_clusters": 100,
+                "sd": 0.111021,
+                "se": 0.0111021
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.0836231,
+                "ci_lo": -0.0937676,
+                "mean": -0.0886953,
+                "n_clusters": 100,
+                "sd": 0.025563,
+                "se": 0.0025563
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 1.10623,
+                "ci_lo": 1.06201,
+                "mean": 1.08412,
+                "n_clusters": 100,
+                "sd": 0.111426,
+                "se": 0.0111426
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 1.19776,
+                "ci_lo": 1.14787,
+                "mean": 1.17281,
+                "n_clusters": 100,
+                "sd": 0.125716,
+                "se": 0.0125716
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.934366,
+                "ci_lo": 0.852697,
+                "mean": 0.893532,
+                "n_clusters": 100,
+                "sd": 0.205798,
+                "se": 0.0205798
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 2.12144,
+                "ci_lo": 2.01125,
+                "mean": 2.06634,
+                "n_clusters": 100,
+                "sd": 0.277675,
+                "se": 0.0277675
+              }
+            },
+            "moving_average": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.03664,
+                "ci_lo": 0.0225613,
+                "mean": 0.0296007,
+                "n_clusters": 100,
+                "sd": 0.0354767,
+                "se": 0.00354767
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 1.22887,
+                "ci_lo": 1.17596,
+                "mean": 1.20241,
+                "n_clusters": 100,
+                "sd": 0.133333,
+                "se": 0.0133333
+              }
+            }
+          }
+        },
+        "regime": "outliers",
+        "test_seed_range": [
+          3100700,
+          3100799
+        ],
+        "tuned": {
+          "ewma": {
+            "tau_days": 4.0,
+            "train_mse": 1.21751
+          },
+          "holt": {
+            "tau_level_days": 14.0,
+            "tau_trend_days": 14.0,
+            "train_mse": 1.12952
+          },
+          "kalman_fitted": {
+            "sigma_accel": 1e-06,
+            "sigma_accel_at_floor": true,
+            "sigma_obs_kg": 0.989861,
+            "sigma_v0": 0.142857,
+            "train_loglik": -5208.09
+          },
+          "moving_average": {
+            "train_mse": 1.22449,
+            "window_days": 7.0
+          },
+          "train_n_series": 30,
+          "train_seed_range": [
+            3000210,
+            3000239
+          ]
+        }
+      },
+      "plateau": {
+        "forecast30": {
+          "achieved_horizon_days": {
+            "max": 30.0,
+            "mean": 30.0,
+            "min": 30.0
+          },
+          "mae": {
+            "ewma": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.872237,
+                "ci_lo": -0.976418,
+                "mean": -0.924328,
+                "n_clusters": 100,
+                "sd": 0.262524,
+                "se": 0.0262524
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.195896,
+                "ci_lo": 0.170572,
+                "mean": 0.183234,
+                "n_clusters": 100,
+                "sd": 0.063814,
+                "se": 0.0063814
+              }
+            },
+            "holt": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.025634,
+                "ci_lo": -0.0721708,
+                "mean": -0.0489024,
+                "n_clusters": 100,
+                "sd": 0.117267,
+                "se": 0.0117267
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 1.11869,
+                "ci_lo": 0.998627,
+                "mean": 1.05866,
+                "n_clusters": 100,
+                "sd": 0.302551,
+                "se": 0.0302551
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.0307529,
+                "ci_lo": 0.0166611,
+                "mean": 0.023707,
+                "n_clusters": 100,
+                "sd": 0.0355097,
+                "se": 0.00355097
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 1.17584,
+                "ci_lo": 1.0867,
+                "mean": 1.13127,
+                "n_clusters": 100,
+                "sd": 0.22463,
+                "se": 0.022463
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 1.1567,
+                "ci_lo": 1.05843,
+                "mean": 1.10756,
+                "n_clusters": 100,
+                "sd": 0.247635,
+                "se": 0.0247635
+              }
+            },
+            "locf": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.683165,
+                "ci_lo": -0.801014,
+                "mean": -0.74209,
+                "n_clusters": 100,
+                "sd": 0.296964,
+                "se": 0.0296964
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.396884,
+                "ci_lo": 0.33406,
+                "mean": 0.365472,
+                "n_clusters": 100,
+                "sd": 0.158311,
+                "se": 0.0158311
+              }
+            },
+            "moving_average": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.865003,
+                "ci_lo": -0.966151,
+                "mean": -0.915577,
+                "n_clusters": 100,
+                "sd": 0.254882,
+                "se": 0.0254882
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.205387,
+                "ci_lo": 0.178582,
+                "mean": 0.191985,
+                "n_clusters": 100,
+                "sd": 0.0675471,
+                "se": 0.00675471
+              }
+            }
+          }
+        },
+        "kalman_intervals": {
+          "forecast30_coverage": {
+            "kalman_fitted": {
+              "ci_hi": 0.894129,
+              "ci_lo": 0.825871,
+              "mean": 0.86,
+              "n_clusters": 100,
+              "sd": 0.172002,
+              "se": 0.0172002
+            },
+            "kalman_shipped": {
+              "ci_hi": 0.962744,
+              "ci_lo": 0.910589,
+              "mean": 0.936667,
+              "n_clusters": 100,
+              "sd": 0.131426,
+              "se": 0.0131426
+            }
+          },
+          "note": "Only the two Kalman variants state an interval. LOCF, moving average, EWMA and Holt produce point predictions with no error model, so no coverage is reported for them rather than one being invented.",
+          "one_step_coverage": {
+            "kalman_fitted": {
+              "ci_hi": 0.949016,
+              "ci_lo": 0.940984,
+              "mean": 0.945,
+              "n_clusters": 100,
+              "sd": 0.0202404,
+              "se": 0.00202404
+            },
+            "kalman_shipped": {
+              "ci_hi": 0.956213,
+              "ci_lo": 0.948696,
+              "mean": 0.952455,
+              "n_clusters": 100,
+              "sd": 0.0189399,
+              "se": 0.00189399
+            }
+          }
+        },
+        "n_test_series": 100,
+        "one_step": {
+          "mae": {
+            "ewma": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.0204648,
+                "ci_lo": 0.0158399,
+                "mean": 0.0181523,
+                "n_clusters": 100,
+                "sd": 0.0116543,
+                "se": 0.00116543
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.458338,
+                "ci_lo": 0.446446,
+                "mean": 0.452392,
+                "n_clusters": 100,
+                "sd": 0.0299663,
+                "se": 0.00299663
+              }
+            },
+            "holt": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.00501383,
+                "ci_lo": 0.00148614,
+                "mean": 0.00324998,
+                "n_clusters": 100,
+                "sd": 0.00888939,
+                "se": 0.000888939
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.443505,
+                "ci_lo": 0.431474,
+                "mean": 0.437489,
+                "n_clusters": 100,
+                "sd": 0.0303183,
+                "se": 0.00303183
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 3.98141e-05,
+                "ci_lo": -0.000410755,
+                "mean": -0.00018547,
+                "n_clusters": 100,
+                "sd": 0.00113538,
+                "se": 0.000113538
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.43982,
+                "ci_lo": 0.428288,
+                "mean": 0.434054,
+                "n_clusters": 100,
+                "sd": 0.0290612,
+                "se": 0.00290612
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 0.440044,
+                "ci_lo": 0.428435,
+                "mean": 0.434239,
+                "n_clusters": 100,
+                "sd": 0.0292532,
+                "se": 0.00292532
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.137344,
+                "ci_lo": 0.123978,
+                "mean": 0.130661,
+                "n_clusters": 100,
+                "sd": 0.0336812,
+                "se": 0.00336812
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.574876,
+                "ci_lo": 0.554925,
+                "mean": 0.5649,
+                "n_clusters": 100,
+                "sd": 0.0502755,
+                "se": 0.00502755
+              }
+            },
+            "moving_average": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.0193618,
+                "ci_lo": 0.0146486,
+                "mean": 0.0170052,
+                "n_clusters": 100,
+                "sd": 0.0118765,
+                "se": 0.00118765
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.45728,
+                "ci_lo": 0.445209,
+                "mean": 0.451245,
+                "n_clusters": 100,
+                "sd": 0.030419,
+                "se": 0.0030419
+              }
+            }
+          },
+          "mse": {
+            "ewma": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.024894,
+                "ci_lo": 0.0219125,
+                "mean": 0.0234033,
+                "n_clusters": 100,
+                "sd": 0.00751312,
+                "se": 0.000751312
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.326245,
+                "ci_lo": 0.311321,
+                "mean": 0.318783,
+                "n_clusters": 100,
+                "sd": 0.0376062,
+                "se": 0.00376062
+              }
+            },
+            "holt": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.00621222,
+                "ci_lo": 0.00229417,
+                "mean": 0.00425319,
+                "n_clusters": 100,
+                "sd": 0.00987303,
+                "se": 0.000987303
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.307268,
+                "ci_lo": 0.291998,
+                "mean": 0.299633,
+                "n_clusters": 100,
+                "sd": 0.0384787,
+                "se": 0.00384787
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.000105404,
+                "ci_lo": -0.000483661,
+                "mean": -0.000294532,
+                "n_clusters": 100,
+                "sd": 0.000953164,
+                "se": 9.53164e-05
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.302399,
+                "ci_lo": 0.287771,
+                "mean": 0.295085,
+                "n_clusters": 100,
+                "sd": 0.0368594,
+                "se": 0.00368594
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 0.302752,
+                "ci_lo": 0.288007,
+                "mean": 0.29538,
+                "n_clusters": 100,
+                "sd": 0.0371565,
+                "se": 0.00371565
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.215004,
+                "ci_lo": 0.193426,
+                "mean": 0.204215,
+                "n_clusters": 100,
+                "sd": 0.0543721,
+                "se": 0.00543721
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.5154,
+                "ci_lo": 0.483789,
+                "mean": 0.499595,
+                "n_clusters": 100,
+                "sd": 0.0796563,
+                "se": 0.00796563
+              }
+            },
+            "moving_average": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.0232491,
+                "ci_lo": 0.0195516,
+                "mean": 0.0214004,
+                "n_clusters": 100,
+                "sd": 0.00931711,
+                "se": 0.000931711
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.324475,
+                "ci_lo": 0.309085,
+                "mean": 0.31678,
+                "n_clusters": 100,
+                "sd": 0.0387799,
+                "se": 0.00387799
+              }
+            }
+          }
+        },
+        "regime": "plateau",
+        "test_seed_range": [
+          3100300,
+          3100399
+        ],
+        "tuned": {
+          "ewma": {
+            "tau_days": 4.0,
+            "train_mse": 0.308047
+          },
+          "holt": {
+            "tau_level_days": 7.0,
+            "tau_trend_days": 7.0,
+            "train_mse": 0.286895
+          },
+          "kalman_fitted": {
+            "sigma_accel": 0.00677421,
+            "sigma_accel_at_floor": false,
+            "sigma_obs_kg": 0.487961,
+            "sigma_v0": 0.142857,
+            "train_loglik": -2852.95
+          },
+          "moving_average": {
+            "train_mse": 0.304997,
+            "window_days": 7.0
+          },
+          "train_n_series": 30,
+          "train_seed_range": [
+            3000090,
+            3000119
+          ]
+        }
+      },
+      "steady_loss": {
+        "forecast30": {
+          "achieved_horizon_days": {
+            "max": 30.0,
+            "mean": 30.0,
+            "min": 30.0
+          },
+          "mae": {
+            "ewma": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 1.1845,
+                "ci_lo": 1.0769,
+                "mean": 1.1307,
+                "n_clusters": 100,
+                "sd": 0.271137,
+                "se": 0.0271137
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 1.61836,
+                "ci_lo": 1.56204,
+                "mean": 1.5902,
+                "n_clusters": 100,
+                "sd": 0.141942,
+                "se": 0.0141942
+              }
+            },
+            "holt": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.100095,
+                "ci_lo": -0.137815,
+                "mean": -0.118955,
+                "n_clusters": 100,
+                "sd": 0.0950512,
+                "se": 0.00950512
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.372402,
+                "ci_lo": 0.308686,
+                "mean": 0.340544,
+                "n_clusters": 100,
+                "sd": 0.160558,
+                "se": 0.0160558
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.246917,
+                "ci_lo": -0.338248,
+                "mean": -0.292583,
+                "n_clusters": 100,
+                "sd": 0.230144,
+                "se": 0.0230144
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.185808,
+                "ci_lo": 0.148025,
+                "mean": 0.166916,
+                "n_clusters": 100,
+                "sd": 0.0952078,
+                "se": 0.00952078
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 0.504517,
+                "ci_lo": 0.414482,
+                "mean": 0.459499,
+                "n_clusters": 100,
+                "sd": 0.226879,
+                "se": 0.0226879
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 1.12844,
+                "ci_lo": 0.991024,
+                "mean": 1.05973,
+                "n_clusters": 100,
+                "sd": 0.346272,
+                "se": 0.0346272
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 1.57264,
+                "ci_lo": 1.46582,
+                "mean": 1.51923,
+                "n_clusters": 100,
+                "sd": 0.269175,
+                "se": 0.0269175
+              }
+            },
+            "moving_average": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 1.26869,
+                "ci_lo": 1.16984,
+                "mean": 1.21926,
+                "n_clusters": 100,
+                "sd": 0.249094,
+                "se": 0.0249094
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 1.69779,
+                "ci_lo": 1.65973,
+                "mean": 1.67876,
+                "n_clusters": 100,
+                "sd": 0.0958993,
+                "se": 0.00958993
+              }
+            }
+          }
+        },
+        "kalman_intervals": {
+          "forecast30_coverage": {
+            "kalman_fitted": {
+              "ci_hi": 0.9773,
+              "ci_lo": 0.909367,
+              "mean": 0.943333,
+              "n_clusters": 100,
+              "sd": 0.171185,
+              "se": 0.0171185
+            },
+            "kalman_shipped": {
+              "ci_hi": 1.0,
+              "ci_lo": 1.0,
+              "mean": 1.0,
+              "n_clusters": 100,
+              "sd": 0.0,
+              "se": 0.0
+            }
+          },
+          "note": "Only the two Kalman variants state an interval. LOCF, moving average, EWMA and Holt produce point predictions with no error model, so no coverage is reported for them rather than one being invented.",
+          "one_step_coverage": {
+            "kalman_fitted": {
+              "ci_hi": 0.95514,
+              "ci_lo": 0.946497,
+              "mean": 0.950818,
+              "n_clusters": 100,
+              "sd": 0.0217789,
+              "se": 0.00217789
+            },
+            "kalman_shipped": {
+              "ci_hi": 0.959482,
+              "ci_lo": 0.950882,
+              "mean": 0.955182,
+              "n_clusters": 100,
+              "sd": 0.0216698,
+              "se": 0.00216698
+            }
+          }
+        },
+        "n_test_series": 100,
+        "one_step": {
+          "mae": {
+            "ewma": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.030158,
+                "ci_lo": 0.025483,
+                "mean": 0.0278205,
+                "n_clusters": 100,
+                "sd": 0.0117803,
+                "se": 0.00117803
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.464656,
+                "ci_lo": 0.451056,
+                "mean": 0.457856,
+                "n_clusters": 100,
+                "sd": 0.0342709,
+                "se": 0.00342709
+              }
+            },
+            "holt": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.00039798,
+                "ci_lo": -0.00378992,
+                "mean": -0.00209395,
+                "n_clusters": 100,
+                "sd": 0.0085473,
+                "se": 0.00085473
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.433856,
+                "ci_lo": 0.422027,
+                "mean": 0.427942,
+                "n_clusters": 100,
+                "sd": 0.0298082,
+                "se": 0.00298082
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.0107795,
+                "ci_lo": -0.0139939,
+                "mean": -0.0123867,
+                "n_clusters": 100,
+                "sd": 0.00809977,
+                "se": 0.000809977
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.423795,
+                "ci_lo": 0.411503,
+                "mean": 0.417649,
+                "n_clusters": 100,
+                "sd": 0.0309758,
+                "se": 0.00309758
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 0.436486,
+                "ci_lo": 0.423585,
+                "mean": 0.430036,
+                "n_clusters": 100,
+                "sd": 0.0325107,
+                "se": 0.00325107
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.144395,
+                "ci_lo": 0.13283,
+                "mean": 0.138613,
+                "n_clusters": 100,
+                "sd": 0.0291438,
+                "se": 0.00291438
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.578385,
+                "ci_lo": 0.558911,
+                "mean": 0.568648,
+                "n_clusters": 100,
+                "sd": 0.0490719,
+                "se": 0.00490719
+              }
+            },
+            "moving_average": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.0287906,
+                "ci_lo": 0.023904,
+                "mean": 0.0263473,
+                "n_clusters": 100,
+                "sd": 0.0123136,
+                "se": 0.00123136
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.462804,
+                "ci_lo": 0.449962,
+                "mean": 0.456383,
+                "n_clusters": 100,
+                "sd": 0.0323593,
+                "se": 0.00323593
+              }
+            }
+          },
+          "mse": {
+            "ewma": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.0401881,
+                "ci_lo": 0.0357841,
+                "mean": 0.0379861,
+                "n_clusters": 100,
+                "sd": 0.0110976,
+                "se": 0.00110976
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.335781,
+                "ci_lo": 0.31795,
+                "mean": 0.326866,
+                "n_clusters": 100,
+                "sd": 0.0449308,
+                "se": 0.00449308
+              }
+            },
+            "holt": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.00160765,
+                "ci_lo": -0.00501652,
+                "mean": -0.00331209,
+                "n_clusters": 100,
+                "sd": 0.00858996,
+                "se": 0.000858996
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.293154,
+                "ci_lo": 0.277981,
+                "mean": 0.285567,
+                "n_clusters": 100,
+                "sd": 0.0382332,
+                "se": 0.00382332
+              }
+            },
+            "kalman_fitted": {
+              "beats_shipped": true,
+              "difference_vs_shipped": {
+                "ci_hi": -0.0144534,
+                "ci_lo": -0.0174497,
+                "mean": -0.0159515,
+                "n_clusters": 100,
+                "sd": 0.00755038,
+                "se": 0.000755038
+              },
+              "loses_to_shipped": false,
+              "score": {
+                "ci_hi": 0.280353,
+                "ci_lo": 0.265503,
+                "mean": 0.272928,
+                "n_clusters": 100,
+                "sd": 0.037419,
+                "se": 0.0037419
+              }
+            },
+            "kalman_shipped": {
+              "score": {
+                "ci_hi": 0.296839,
+                "ci_lo": 0.280921,
+                "mean": 0.28888,
+                "n_clusters": 100,
+                "sd": 0.0401118,
+                "se": 0.00401118
+              }
+            },
+            "locf": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.227114,
+                "ci_lo": 0.206697,
+                "mean": 0.216905,
+                "n_clusters": 100,
+                "sd": 0.0514486,
+                "se": 0.00514486
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.521916,
+                "ci_lo": 0.489654,
+                "mean": 0.505785,
+                "n_clusters": 100,
+                "sd": 0.0812982,
+                "se": 0.00812982
+              }
+            },
+            "moving_average": {
+              "beats_shipped": false,
+              "difference_vs_shipped": {
+                "ci_hi": 0.0374191,
+                "ci_lo": 0.0336272,
+                "mean": 0.0355232,
+                "n_clusters": 100,
+                "sd": 0.00955517,
+                "se": 0.000955517
+              },
+              "loses_to_shipped": true,
+              "score": {
+                "ci_hi": 0.332788,
+                "ci_lo": 0.316017,
+                "mean": 0.324403,
+                "n_clusters": 100,
+                "sd": 0.0422599,
+                "se": 0.00422599
+              }
+            }
+          }
+        },
+        "regime": "steady_loss",
+        "test_seed_range": [
+          3100200,
+          3100299
+        ],
+        "tuned": {
+          "ewma": {
+            "tau_days": 2.0,
+            "train_mse": 0.330434
+          },
+          "holt": {
+            "tau_level_days": 7.0,
+            "tau_trend_days": 14.0,
+            "train_mse": 0.287016
+          },
+          "kalman_fitted": {
+            "sigma_accel": 0.000316435,
+            "sigma_accel_at_floor": false,
+            "sigma_obs_kg": 0.500188,
+            "sigma_v0": 0.142857,
+            "train_loglik": -2794.44
+          },
+          "moving_average": {
+            "train_mse": 0.327952,
+            "window_days": 7.0
+          },
+          "train_n_series": 30,
+          "train_seed_range": [
+            3000060,
+            3000089
+          ]
+        }
+      }
+    },
+    "summary": {
+      "methods_beating_shipped": [
+        "curvature/one_step.mae/kalman_fitted",
+        "flat/forecast30.mae/ewma",
+        "flat/forecast30.mae/holt",
+        "flat/forecast30.mae/kalman_fitted",
+        "flat/forecast30.mae/locf",
+        "flat/forecast30.mae/moving_average",
+        "flat/one_step.mae/ewma",
+        "flat/one_step.mae/holt",
+        "flat/one_step.mae/kalman_fitted",
+        "flat/one_step.mae/moving_average",
+        "irregular/forecast30.mae/holt",
+        "irregular/forecast30.mae/kalman_fitted",
+        "irregular/one_step.mae/kalman_fitted",
+        "jump/forecast30.mae/holt",
+        "jump/forecast30.mae/kalman_fitted",
+        "jump/one_step.mae/ewma",
+        "jump/one_step.mae/holt",
+        "jump/one_step.mae/kalman_fitted",
+        "jump/one_step.mae/moving_average",
+        "outliers/forecast30.mae/holt",
+        "outliers/forecast30.mae/kalman_fitted",
+        "outliers/one_step.mae/holt",
+        "outliers/one_step.mae/kalman_fitted",
+        "plateau/forecast30.mae/ewma",
+        "plateau/forecast30.mae/holt",
+        "plateau/forecast30.mae/locf",
+        "plateau/forecast30.mae/moving_average",
+        "steady_loss/forecast30.mae/holt",
+        "steady_loss/forecast30.mae/kalman_fitted",
+        "steady_loss/one_step.mae/holt",
+        "steady_loss/one_step.mae/kalman_fitted"
+      ],
+      "methods_losing_to_shipped": [
+        "curvature/forecast30.mae/ewma",
+        "curvature/forecast30.mae/holt",
+        "curvature/forecast30.mae/kalman_fitted",
+        "curvature/forecast30.mae/locf",
+        "curvature/forecast30.mae/moving_average",
+        "curvature/one_step.mae/ewma",
+        "curvature/one_step.mae/holt",
+        "curvature/one_step.mae/locf",
+        "curvature/one_step.mae/moving_average",
+        "flat/one_step.mae/locf",
+        "irregular/forecast30.mae/ewma",
+        "irregular/forecast30.mae/locf",
+        "irregular/forecast30.mae/moving_average",
+        "irregular/one_step.mae/ewma",
+        "irregular/one_step.mae/locf",
+        "irregular/one_step.mae/moving_average",
+        "jump/forecast30.mae/ewma",
+        "jump/forecast30.mae/moving_average",
+        "jump/one_step.mae/locf",
+        "model_correct/forecast30.mae/ewma",
+        "model_correct/forecast30.mae/holt",
+        "model_correct/forecast30.mae/locf",
+        "model_correct/forecast30.mae/moving_average",
+        "model_correct/one_step.mae/ewma",
+        "model_correct/one_step.mae/holt",
+        "model_correct/one_step.mae/locf",
+        "model_correct/one_step.mae/moving_average",
+        "outliers/forecast30.mae/ewma",
+        "outliers/forecast30.mae/locf",
+        "outliers/forecast30.mae/moving_average",
+        "outliers/one_step.mae/ewma",
+        "outliers/one_step.mae/locf",
+        "outliers/one_step.mae/moving_average",
+        "plateau/forecast30.mae/kalman_fitted",
+        "plateau/one_step.mae/ewma",
+        "plateau/one_step.mae/holt",
+        "plateau/one_step.mae/locf",
+        "plateau/one_step.mae/moving_average",
+        "steady_loss/forecast30.mae/ewma",
+        "steady_loss/forecast30.mae/locf",
+        "steady_loss/forecast30.mae/moving_average",
+        "steady_loss/one_step.mae/ewma",
+        "steady_loss/one_step.mae/locf",
+        "steady_loss/one_step.mae/moving_average"
+      ],
+      "n_beating_shipped": 31,
+      "n_comparisons": 80,
+      "n_losing_to_shipped": 44,
+      "n_simple_baselines_beating_shipped": 20,
+      "regimes_where_a_simple_baseline_wins": [
+        "flat",
+        "irregular",
+        "jump",
+        "outliers",
+        "plateau",
+        "steady_loss"
+      ],
+      "simple_baselines_beating_shipped": [
+        "flat/forecast30.mae/ewma",
+        "flat/forecast30.mae/holt",
+        "flat/forecast30.mae/locf",
+        "flat/forecast30.mae/moving_average",
+        "flat/one_step.mae/ewma",
+        "flat/one_step.mae/holt",
+        "flat/one_step.mae/moving_average",
+        "irregular/forecast30.mae/holt",
+        "jump/forecast30.mae/holt",
+        "jump/one_step.mae/ewma",
+        "jump/one_step.mae/holt",
+        "jump/one_step.mae/moving_average",
+        "outliers/forecast30.mae/holt",
+        "outliers/one_step.mae/holt",
+        "plateau/forecast30.mae/ewma",
+        "plateau/forecast30.mae/holt",
+        "plateau/forecast30.mae/locf",
+        "plateau/forecast30.mae/moving_average",
+        "steady_loss/forecast30.mae/holt",
+        "steady_loss/one_step.mae/holt"
+      ]
+    }
+  }
+}

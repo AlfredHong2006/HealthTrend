@@ -1,0 +1,69 @@
+/* One DOM order, two layouts.
+   Phone (the default, no media query): summary, chart, inspection -- the mobile order the
+   design direction specifies, and exactly the reading order.
+   Desktop: named grid areas fold that same order into a canvas column and an analysis rail,
+   without rendering anything twice. */
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--v2-space-5);
+  min-width: 0;
+}
+
+.summaryArea,
+.canvasArea,
+.inspectArea {
+  min-width: 0;
+}
+
+.summaryArea {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-4);
+}
+
+@media (min-width: 960px) {
+  .workspace {
+    /* 1.62 : 1 is 61.8% canvas to 38.2% rail -- inside the 60-65 / 35-40 split the design
+       direction asks for, and the canvas keeps the larger share at every width. */
+    grid-template-columns: minmax(0, 1.62fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "canvas summary"
+      "canvas inspect";
+    gap: var(--v2-space-6) var(--v2-space-8);
+    align-items: start;
+  }
+
+  .summaryArea {
+    grid-area: summary;
+  }
+
+  .canvasArea {
+    grid-area: canvas;
+    /* The canvas persists while the rail is read: it is the surface every detail tier refers
+       back to, so it should still be on screen when a reader reaches Statistics. */
+    position: sticky;
+    top: var(--v2-space-5);
+  }
+
+  .inspectArea {
+    grid-area: inspect;
+  }
+}
+
+@media (min-width: 1280px) {
+  .workspace {
+    gap: var(--v2-space-6) var(--v2-space-10);
+  }
+}
+
+@media (max-width: 559px) {
+  .workspace {
+    gap: var(--v2-space-4);
+  }
+
+  .summaryArea {
+    gap: var(--v2-space-3);
+  }
+}

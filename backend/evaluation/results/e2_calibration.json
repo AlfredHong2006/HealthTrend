@@ -1,0 +1,243 @@
+{
+  "_config": {
+    "experiment": "e2",
+    "grid": {
+      "daily_n_obs": 60,
+      "irregular_n_obs": 23,
+      "irregular_pattern_days": [
+        0.5,
+        3.0,
+        1.0,
+        14.0,
+        0.25,
+        7.0,
+        21.0,
+        2.0,
+        0.75,
+        5.0
+      ],
+      "n_series": 500,
+      "nominal": {
+        "anees": 2.0,
+        "anis": 1.0,
+        "coverage": 0.95
+      }
+    },
+    "params": {
+      "initial_weekly_rate_spread_kg_per_week": 1.0,
+      "sigma_accel": 0.00809924,
+      "sigma_obs_kg": 0.5,
+      "sigma_v0": 0.142857,
+      "weekly_rate_drift_kg_per_week": 0.15
+    },
+    "scale": "full",
+    "seed_ranges": {
+      "e2_daily": {
+        "base": 1100000,
+        "end": 1150000,
+        "span": 50000
+      },
+      "e2_irregular": {
+        "base": 1200000,
+        "end": 1250000,
+        "span": 50000
+      },
+      "e2_recheck": {
+        "base": 1300000,
+        "end": 1350000,
+        "span": 50000
+      }
+    }
+  },
+  "results": {
+    "assessment": {
+      "coherent_misses": [],
+      "interval_misses": [],
+      "investigate": false,
+      "investigation_miss_count": 3,
+      "investigation_se_threshold": 4.0,
+      "large_deviations": [],
+      "n_checks": 8,
+      "n_interval_misses": 0,
+      "reasons": []
+    },
+    "configurations": [
+      {
+        "ci_contains_nominal": {
+          "anees": true,
+          "anis": true,
+          "coverage_v": true,
+          "coverage_w": true
+        },
+        "deviation_in_se": {
+          "anees": -0.122837,
+          "anis": 0.733437,
+          "coverage_v": -0.113612,
+          "coverage_w": -0.350097
+        },
+        "label": "daily",
+        "n_obs": 60,
+        "n_series": 500,
+        "nominal": {
+          "anees": 2.0,
+          "anis": 1.0,
+          "coverage_v": 0.95,
+          "coverage_w": 0.95
+        },
+        "pooled": {
+          "coverage_v": 0.949667,
+          "coverage_w": 0.949,
+          "inside_v": 28490,
+          "inside_w": 28470,
+          "n_posteriors": 30000,
+          "n_steps": 29500
+        },
+        "seed_range": [
+          1100000,
+          1100499
+        ],
+        "span_days": 59.0,
+        "spread_across_series": {
+          "anees": {
+            "q0.05": 0.972049,
+            "q0.5": 1.81663,
+            "q0.95": 3.42923
+          },
+          "anis": {
+            "q0.05": 0.7229,
+            "q0.5": 0.991985,
+            "q0.95": 1.32633
+          },
+          "coverage_w": {
+            "q0.05": 0.816667,
+            "q0.5": 0.966667,
+            "q0.95": 1.0
+          }
+        },
+        "summaries": {
+          "anees": {
+            "ci_hi": 2.06749,
+            "ci_lo": 1.92351,
+            "mean": 1.9955,
+            "n_clusters": 500,
+            "sd": 0.819341,
+            "se": 0.036642
+          },
+          "anis": {
+            "ci_hi": 1.022,
+            "ci_lo": 0.989961,
+            "mean": 1.00598,
+            "n_clusters": 500,
+            "sd": 0.182309,
+            "se": 0.00815309
+          },
+          "coverage_v": {
+            "ci_hi": 0.955431,
+            "ci_lo": 0.943902,
+            "mean": 0.949667,
+            "n_clusters": 500,
+            "sd": 0.0656053,
+            "se": 0.00293396
+          },
+          "coverage_w": {
+            "ci_hi": 0.954612,
+            "ci_lo": 0.943388,
+            "mean": 0.949,
+            "n_clusters": 500,
+            "sd": 0.06387,
+            "se": 0.00285635
+          }
+        }
+      },
+      {
+        "ci_contains_nominal": {
+          "anees": true,
+          "anis": true,
+          "coverage_v": true,
+          "coverage_w": true
+        },
+        "deviation_in_se": {
+          "anees": 0.334738,
+          "anis": 0.152879,
+          "coverage_v": -0.258065,
+          "coverage_w": -0.32789
+        },
+        "label": "irregular",
+        "n_obs": 23,
+        "n_series": 500,
+        "nominal": {
+          "anees": 2.0,
+          "anis": 1.0,
+          "coverage_v": 0.95,
+          "coverage_w": 0.95
+        },
+        "pooled": {
+          "coverage_v": 0.94913,
+          "coverage_w": 0.949043,
+          "inside_v": 10915,
+          "inside_w": 10914,
+          "n_posteriors": 11500,
+          "n_steps": 11000
+        },
+        "seed_range": [
+          1200000,
+          1200499
+        ],
+        "span_days": 112.5,
+        "spread_across_series": {
+          "anees": {
+            "q0.05": 0.962294,
+            "q0.5": 1.86856,
+            "q0.95": 3.7022
+          },
+          "anis": {
+            "q0.05": 0.537001,
+            "q0.5": 0.958249,
+            "q0.95": 1.55156
+          },
+          "coverage_w": {
+            "q0.05": 0.826087,
+            "q0.5": 0.956522,
+            "q0.95": 1.0
+          }
+        },
+        "summaries": {
+          "anees": {
+            "ci_hi": 2.08624,
+            "ci_lo": 1.93887,
+            "mean": 2.01255,
+            "n_clusters": 500,
+            "sd": 0.838589,
+            "se": 0.0375028
+          },
+          "anis": {
+            "ci_hi": 1.02977,
+            "ci_lo": 0.974532,
+            "mean": 1.00215,
+            "n_clusters": 500,
+            "sd": 0.314308,
+            "se": 0.0140563
+          },
+          "coverage_v": {
+            "ci_hi": 0.955751,
+            "ci_lo": 0.94251,
+            "mean": 0.94913,
+            "n_clusters": 500,
+            "sd": 0.0753455,
+            "se": 0.00336955
+          },
+          "coverage_w": {
+            "ci_hi": 0.954775,
+            "ci_lo": 0.943312,
+            "mean": 0.949043,
+            "n_clusters": 500,
+            "sd": 0.0652307,
+            "se": 0.00291721
+          }
+        }
+      }
+    ],
+    "investigate": false,
+    "n_interval_misses": 0
+  }
+}

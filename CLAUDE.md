@@ -122,7 +122,7 @@ From `backend/` (requires [uv](https://docs.astral.sh/uv/)):
 uv sync --locked                 # provision; fails on a drifted lockfile
 uv run ruff check .              # lint
 uv run ruff format --check .     # format check
-uv run mypy app                  # strict type check
+uv run mypy                      # strict type check (app, testing, evaluation)
 uv run pytest -q                 # tests
 uv run python -m tests.api.regenerate_openapi        # after any schema/route change
 HEALTHTREND_ALLOWED_ORIGINS=http://localhost:3000 uv run uvicorn app.main:app --no-access-log
