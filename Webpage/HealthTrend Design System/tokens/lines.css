@@ -1,0 +1,15 @@
+/* Hairlines. With almost no containers, the rule IS the structure.
+   Four weights, each with a fixed meaning. */
+:root {
+  --line-hair: 1px solid var(--rule-1); /* @kind other */
+  --line-divider: 1px solid var(--rule-2); /* @kind other */
+  --line-axis: 1px solid var(--rule-3); /* @kind other */
+  --line-accent: 2px solid var(--azure-500); /* @kind other */
+  --line-dashed: 1px dashed var(--rule-2); /* @kind other */
+
+  --stroke-trend: 2.25px;    /* estimated trajectory */
+  --stroke-projection: 1.75px;
+  --stroke-raw: 1px;
+  --stroke-grid: 1px;
+  --stroke-icon: 1.5px;      /* Lucide default we standardise on */
+}

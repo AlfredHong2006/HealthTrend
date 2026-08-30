@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Trend view" description="HealthTrend app shell with the hero trajectory screen: tier-1 estimate, interval bands, raw readings, projection." -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="display:grid;grid-template-columns:216px 1fr;min-height:100vh;background:#fff;font-family:var(--font-numeric)">
+<nav style="border-right:1px solid var(--rule-1);padding:20px 14px;display:flex;flex-direction:column;gap:26px">
+<div style="padding:0 10px;font:400 21px var(--font-prose);letter-spacing:-0.02em;color:var(--ink-1)">HealthTrend</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<div style="padding:7px 10px;border-radius:3px;background:var(--surface-hover);color:var(--text-display);font:600 14px var(--font-numeric)">Trend</div>
+<div style="padding:7px 10px;border-radius:3px;color:var(--text-secondary);font:450 14px var(--font-numeric)">Measurements</div>
+<div style="padding:7px 10px;border-radius:3px;color:var(--text-secondary);font:450 14px var(--font-numeric)">Evidence</div>
+<div style="padding:7px 10px;border-radius:3px;color:var(--text-secondary);font:450 14px var(--font-numeric)">Method</div>
+<div style="padding:7px 10px;border-radius:3px;color:var(--text-secondary);font:450 14px var(--font-numeric)">Settings</div>
+</div>
+<div style="margin-top:auto;display:flex;flex-direction:column;gap:10px;padding:0 10px">
+<span class="ht-eyebrow">Last 30 days</span>
+<x-import component-from-global-scope="HealthTrendDesignSystem_ec2bc0.Sparkline" trend="{{ spark }}" width="160" height="38" hint-size="160px,38px"></x-import>
+<span class="ht-qualifier">Sample data &mdash; not a real person</span>
+</div>
+</nav>
+<div style="display:flex;flex-direction:column;min-width:0">
+<header style="height:56px;display:flex;align-items:center;gap:18px;padding:0 64px;border-bottom:1px solid var(--rule-1)">
+<span class="ht-qualifier">Synced from a connected scale &middot; today, 06:40</span>
+<x-import component-from-global-scope="HealthTrendDesignSystem_ec2bc0.Badge" variant="accent" hint-size="150px,19px">Local linear trend, v2</x-import>
+<x-import component-from-global-scope="HealthTrendDesignSystem_ec2bc0.Badge" variant="outline" hint-size="110px,19px">Fixture series</x-import>
+</header>
+<main style="padding:64px 64px 128px;min-width:0">
+<div style="max-width:1400px;display:flex;flex-direction:column;gap:64px">
+<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:48px;flex-wrap:wrap">
+<x-import component-from-global-scope="HealthTrendDesignSystem_ec2bc0.HeroMetric" label="Estimated trend weight" value="{{ heroValue }}" unit="{{ unit }}" interval="{{ heroInterval }}" asOf="as of today, 06:40" hint-size="320px,190px"></x-import>
+<div style="padding-bottom:6px">
+<x-import component-from-global-scope="HealthTrendDesignSystem_ec2bc0.TrendDelta" value="{{ rate }}" unit="{{ rateUnit }}" direction="{{ rateDirection }}" interval="{{ rateInterval }}" hint-size="280px,70px"></x-import>
+</div>
+</div>
+<div style="display:flex;gap:64px;padding-top:24px;border-top:1px solid var(--rule-1);flex-wrap:wrap">
+<x-import component-from-global-scope="HealthTrendDesignSystem_ec2bc0.SupportingMetric" label="Projected in 30 days" value="{{ projValue }}" unit="{{ unit }}" qualifier="{{ projInterval }}" hint-size="180px,80px"></x-import>
+<x-import component-from-global-scope="HealthTrendDesignSystem_ec2bc0.SupportingMetric" label="Change, 90 days" value="{{ change90 }}" unit="{{ unit }}" qualifier="95% CI, fixture values" hint-size="180px,80px"></x-import>
+<x-import component-from-global-scope="HealthTrendDesignSystem_ec2bc0.SupportingMetric" label="Measurements used" value="{{ nUsed }}" qualifier="{{ nQualifier }}" hint-size="200px,80px"></x-import>
+<x-import component-from-global-scope="HealthTrendDesignSystem_ec2bc0.SupportingMetric" label="Residual scatter" value="0.71" unit="kg" qualifier="&sigma; of readings around the estimate" hint-size="200px,80px"></x-import>
+</div>
+<section style="display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+<span class="ht-eyebrow">Trajectory</span>
+<span class="ht-qualifier" style="margin-left:auto">All figures on this screen are fixture data for layout only.</span>
+</div>
+<x-import component-from-global-scope="HealthTrendDesignSystem_ec2bc0.TrajectoryChart" trend="{{ trend }}" raw="{{ raw }}" projection="{{ projection }}" showRaw="{{ showRaw }}" showProjection="{{ showProjection }}" unit="{{ unit }}" height="{{ chartHeight }}" xTicks="{{ xTicks }}" reference="{{ reference }}" hint-size="100%,420px"></x-import>
+<x-import component-from-global-scope="HealthTrendDesignSystem_ec2bc0.ChartLegend" items="{{ legend }}" hint-size="100%,20px"></x-import>
+</section>
+<section style="display:flex;flex-wrap:wrap;gap:64px;padding-top:32px;border-top:1px solid var(--rule-1)">
+<div class="ht-body-sm" style="flex:1 1 380px;max-width:34em">
+<p>The line above is not a weight. It is the model&rsquo;s estimate of the weight underneath a set of noisy readings &mdash; and the band is how much that estimate could still move.</p>
+<p>Replace the fixture series with real model output before this screen is shown to anyone. Every number here must trace to a quantity the model produced.</p>
+</div>
+<div style="flex:1 1 260px;min-width:260px;display:flex;flex-direction:column;gap:10px;padding-top:4px">
+<x-import component-from-global-scope="HealthTrendDesignSystem_ec2bc0.Qualifier" icon="circle-slash" hint-size="260px,34px">Days without a reading widen the band; they do not move the line.</x-import>
+<x-import component-from-global-scope="HealthTrendDesignSystem_ec2bc0.Qualifier" icon="sigma" hint-size="260px,34px">Rate is the filter&rsquo;s velocity state, not a difference of two readings.</x-import>
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1400,&quot;height&quot;:900},&quot;unit&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;kg&quot;,&quot;lb&quot;],&quot;default&quot;:&quot;kg&quot;,&quot;tsType&quot;:&quot;'kg' | 'lb'&quot;,&quot;section&quot;:&quot;Display&quot;},&quot;showRaw&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Chart layers&quot;},&quot;showProjection&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Chart layers&quot;},&quot;chartHeight&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:240,&quot;max&quot;:560,&quot;step&quot;:20,&quot;default&quot;:420,&quot;unit&quot;:&quot;px&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Chart layers&quot;},&quot;days&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:30,&quot;max&quot;:240,&quot;step&quot;:30,&quot;default&quot;:120,&quot;unit&quot;:&quot;days&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Fixture series&quot;},&quot;startWeight&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:79.8,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Fixture series&quot;},&quot;weeklyRate&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:-0.27,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Fixture series&quot;},&quot;goal&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:74,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Fixture series&quot;}}">
+class Component extends DCLogic {
+  // FIXTURE DATA — deterministic, invented, for layout only. Never ship as product copy.
+  series() {
+    const days = this.props.days ?? 120;
+    const start = this.props.startWeight ?? 79.8;
+    const weekly = this.props.weeklyRate ?? -0.27;
+    const perDay = weekly / 7;
+    const trend = [], raw = [];
+    let seed = 20260830;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < days; i++) {
+      const y = start + perDay * i + Math.sin(i / 40) * 0.12;
+      const s = 0.13 + 0.42 * Math.exp(-i / 26);
+      const d = new Date(2026, 7, 30 - (days - 1 - i));
+      const measured = i % 7 === 3 && i > 30 ? null : y + (rnd() - 0.5) * 2.0;
+      trend.push({
+        y, lo68: y - s, hi68: y + s, lo95: y - s * 1.96, hi95: y + s * 1.96,
+        label: d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }),
+        rawY: measured == null ? undefined : measured,
+      });
+      if (measured != null) raw.push({ i, y: measured });
+    }
+    const projection = [];
+    let p = trend[trend.length - 1].y, sp = 0.2;
+    for (let j = 0; j < 30; j++) { p += perDay; sp += 0.035; projection.push({ y: p, lo: p - sp, hi: p + sp }); }
+    const xTicks = [];
+    for (let i = 0; i < days; i += 30) xTicks.push({ i, label: trend[i].label.split(' ').slice(-1)[0] });
+    return { trend, raw, projection, xTicks };
+  }
+  renderVals() {
+    const { trend, raw, projection, xTicks } = this.series();
+    const unit = this.props.unit ?? 'kg';
+    const last = trend[trend.length - 1];
+    const weekly = this.props.weeklyRate ?? -0.27;
+    const change90 = trend.length > 90 ? last.y - trend[trend.length - 91].y : last.y - trend[0].y;
+    const fmt = v => (v < 0 ? '\u2212' : '+') + Math.abs(v).toFixed(2);
+    return {
+      unit,
+      trend, raw, xTicks,
+      spark: trend.slice(-30),
+      projection: this.props.showProjection === false ? [] : projection,
+      showRaw: this.props.showRaw !== false,
+      showProjection: this.props.showProjection !== false,
+      chartHeight: this.props.chartHeight ?? 420,
+      heroValue: last.y.toFixed(1),
+      heroInterval: '\u00b1' + (last.hi68 - last.y).toFixed(2) + ' ' + unit + ' (68%)',
+      rate: fmt(weekly),
+      rateUnit: unit + '/week',
+      rateDirection: Math.abs(weekly) < 0.05 ? 'flat' : weekly < 0 ? 'down' : 'up',
+      rateInterval: '95% CI ' + fmt(weekly - 0.08) + ' to ' + fmt(weekly + 0.08) + ' ' + unit + '/week',
+      projValue: projection[29].y.toFixed(1),
+      projInterval: '\u00b1' + (projection[29].hi - projection[29].y).toFixed(1) + ' ' + unit + ' (68%)',
+      change90: fmt(change90),
+      nUsed: String(raw.length),
+      nQualifier: 'of ' + trend.length + ' days \u00b7 ' + (trend.length - raw.length) + ' days without a reading',
+      reference: this.props.goal ? { y: Number(this.props.goal), label: 'goal ' + Number(this.props.goal).toFixed(1) } : undefined,
+      legend: [
+        { role: 'trend', label: 'Estimated trajectory' },
+        { role: 'band', label: '68% / 95% credible interval' },
+        { role: 'raw', label: 'Scale measurements' },
+        { role: 'projection', label: 'Projection, 30 days' },
+      ].concat(this.props.goal ? [{ role: 'reference', label: 'Goal' }] : []),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

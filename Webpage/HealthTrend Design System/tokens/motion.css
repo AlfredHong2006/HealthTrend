@@ -1,0 +1,22 @@
+/* Motion: brisk, linear-ish, no bounce, no spring, nothing decorative.
+   Data never animates on load — a chart that draws itself is a chart you cannot
+   read yet. Only state changes move. */
+:root {
+  --dur-1: 90ms /* @kind other */;
+  --dur-2: 140ms /* @kind other */;
+  --dur-3: 220ms /* @kind other */;
+  --dur-4: 320ms /* @kind other */;
+  --ease-standard: cubic-bezier(.2, 0, .2, 1); /* @kind other */
+  --ease-out: cubic-bezier(0, 0, .2, 1); /* @kind other */
+  --ease-inout: cubic-bezier(.4, 0, .2, 1); /* @kind other */
+
+  --transition-control: color var(--dur-1) var(--ease-standard),
+                        background-color var(--dur-1) var(--ease-standard),
+                        border-color var(--dur-1) var(--ease-standard);
+  --transition-chart: d var(--dur-4) var(--ease-inout),
+                      opacity var(--dur-2) var(--ease-standard);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-1: 0ms /* @kind other */; --dur-2: 0ms /* @kind other */; --dur-3: 0ms /* @kind other */; --dur-4: 0ms /* @kind other */; }
+}

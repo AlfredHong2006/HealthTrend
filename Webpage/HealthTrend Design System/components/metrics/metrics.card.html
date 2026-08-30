@@ -1,0 +1,33 @@
+<!-- @dsCard group="Components" viewport="700x340" name="Metric hierarchy" subtitle="Tier 1 trajectory, tier 2 statistical context, tier 3 raw readings, qualifier tier." -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script></head>
+<body style="margin:0"><div id="root" style="padding:22px 24px"></div>
+<script type="text/babel">
+const { HeroMetric, SupportingMetric, RawReading, Qualifier, TrendDelta } = window.HealthTrendDesignSystem_ec2bc0;
+function Demo() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      <HeroMetric label="Estimated trend weight" value="81.4" unit="kg"
+        interval="±0.28 kg (68%)" asOf="as of today, 06:40" />
+      <div style={{ display: 'flex', gap: 48, paddingTop: 20, borderTop: '1px solid var(--rule-1)', flexWrap: 'wrap' }}>
+        <TrendDelta value="−0.42" direction="down" interval="95% CI −0.61 to −0.23 kg/week" />
+        <SupportingMetric label="Projected 1 Nov" value="78.9" unit="kg" qualifier="±1.4 kg" />
+        <SupportingMetric label="Fit" value="0.91" unit="R²" qualifier="residual σ = 0.61 kg" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 32, borderLeft: '1px solid var(--rule-1)' }}>
+          <RawReading date="Mon 24 Aug" value="82.1" unit="kg" delta="+0.7 vs trend" />
+          <RawReading date="Sun 23 Aug" value="81.6" unit="kg" delta="+0.2 vs trend" />
+          <RawReading date="Sat 22 Aug" value="83.0" unit="kg" delta="+1.6 vs trend" muted />
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
+        <Qualifier>n = 84 readings · 14-day window</Qualifier>
+        <Qualifier tone="stale" icon="clock">No reading for 6 days — interval widening</Qualifier>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<Demo />);
+</script></body></html>
