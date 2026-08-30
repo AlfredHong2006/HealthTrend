@@ -62,10 +62,16 @@ export function V2Inspector({ analysis }: { analysis: DemoAnalysis }) {
   if (view === "summary") {
     return (
       <div className={styles.inspector}>
-        {/* The entry has to look like a way in, not like a sentence. It names the tiers it
-            leads to, carries a chevron rather than the arrow the Method link uses -- one goes
-            deeper into this analysis, the other leaves it for a page -- and has hover, press
-            and focus states, since a phone gets no hover to discover it with. */}
+        {/* A section label, in the same micro-eyebrow the summary above uses. It is the cheapest
+            way to say that something lives here: without it the button below is one more row in
+            a rail made of rows, which is how it was being read past. */}
+        <h2 className={styles.eyebrow}>Deeper analysis</h2>
+
+        {/* The entry has to look like a way in, not like a sentence. It states what pressing it
+            opens, is drawn as a control rather than as text so it reads that way at rest, and
+            carries a chevron rather than the arrow the Method link uses -- one pushes deeper
+            into this analysis, the other leaves it for a page. Hover, press and focus all move
+            the same things, since a phone gets no hover to discover it with. */}
         <button ref={enterRef} type="button" className={styles.enter} onClick={() => go("why")}>
           <span className={styles.enterText}>
             <span className={styles.enterTitle}>Inspect this analysis</span>{" "}
@@ -73,7 +79,7 @@ export function V2Inspector({ analysis }: { analysis: DemoAnalysis }) {
                 in the button's accessible name. A whitespace-only anonymous flex item is not
                 rendered, so it changes nothing visually. */}
             <span className={styles.enterTiers}>
-              {TIERS.map((tier) => tier.label).join(", ")}
+              Opens {TIERS.map((tier) => tier.label).join(", ")}
             </span>
           </span>
           <span className={styles.chevron} aria-hidden="true" />

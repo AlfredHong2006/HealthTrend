@@ -77,15 +77,28 @@ describe("V2Workspace inspection", () => {
   });
 
   /**
-   * The entry has to read as a way into something, not as a sentence. Naming the tiers is what
-   * makes that legible without hover -- which a phone never has.
+   * The entry has to read as a way into something, not as a sentence. Saying what it opens is
+   * what makes that legible without hover -- which a phone never has -- and it has to be in the
+   * accessible name too, because a screen-reader user gets no visual affordance at all.
    */
-  it("names the tiers the entry leads to, in its accessible name too", () => {
+  it("says what the entry opens, in its accessible name too", () => {
     renderWorkspace();
     const entry = within(detail()).getByRole("button", { name: /Inspect this analysis/ });
 
-    expect(entry).toHaveAccessibleName("Inspect this analysis Why, Evidence, Statistics");
-    expect(within(entry).getByText("Why, Evidence, Statistics")).toBeInTheDocument();
+    expect(entry).toHaveAccessibleName("Inspect this analysis Opens Why, Evidence, Statistics");
+    expect(within(entry).getByText("Opens Why, Evidence, Statistics")).toBeInTheDocument();
+  });
+
+  /**
+   * A labelled section, not a loose row: the eyebrow is what says something lives here before
+   * the entry has to argue for itself. It is a real heading so the structure a screen reader
+   * hears is the one the eye sees.
+   */
+  it("labels the inspection block as a section of its own", () => {
+    renderWorkspace();
+    expect(
+      within(detail()).getByRole("heading", { name: "Deeper analysis", level: 2 }),
+    ).toBeInTheDocument();
   });
 
   it("shows no tier content at all until asked", () => {

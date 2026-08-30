@@ -1,16 +1,31 @@
 /* The inspection surface: hairlines and typography, never a card. In its default state this
-   is two lines of text -- the rail's job at rest is to offer depth, not to display it. */
+   is a labelled way in and a link out -- the rail's job at rest is to offer depth, not to
+   display it. */
 .inspector {
   display: flex;
   flex-direction: column;
+  gap: var(--v2-space-3);
   min-width: 0;
   padding-top: var(--v2-space-4);
   border-top: 1px solid var(--v2-rule);
 }
 
-/* The way into the detail stack. It is the one control on this surface that has to announce
-   itself, so it is a row rather than a line of prose: a title, the tiers behind it, and a
-   chevron, with the whole row reacting to hover, press and focus. */
+/* The same micro-eyebrow the summary block above uses, for the same reason: it says a section
+   begins here and names what is in it. Without one the way in was a row of text among rows of
+   text, which is precisely how it was being missed. */
+.eyebrow {
+  font-size: var(--v2-size-micro);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--v2-ink-faint);
+}
+
+/* The way into the detail stack, and the only thing on this surface drawn as a control rather
+   than as text. Everything else in the rail is a hairline and a line of prose, so a bordered
+   row with real padding is what separates "press this" from "read this" -- at rest, without
+   hover, which a phone never has. The method link below stays a text row, and the difference
+   between the two is the hierarchy. */
 .enter {
   display: flex;
   align-items: center;
@@ -18,13 +33,13 @@
   gap: var(--v2-space-4);
   width: 100%;
   min-height: 48px;
-  padding: var(--v2-space-3) 0;
+  padding: var(--v2-space-3) var(--v2-space-4);
   font: inherit;
   color: var(--v2-ink);
   text-align: left;
   background: none;
-  border: none;
-  border-bottom: 1px solid var(--v2-rule);
+  border: 1px solid var(--v2-rule-strong);
+  border-radius: var(--v2-radius);
   cursor: pointer;
   transition: border-color 140ms ease, background-color 140ms ease;
 }
@@ -42,17 +57,22 @@
   transition: color 140ms ease;
 }
 
-/* Naming the three tiers is most of the discoverability: it says this is a way into something
-   with contents, not a link to one more paragraph. */
+/* Naming the three tiers is most of the discoverability, and the verb is the rest: "Opens Why,
+   Evidence, Statistics" says both that there is more behind this and what pressing it produces,
+   which a bare list of nouns left the reader to guess. */
 .enterTiers {
   font-size: var(--v2-size-small);
   color: var(--v2-ink-muted);
 }
 
+/* Keyboard focus gets everything hover gets. A pointer user seeing the surface lift while a
+   keyboard user gets only a ring is the usual way a control like this ends up weaker than it
+   looks, and it is the state the design direction cares most about. */
 .enter:hover,
+.enter:focus-visible,
 .enter:active {
   background: var(--v2-raised);
-  border-bottom-color: var(--v2-rule-strong);
+  border-color: var(--v2-trend);
 }
 
 .enter:hover .enterTitle,
@@ -60,14 +80,16 @@
   color: var(--v2-trend);
 }
 
-/* Drawn rather than typed, so it can nudge on hover and match the hairline weight around it. */
+/* Drawn rather than typed, so it can nudge on hover and match the hairline weight around it.
+   It points right and not down on purpose: pressing this pushes into a stack, it does not
+   expand a panel in place. */
 .chevron {
   flex: none;
   width: 8px;
   height: 8px;
   margin-right: 2px;
-  border-right: 1.5px solid var(--v2-ink-faint);
-  border-bottom: 1.5px solid var(--v2-ink-faint);
+  border-right: 1.5px solid var(--v2-ink-muted);
+  border-bottom: 1.5px solid var(--v2-ink-muted);
   transform: rotate(-45deg);
   transition: transform 160ms ease, border-color 160ms ease;
 }
@@ -78,6 +100,9 @@
   transform: translateX(3px) rotate(-45deg);
 }
 
+/* Deliberately not given the same treatment. The way deeper is a bordered control, the way out
+   to a page stays a text row, and holding that difference is what makes the first one read as
+   the primary thing to do here. */
 .methodLink {
   display: flex;
   align-items: center;
