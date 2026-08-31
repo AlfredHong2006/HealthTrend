@@ -1,0 +1,29 @@
+/* Whitespace is structural. The scale is coarse on purpose: fewer, larger steps
+   read as intent; a fine-grained scale reads as drift. */
+:root {
+  --space-0: 0px;
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 6px;
+  --space-4: 8px;
+  --space-5: 12px;
+  --space-6: 16px;
+  --space-7: 24px;
+  --space-8: 32px;
+  --space-9: 48px;
+  --space-10: 64px;
+  --space-11: 96px;
+  --space-12: 128px;
+  --space-13: 176px;
+
+  /* semantic rhythm */
+  --gap-inline: var(--space-5);      /* between controls in a row */
+  --gap-stack: var(--space-6);       /* between related lines */
+  --gap-group: var(--space-8);       /* between metric groups */
+  --gap-block: var(--space-10);      /* between prose blocks + figures */
+  --gap-section: var(--space-12);    /* between page sections — no divider */
+  --gap-chapter: var(--space-13);    /* Method chapter break */
+
+  --prose-para-gap: var(--space-7);  /* 24px between paragraphs, never <p> margin default */
+  --figure-gap: var(--space-9);      /* figure to its caption block context */
+}
