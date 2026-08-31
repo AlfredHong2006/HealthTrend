@@ -1,0 +1,63 @@
+/* HealthTrend colour. Light mode only — there is no dark theme.
+   One saturated accent (azure). Colour encodes DATA ROLE, never health judgement:
+   there is no green "good" and no red "bad" anywhere in this system. */
+:root {
+  /* ── Ink: a near-black with a cool cast, matched to the azure ───────── */
+  --ink-1: #0e141c; /* headings, hero numerals */
+  --ink-2: #2b3542; /* prose */
+  --ink-3: #5b6878; /* secondary / supporting metrics */
+  --ink-4: #8794a3; /* qualifiers, axis labels, raw readings */
+  --ink-5: #b3bdc9; /* disabled, gridline emphasis */
+
+  /* ── Paper: three surfaces, no more ─────────────────────────────────── */
+  --paper-1: #ffffff; /* the page */
+  --paper-2: #f7f8fa; /* recessed figure well (Distill-style) */
+  --paper-3: #eef1f5; /* hover / selected row */
+
+  /* ── Rules: hairlines do the work cards would otherwise do ──────────── */
+  --rule-1: #e5e9ee; /* default hairline */
+  --rule-2: #d3d9e1; /* structural divider */
+  --rule-3: #b9c2cd; /* axis line */
+
+  /* ── Accent: azure. One hue, five steps. No purple, no gradient ramp ── */
+  --azure-100: #eaf2fd;
+  --azure-200: #d3e4fa;
+  --azure-300: #9cc4f2;
+  --azure-500: #1668c9; /* THE accent */
+  --azure-600: #1156a8; /* hover / pressed */
+  --azure-700: #0d4283; /* trajectory line on light fills */
+
+  /* ── Non-judgemental signal colours ─────────────────────────────────── */
+  --amber-500: #b07407; /* staleness / data gap. Warning of DATA, not of body */
+  --amber-100: #fbf1de;
+
+  /* ── Semantic text ──────────────────────────────────────────────────── */
+  --text-display: var(--ink-1);
+  --text-body: var(--ink-2);
+  --text-secondary: var(--ink-3);
+  --text-qualifier: var(--ink-4);
+  --text-disabled: var(--ink-5);
+  --text-accent: var(--azure-500);
+  --text-inverse: #ffffff;
+
+  /* ── Semantic surface ───────────────────────────────────────────────── */
+  --surface-page: var(--paper-1);
+  --surface-well: var(--paper-2);
+  --surface-hover: var(--paper-3);
+  --surface-accent: var(--azure-500);
+  --surface-accent-hover: var(--azure-600);
+  --surface-accent-tint: var(--azure-100);
+  --surface-stale: var(--amber-100);
+
+  /* ── Semantic border ────────────────────────────────────────────────── */
+  --border-hairline: var(--rule-1);
+  --border-divider: var(--rule-2);
+  --border-control: var(--rule-2);
+  --border-control-hover: var(--rule-3);
+  --border-accent: var(--azure-500);
+
+  --focus-ring: var(--azure-500);
+  --selection-bg: var(--azure-200);
+}
+
+::selection { background: var(--selection-bg); }

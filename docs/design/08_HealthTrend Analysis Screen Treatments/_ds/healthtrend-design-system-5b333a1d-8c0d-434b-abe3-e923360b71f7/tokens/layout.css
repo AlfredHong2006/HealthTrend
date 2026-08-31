@@ -1,0 +1,74 @@
+/* Measure + column rules. Prose never leaves orphaned space: every text block is
+   pinned to a named column, and figures escape the column deliberately, not
+   accidentally. Modelled on the Distill body/page/screen grid. */
+:root {
+  /* ── Measure ────────────────────────────────────────────────────────── */
+  --measure-prose: 34em; /* @kind other */
+  --measure-narrow: 24em; /* @kind other */
+  --measure-wide: 44em; /* @kind other */
+  --measure-qualifier: 24em; /* @kind other */ /* matches the caption/sidenote measure:
+     a staleness sentence must not set wider than the note beside it */
+
+  /* ── Columns (px, so figures can be authored against them) ──────────── */
+  --col-body: 680px;          /* prose column */
+  --col-page: 1000px;         /* figure + chart column */
+  --col-screen: 1400px;       /* app shell max */
+  --col-margin: 220px;        /* margin-note gutter */
+  --gutter: var(--space-9);
+
+  /* app shell */
+  --shell-nav-w: 216px;
+  --shell-header-h: 56px;
+  --shell-pad-x: var(--space-10);
+  --shell-pad-x-sm: var(--space-7);
+
+  /* chart geometry — the trajectory chart is the hero object */
+  --chart-h-hero: 420px;
+  --chart-h-inline: 168px;
+  --chart-h-spark: 40px;
+  --chart-pad-l: 56px;        /* room for a 3-digit tabular axis */
+  --chart-pad-r: 88px;        /* room for the terminal value flag */
+  --chart-pad-b: 28px;
+
+  /* ── Radii — near-zero. Data objects are square. ────────────────────── */
+  --radius-0: 0px;            /* charts, tables, wells, figures */
+  --radius-1: 3px;            /* inputs, buttons, badges */
+  --radius-2: 6px;            /* overlays, tooltips, menus */
+  --radius-pill: 999px;       /* segmented control track only */
+
+  /* ── Elevation — one shadow, used only for things that float ────────── */
+  --shadow-none: none;
+  --shadow-overlay: 0 1px 2px rgba(14, 20, 28, .06), 0 8px 24px -6px rgba(14, 20, 28, .14);
+  --shadow-tooltip: 0 1px 2px rgba(14, 20, 28, .10), 0 4px 12px -4px rgba(14, 20, 28, .16);
+}
+
+@media (max-width: 1180px) { :root { --col-margin: 0px; } }
+
+.ht-col-body { width: 100%; max-width: var(--col-body); margin-inline: auto; }
+.ht-col-page { width: 100%; max-width: var(--col-page); margin-inline: auto; }
+.ht-col-screen { width: 100%; max-width: var(--col-screen); margin-inline: auto; }
+.ht-measure { max-width: var(--measure-prose); }
+.ht-measure-narrow { max-width: var(--measure-narrow); }
+
+/* ── Figure escape ───────────────────────────────────────────────────────
+   A figure or chart inside the prose column breaks out to the figure column
+   by symmetric negative margin — never by leaving the flow, never by transform
+   (a transform would fight the reveal transition). Prose stays at --col-body;
+   only figures escape, and only to a NAMED column.
+     .ht-escape-page   680 -> 1000  charts, wide diagrams, side-by-side figures
+     .ht-escape-screen 680 -> 1400  the hero trajectory chart, full evidence tables
+   Captions do NOT escape: they stay at --measure-narrow, left-aligned to the
+   escaped figure's left edge. Never nest one escape inside another. */
+.ht-escape-page { width: min(var(--col-page), calc(100vw - 2 * var(--space-8))); margin-inline: calc((100% - min(var(--col-page), calc(100vw - 2 * var(--space-8)))) / 2); }
+.ht-escape-screen { width: min(var(--col-screen), calc(100vw - 2 * var(--space-8))); margin-inline: calc((100% - min(var(--col-screen), calc(100vw - 2 * var(--space-8)))) / 2); }
+
+/* Margin notes: in the outer gutter on wide screens, inline below 1180px. */
+.ht-margin-note { float: right; width: var(--col-margin); margin-right: calc(-1 * (var(--col-margin) + var(--space-8))); margin-bottom: var(--space-6); display: flex; gap: var(--space-3); }
+.ht-margin-note[data-side="left"] { float: left; margin-left: calc(-1 * (var(--col-margin) + var(--space-8))); margin-right: 0; }
+@media (max-width: 1180px) {
+  .ht-margin-note, .ht-margin-note[data-side="left"] {
+    float: none; width: auto; max-width: var(--measure-narrow);
+    margin: 0 0 var(--space-6) 0; padding-left: var(--space-6);
+    border-left: 1px solid var(--rule-1);
+  }
+}

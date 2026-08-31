@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/colors.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/typography.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/layout.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/lines.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/motion.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/dataviz.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/base.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/styles.css">
+<script src="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; background: var(--paper-1); }
+  a { color: var(--azure-500); text-decoration: none; border-bottom: 1px solid var(--azure-300); }
+  a:hover { color: var(--azure-600); border-bottom-color: var(--azure-500); }
+</style>
+</helmet>
+
+<div style="background:var(--paper-1);min-height:100vh;font-family:var(--font-numeric)">
+
+  <header style="height:{{ L.headerH }};display:flex;flex-direction:{{ L.headerDir }};align-items:{{ L.headerAlign }};gap:{{ L.headerGap }};padding:{{ L.headerPad }};border-bottom:1px solid var(--rule-1);position:sticky;top:0;background:var(--paper-1);z-index:20">
+    <span style="font:400 23px var(--font-prose);letter-spacing:-0.022em;color:var(--ink-1)">HealthTrend</span>
+    <nav style="display:flex;gap:34px;align-items:center">
+      <a href="Analysis Screen.dc.html" style="font:400 {{ L.navSize }} var(--font-prose);color:var(--ink-4);border-bottom:none">Analysis</a>
+      <span style="font:400 {{ L.navSize }} var(--font-prose);color:var(--ink-4)">Measurements</span>
+      <span style="font:400 {{ L.navSize }} var(--font-prose);color:var(--ink-1)">Method</span>
+      <span style="font:400 {{ L.navSize }} var(--font-prose);color:var(--ink-4)">Settings</span>
+    </nav>
+    <div style="margin-left:{{ L.badgePush }};display:flex;align-items:center;gap:16px">
+      <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.Badge" variant="outline" hint-size="104px,19px">Fixture figures</x-import>
+    </div>
+  </header>
+
+  <div style="max-width:{{ L.pageW }};margin:0 auto;padding:{{ L.pagePad }}">
+
+    <div style="display:flex;flex-direction:column;gap:32px;padding-top:112px">
+      <h1 class="ht-display" style="max-width:22em;font-size:{{ L.h1 }}">Estimating a weight trajectory from noisy daily measurements</h1>
+      <div style="display:flex;gap:{{ L.metaGap }};flex-wrap:wrap;padding-top:20px;border-top:1px solid var(--rule-2)"><div style="display:flex;flex-direction:column;gap:5px"><span class="ht-eyebrow">Revision</span><span class="ht-qualifier" style="color:var(--text-body);white-space:nowrap">{{ revision }}</span></div>
+        <div style="display:flex;flex-direction:column;gap:5px"><span class="ht-eyebrow">Model</span><span class="ht-qualifier" style="color:var(--text-body)">Local linear trend</span></div>
+        <div style="display:flex;flex-direction:column;gap:5px"><span class="ht-eyebrow">Estimator</span><span class="ht-qualifier" style="color:var(--text-body)">Kalman filter, fixed documented parameters</span></div>
+        <div style="display:flex;flex-direction:column;gap:5px"><span class="ht-eyebrow">Reading time</span><span class="ht-qualifier" style="color:var(--text-body)">{{ readingTime }}</span></div>
+      </div>
+    </div>
+
+    <div class="ht-lede" style="max-width:44em;margin-top:72px">
+      <p>A bathroom scale is an honest instrument answering a question you did not ask. It reports the mass of a body at one moment, including its water, its last meal and the hour of the morning. What you want to know is the slow quantity underneath: where the trajectory sits today, and how fast it is moving.</p>
+    </div>
+
+    <div style="margin-top:{{ L.sectionGap }};padding-top:24px;border-top:1px solid var(--rule-2);display:flex;flex-direction:column;gap:12px;max-width:44em">
+      <span class="ht-eyebrow">Section 1</span>
+      <h2 class="ht-title">The measurement is not the state</h2>
+    </div>
+    <div class="ht-body" style="max-width:34em;margin-top:28px;display:flex;flex-direction:column;gap:24px">
+      <p>Write the thing you care about as a hidden state, and the number on the scale as a noisy view of it. On day <em>t</em> the state has two parts and no more: a <strong>level</strong>, which is where the trajectory sits, and a <strong>velocity</strong>, which is how fast that level is moving. The reading adds independent measurement error on top of the level.</p>
+    </div>
+    <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.Equation" number="1" hint-size="100%,60px">&#8467;&#8348; = &#8467;&#8348;&#8331;&#8321; + v&#8348;&#8331;&#8321; + &eta;&#8348;,   v&#8348; = v&#8348;&#8331;&#8321; + &zeta;&#8348;,   y&#8348; = &#8467;&#8348; + &epsilon;&#8348;</x-import>
+    <div class="ht-body" style="max-width:34em;display:flex;flex-direction:column;gap:24px">
+      <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.MarginNote" marker="1" hint-size="220px,80px">Hydration, glycogen and gut contents dominate day-to-day variance, which is why a single morning can move by more than a fortnight of real change.</x-import>
+      <p>The three noise terms carry three different admissions of ignorance: how far the level may wander on its own, how much the velocity may change, and how badly a single reading may mislead. The chart on the analysis screen draws &#8467;, and the rate beside it is v.</p>
+      <p>A seven-day mean is a special case of this with the velocity term deleted and the noise assumed constant. That is why it lags: it estimates the average of a window, and the average of a falling window is a value from the middle of it.</p>
+    </div>
+
+    <figure style="margin:{{ L.figMargin }};max-width:1000px">
+      <div style="background:var(--surface-well);padding:{{ L.figPad }}">
+        <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.TrajectoryChart" trend="{{ trend }}" raw="{{ raw }}" projection="{{ projection }}" xTicks="{{ xTicks }}" unit="kg" decimals="1" height="{{ figureHeight }}" hint-size="100%,320px"></x-import>
+        <div style="margin-top:16px">
+          <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.ChartLegend" items="{{ legend }}" hint-size="100%,20px"></x-import>
+        </div>
+      </div>
+      <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.FigureCaption" label="Figure 1" source="Fixture series &mdash; invented data, shown for layout only" hint-size="24em,60px">The posterior mean of the level with its 68% and 95% bands, the readings it saw, and a projection whose band widens with every step forward.</x-import>
+    </figure>
+
+    <div style="padding-top:24px;border-top:1px solid var(--rule-2);display:flex;flex-direction:column;gap:12px;max-width:44em">
+      <span class="ht-eyebrow">Section 2</span>
+      <h2 class="ht-title">What the filter computes, and what the bands mean</h2>
+    </div>
+    <div class="ht-body" style="max-width:34em;margin-top:28px;display:flex;flex-direction:column;gap:24px">
+      <p>Each morning the model carries its belief forward one day, widening it by the process noise; then it sees a reading and narrows it in proportion to how trustworthy that reading is relative to the belief.</p>
+    </div>
+    <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.Equation" number="2" hint-size="100%,60px">K&#8348; = P&#8348;&#8331; / (P&#8348;&#8331; + &sigma;&sup2;&#8342;),   &#8467;&#770;&#8348; = &#8467;&#770;&#8348;&#8331; + K&#8348;(y&#8348; &minus; &#8467;&#770;&#8348;&#8331;)</x-import>
+    <div class="ht-body" style="max-width:34em;display:flex;flex-direction:column;gap:24px">
+      <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.MarginNote" marker="2" hint-size="220px,80px">When a day is skipped only the first step runs: the band widens and the line continues on its last velocity. Gaps widen the band; they do not move the line.</x-import>
+      <p>The gain K is the whole argument in one line. When readings are consistent, K is large and the estimate tracks them closely. When they scatter, K falls and a single two-kilogram morning barely registers.</p>
+      <p>The shaded bands are the posterior standard deviation of that belief, at 68% and 95%. They are credible intervals <em>for the state</em> &mdash; the range in which the level plausibly sits, given the readings and the model. They are not the range in which tomorrow&rsquo;s reading will fall, which is wider, because a reading carries measurement error the level does not.</p>
+      <p>Forward of today the same two steps run without any reading to narrow the belief, so the band grows at every step: the forecast compounds uncertainty in the velocity as well as in the level. That is the honest shape of a projection, and it is why the interval, not the line, is the headline once you look far enough ahead.</p>
+    </div>
+
+    <div style="margin-top:{{ L.sectionGap }};padding-top:24px;border-top:1px solid var(--rule-2);display:flex;flex-direction:column;gap:12px;max-width:44em">
+      <span class="ht-eyebrow">Section 3</span>
+      <h2 class="ht-title">Why the parameters are fixed and documented</h2>
+    </div>
+    <div class="ht-body" style="max-width:34em;margin-top:28px;display:flex;flex-direction:column;gap:24px">
+      <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.MarginNote" marker="3" hint-size="220px,80px">Fixed here means fixed across people and across time, and written down: the same three variances produce every estimate this product shows.</x-import>
+      <p>The three variances in Equation 1 could be estimated from data by maximum likelihood, in practice by EM. This product does not do that. They are set to documented constants, the same for every account, and any change to them is a revision of this document.</p>
+      <p>The reason is that the numbers here are read as claims. A parameter fitted per person makes the estimate a moving target: the line you saw last week was produced by a slightly different model from the one that produced this week&rsquo;s, and the interval around it means something slightly different too. Two people with the same readings would be shown different confidence. Fixed parameters cost some fit and buy a quantity that can be compared with itself over time and explained in one page.</p>
+      <p>It also makes this document possible. A fitted model has to be described as a procedure; a fixed one can be written as three numbers and a filter, which is what Section 1 is.</p>
+    </div>
+
+    <div style="margin-top:{{ L.sectionGap }};padding-top:24px;border-top:1px solid var(--rule-2);display:flex;flex-direction:column;gap:12px;max-width:44em">
+      <span class="ht-eyebrow">Section 4</span>
+      <h2 class="ht-title">Why per-user fitting is not justified on short histories</h2>
+    </div>
+    <div class="ht-body" style="max-width:34em;margin-top:28px;display:flex;flex-direction:column;gap:24px">
+      <p>Fitting the variances per person is only worth doing if it produces a better estimate on the histories people actually have. On a short history it does the opposite: the same scatter that the model is meant to see through is also the only evidence available about how large that scatter is, so the fit absorbs noise as signal. The velocity term is the most exposed, because it is identified by the slow part of a series that has barely any slow part yet.</p>
+      <p>The failure is not a worse average error so much as a worse <em>interval</em>. A per-user fit on a short history tends to find small variances, which produces a confident-looking band around a line that the next fortnight moves. Given what this product sells &#8212; an estimate that admits its uncertainty in the same breath &#8212; that is the expensive direction to be wrong in.</p>
+      <p style="color:var(--ink-3)">The evaluation that decided this is not reproduced here: no comparison figures, error tables or held-out results appear in this revision. Required at implementation &#8212; the comparison against fixed parameters, on real histories, with the horizon and the metric stated.</p>
+    </div>
+
+    <div style="margin-top:112px;padding-top:24px;border-top:1px solid var(--rule-2)">
+      <span class="ht-eyebrow">References</span>
+      <div style="margin-top:20px;max-width:680px;display:flex;flex-direction:column;gap:4px">
+        <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.Citation" marker="1" hint-size="100%,44px">Harvey, A. C. Forecasting, Structural Time Series Models and the Kalman Filter. Cambridge University Press, 1989.</x-import>
+        <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.Citation" marker="2" hint-size="100%,44px">Durbin, J. &amp; Koopman, S. J. Time Series Analysis by State Space Methods. 2nd ed., Oxford University Press, 2012.</x-import>
+      </div>
+    </div>
+
+    <p class="ht-qualifier" style="margin-top:64px;max-width:34em">Figure 1 and every value in it are fixture data, invented for layout. Nothing on this page reports a measured result.</p>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1144,&quot;height&quot;:1000},&quot;viewport&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;1440&quot;,&quot;390&quot;,&quot;320&quot;],&quot;default&quot;:&quot;1440&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Viewport&quot;},&quot;revision&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Revision 2.4 · 12 Aug 2026&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Header&quot;},&quot;readingTime&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;≈ 9 min&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Header&quot;},&quot;figureHeight&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:240,&quot;max&quot;:460,&quot;step&quot;:20,&quot;default&quot;:320,&quot;unit&quot;:&quot;px&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Figure&quot;},&quot;days&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:60,&quot;max&quot;:240,&quot;step&quot;:30,&quot;default&quot;:120,&quot;unit&quot;:&quot;days&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Fixture series&quot;}}">
+class Component extends DCLogic {
+  // FIXTURE DATA — deterministic, invented, for layout only. Never ship as product copy.
+  renderVals() {
+    const days = this.props.days ?? 120;
+    const start = 79.8, perDay = -0.27 / 7;
+    let seed = 20260830;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const trend = [], raw = [];
+    for (let i = 0; i < days; i++) {
+      const y = start + perDay * i + Math.sin(i / 40) * 0.12;
+      const s = 0.31 + 0.42 * Math.exp(-i / 26);
+      const d = new Date(2026, 7, 30 - (days - 1 - i));
+      const measured = i % 7 === 3 && i > 30 ? null : y + (rnd() - 0.5) * 2.0;
+      trend.push({
+        y, lo68: y - s, hi68: y + s, lo95: y - s * 1.96, hi95: y + s * 1.96,
+        month: d.toLocaleDateString('en-GB', { month: 'short' }),
+        rawY: measured == null ? undefined : measured,
+      });
+      if (measured != null) raw.push({ i, y: measured });
+    }
+    const projection = [];
+    let p = trend[trend.length - 1].y, sp = 0.2;
+    for (let j = 0; j < 30; j++) { p += perDay; sp += 0.028; projection.push({ y: p, lo: p - sp, hi: p + sp }); }
+    const xTicks = [];
+    for (let i = 0; i < days; i += 30) xTicks.push({ i, label: trend[i].month });
+    const vp = this.props.viewport ?? '1440';
+    const M = vp !== '1440', S = vp === '320';
+    const g = S ? 24 : M ? 32 : 72;   // --space-7 / --space-8 / desktop gutter
+    return {
+      L: {
+        pageW: M ? vp + 'px' : '1144px',
+        pagePad: '0 ' + g + 'px ' + (M ? '96px' : '160px'),
+        headerH: M ? 'auto' : '72px',
+        headerDir: M ? 'column' : 'row',
+        headerAlign: M ? 'flex-start' : 'center',
+        headerGap: M ? '14px' : '56px',
+        headerPad: M ? '16px ' + g + 'px' : '0 72px',
+        navGap: M ? (S ? '14px' : '18px') : '34px',
+        navSize: M ? (S ? '15px' : '16px') : '17px',
+        wordmark: M ? '20px' : '23px',
+        badgePush: M ? '0' : 'auto',
+        h1: M ? (S ? 'var(--size-title)' : 'var(--size-display)') : 'var(--size-display)',
+        metaGap: M ? '24px 32px' : '56px',
+        figMargin: M ? '56px 0' : '96px 0',
+        figPad: M ? '16px' : '28px',
+        sectionGap: M ? '64px' : '96px',
+      },
+      trend, raw, projection, xTicks,
+      figureHeight: M ? (S ? 260 : 300) : (this.props.figureHeight ?? 320),
+      revision: this.props.revision ?? 'Revision 2.4 \u00b7 12 Aug 2026',
+      readingTime: this.props.readingTime ?? '\u2248 9 min',
+      legend: [
+        { role: 'trend', label: 'Posterior mean of the level' },
+        { role: 'band', label: '68% / 95% credible interval' },
+        { role: 'raw', label: 'Measurements' },
+        { role: 'projection', label: 'Projection' },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

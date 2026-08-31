@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/colors.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/typography.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/layout.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/lines.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/motion.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/dataviz.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/base.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/styles.css">
+<script src="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; background: #e9ecf1; }
+  a { color: var(--azure-500); text-decoration: none; }
+  a:hover { color: var(--azure-600); }
+</style>
+</helmet>
+
+<section style="padding:56px;display:flex;flex-direction:column;gap:28px;font-family:var(--font-numeric)">
+<div style="display:flex;flex-direction:column;gap:8px;max-width:44em">
+<span class="ht-eyebrow">Desktop analysis screen &middot; adopted direction</span>
+<h1 class="ht-title">Editorial &mdash; the HealthTrend visual language</h1>
+<p class="ht-body-sm" style="max-width:34em">The frozen architecture, unchanged: chart hero, analysis rail beside it, one Inspect analysis entry into Why / Evidence / Statistics, Method as a separate destination. 72px gutters at 1440, 32 and 24 at 390 and 320; serif rail and nav; tier-2 statistics band below the chart. Every number is fixture data.</p>
+</div>
+
+<div style="display:flex;gap:56px;align-items:flex-start;flex-wrap:wrap">
+
+<!-- ─────────────────────────── 1b  EDITORIAL ─────────────────────────── -->
+<div id="1b" style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:14px">
+<span style="font:600 12px var(--font-numeric);letter-spacing:0.08em;color:#fff;background:var(--ink-1);padding:4px 8px;border-radius:3px">1B</span>
+<span class="ht-subtitle">Editorial</span>
+<span class="ht-qualifier">Responsive &mdash; 1440 / 390 / 320 from the Viewport tweak</span>
+</div>
+<div style="width:{{ L.frameW }};background:var(--paper-1);border:1px solid var(--rule-2)">
+  <header style="height:{{ L.headerH }};display:flex;flex-direction:{{ L.headerDir }};align-items:{{ L.headerAlign }};gap:{{ L.headerGap }};padding:{{ L.headerPad }};border-bottom:1px solid var(--rule-1)">
+    <span style="font:400 {{ L.wordmark }} var(--font-prose);letter-spacing:-0.022em;color:var(--ink-1)">HealthTrend</span>
+    <nav style="display:flex;flex-wrap:wrap;gap:{{ L.navGap }};align-items:center">
+      <span style="font:400 {{ L.navSize }} var(--font-prose);color:var(--ink-1)">Analysis</span>
+      <span style="font:400 {{ L.navSize }} var(--font-prose);color:var(--ink-4)">Measurements</span>
+      <a href="Method.dc.html" style="font:400 {{ L.navSize }} var(--font-prose);color:var(--ink-4);text-decoration:none;border-bottom:none">Method</a>
+      <span style="font:400 {{ L.navSize }} var(--font-prose);color:var(--ink-4)">Settings</span>
+    </nav>
+    <div style="margin-left:{{ L.badgePush }}">
+      <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.Badge" variant="outline" hint-size="104px,19px">Fixture series</x-import>
+    </div>
+  </header>
+
+  <main style="display:grid;grid-template-columns:{{ L.mainCols }};align-items:start">
+    <div style="padding:{{ L.mainPad }};min-width:0;display:flex;flex-direction:column;gap:{{ L.mainGap }}">
+      <sc-if value="{{ hasSpan }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;flex-direction:column;gap:{{ L.mainGap }}">
+        <div style="display:flex;flex-direction:{{ L.heroDir }};align-items:{{ L.heroAlign }};gap:0">
+          <div style="flex:0 0 auto;--size-metric-hero:{{ L.heroSize }};--tracking-metric-hero:{{ L.heroTrack }}"><x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.HeroMetric" label="Estimated trend weight" value="{{ heroValue }}" unit="{{ unit }}" interval="{{ heroInterval }}" asOf="as of today, 06:40" digits="{{ digits }}" hint-size="260px,132px"></x-import></div>
+          <div style="flex:0 0 auto;align-self:stretch;display:flex;align-items:{{ L.rateAlign }};margin:{{ L.rateMargin }};padding:{{ L.ratePad }};border-left:{{ L.rateBorderL }};border-top:{{ L.rateBorderT }};--size-metric-support:{{ L.rateSize }};--lh-metric-support:1.06">
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.TrendDelta" value="{{ rate }}" unit="{{ rateUnit }}" direction="{{ rateDirection }}" hint-size="320px,72px"></x-import>
+              <span class="ht-qualifier" style="max-width:24em;color:var(--ink-3)">{{ rateNote }}</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:30px">
+          <div style="display:flex;align-items:center;gap:24px">
+            <span class="ht-eyebrow">Trajectory</span>
+            <div style="margin-left:auto">
+              <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.SegmentedControl" options="{{ rangeOptions }}" value="{{ B.range }}" onChange="{{ B.setRange }}" variant="pill" size="sm" hint-size="180px,28px"></x-import>
+            </div>
+          </div>
+          <div style="margin:{{ L.bleed }}"><x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.TrajectoryChart" trend="{{ B.trend }}" raw="{{ B.raw }}" projection="{{ projection }}" xTicks="{{ B.xTicks }}" reference="{{ reference }}" showRaw="{{ showRaw }}" unit="{{ unit }}" decimals="1" height="{{ L.chartH }}" hint-size="100%,560px"></x-import></div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:16px;margin:{{ L.bleed }};padding:{{ L.bleedPad }}">
+            <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.ChartLegend" items="{{ legend }}" hint-size="520px,20px"></x-import>
+            <span class="ht-qualifier" style="margin-left:auto">Fixture data &mdash; layout only</span>
+          </div>
+        </div>
+        <div style="display:{{ L.bandDisplay }};grid-template-columns:{{ L.bandCols }};gap:{{ L.bandGap }};align-items:flex-start;padding-top:{{ L.bandPad }};border-top:1px solid var(--rule-1)">
+          <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.SupportingMetric" label="Projected, 30 days" value="{{ f30 }}" unit="{{ unit }}" qualifier="{{ f30i }}" hint-size="170px,80px"></x-import>
+          <sc-if value="{{ hasChange90 }}" hint-placeholder-val="{{ true }}">
+            <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.SupportingMetric" label="Change, 90 days" value="{{ change90 }}" unit="{{ unit }}" qualifier="Fixture values" hint-size="170px,80px"></x-import>
+          </sc-if>
+          <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.SupportingMetric" label="Readings used" value="{{ nUsed }}" qualifier="{{ nQualifier }}" hint-size="210px,80px"></x-import>
+          <sc-if value="{{ noChange90 }}" hint-placeholder-val="{{ false }}">
+            <p class="ht-body-sm" style="max-width:24em;line-height:1.6;color:var(--ink-3);margin:0">{{ change90Absent }}</p>
+          </sc-if>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ noSpan }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:64px">
+        <div style="display:flex;flex-direction:column;gap:18px;max-width:34em">
+          <span class="ht-eyebrow">Estimated trend weight</span>
+          <h2 class="ht-title" style="color:var(--ink-1)">Trend not established yet.</h2>
+          <p class="ht-body">{{ spanCopy }}</p>
+          <p class="ht-body" style="color:var(--ink-3)">Once readings span more than one day the filter returns a level and the interval around it. The chart, the rate and Inspect analysis appear at that point, not before.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;padding-top:48px;border-top:1px solid var(--rule-1);max-width:520px">
+          <span class="ht-eyebrow">Readings so far</span>
+          <sc-if value="{{ noReadings }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <p class="ht-subtitle" style="margin:0;color:var(--ink-1)">None recorded.</p>
+              <p class="ht-body-sm" style="margin:0;line-height:1.6;color:var(--ink-3)">The first reading appears here as soon as it is logged. Nothing is estimated from it on its own.</p>
+            </div>
+          </sc-if>
+          <sc-for list="{{ readingRows }}" as="r" hint-placeholder-count="1">
+            <div style="display:grid;grid-template-columns:1fr 120px;gap:24px;align-items:baseline;padding:12px 0;border-bottom:1px solid var(--rule-1)">
+              <span class="ht-body-sm" style="color:var(--ink-1)">{{ r.date }}</span>
+              <span class="ht-metric-raw" style="text-align:right;color:var(--ink-1)">{{ r.reading }}</span>
+            </div>
+          </sc-for>
+          <sc-if value="{{ hasReadings }}" hint-placeholder-val="{{ true }}">
+            <span class="ht-qualifier">{{ readingsNote }}</span>
+          </sc-if>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+
+    <aside style="border-left:{{ L.asideBorderL }};border-top:{{ L.asideBorderT }};padding:{{ L.asidePad }};display:flex;flex-direction:column;gap:{{ L.asideGap }};align-self:stretch">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <span class="ht-eyebrow">What this analysis says</span>
+        <p class="ht-lede" style="font-size:20px;line-height:1.5;color:var(--ink-1)">{{ railLede }}</p>
+        <p class="ht-body-sm" style="line-height:1.65">{{ saysB }}</p>
+      </div>
+      <sc-if value="{{ hasReadings }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;flex-direction:column;gap:12px;padding-top:32px;border-top:1px solid var(--rule-1)">
+        <span class="ht-eyebrow">Reading today</span>
+        <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.RawReading" value="{{ rawToday }}" unit="{{ unit }}" qualifier="{{ rawTodayQualifier }}" hint-size="200px,44px"></x-import>
+        <sc-if value="{{ hasSpan }}" hint-placeholder-val="{{ true }}">
+          <p class="ht-body-sm" style="line-height:1.6;color:var(--ink-3);margin:0">{{ gapNote }}</p>
+        </sc-if>
+      </div>
+      </sc-if>
+      <div style="margin-top:auto;display:flex;flex-direction:column;gap:16px;padding-top:36px;border-top:1px solid var(--rule-1)">
+        <h3 class="ht-subtitle" style="font-size:22px">Inspect analysis</h3>
+        <sc-if value="{{ hasSpan }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <p class="ht-body-sm" style="line-height:1.6;margin:0">Why the model reached this estimate, the observations that support it, and the inference behind the forecast.</p>
+          <div>
+            <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.Button" variant="primary" size="md" iconRight="arrow-right" onClick="{{ B.openDeep }}" hint-size="170px,38px">Inspect analysis</x-import>
+          </div>
+        </div>
+        </sc-if>
+        <sc-if value="{{ noSpan }}" hint-placeholder-val="{{ false }}">
+          <p class="ht-body-sm" style="line-height:1.6;margin:0;color:var(--ink-3)">{{ inspectNote }}</p>
+        </sc-if>
+      </div>
+    </aside>
+  </main>
+
+  <sc-if value="{{ B.open }}" hint-placeholder-val="{{ false }}">
+  <div style="border-top:1px solid var(--rule-2);background:var(--paper-2);padding:{{ L.deepPad }};display:flex;flex-direction:column;gap:{{ L.deepGap }}">
+    <div style="display:flex;flex-direction:{{ L.deepHeadDir }};align-items:{{ L.deepHeadAlign }};gap:{{ L.deepHeadGap }};flex-wrap:wrap">
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:34em">
+        <span class="ht-eyebrow">Inspect analysis</span>
+        <h2 class="ht-display" style="font-size:{{ L.deepTitle }}">{{ B.tierTitle }}</h2>
+        <p class="ht-lede" style="font-size:19px;line-height:1.55;color:var(--ink-3)">{{ B.tierLede }}</p>
+      </div>
+      <div style="margin-left:{{ L.badgePush }};display:flex;align-items:center;gap:24px">
+        <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.SegmentedControl" options="{{ deepTabs }}" value="{{ B.tab }}" onChange="{{ B.setTab }}" variant="underline" size="md" hint-size="260px,34px"></x-import>
+        <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.Button" variant="quiet" size="sm" icon="x" onClick="{{ B.closeDeep }}" hint-size="90px,30px">Close</x-import>
+      </div>
+    </div>
+
+    <sc-if value="{{ B.isWhy }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:{{ L.tierCols }};gap:{{ L.tierGap }};align-items:start">
+        <div class="ht-body" style="display:flex;flex-direction:column;gap:26px">
+          <p>The filter carries two hidden states and no others: a level, which is where your trajectory sits today, and a velocity, which is how fast that level is moving per week. Every reading updates both, and the chart draws the level.</p>
+          <p>A reading pulls the level toward itself in proportion to how much noise the model expects from a scale. A single high morning therefore moves the line very little and the velocity state less still &mdash; which is the whole point of estimating a trajectory rather than plotting the measurements.</p>
+          <p>The interval beside the estimate is the posterior spread of the level. It widens when readings are sparse or irregular and narrows when they are dense, independently of the direction the level is moving. Forward of today it widens further at every step, because the forecast compounds the uncertainty in the velocity state as well as the level: {{ widenNote }}</p>
+          <p style="color:var(--ink-3)">Parameters are fixed and documented rather than fitted to this history &mdash; nothing here is estimated per person, and the model is not offered as a universal winner. <a href="Method.dc.html">Read the Method</a> for the derivation.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:26px;border-left:{{ L.noteBorderL }};border-top:{{ L.noteBorderT }};padding:{{ L.notePad }}">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <span class="ht-eyebrow">Notation</span>
+            <sc-for list="{{ notation }}" as="n" hint-placeholder-count="3">
+              <div style="display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:baseline;padding:5px 0">
+                <span class="ht-axis" style="font-size:14px;color:var(--ink-1)">{{ n.sym }}</span>
+                <span class="ht-qualifier">{{ n.gloss }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.Qualifier" icon="clock" hint-size="280px,34px">Older readings keep influence, decaying smoothly rather than dropping out of a window.</x-import>
+          <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.Qualifier" icon="info" hint-size="280px,34px">Fixture series &mdash; these sentences describe the model; the numbers do not come from it.</x-import>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ B.isEvi }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:52px">
+        <div style="display:grid;grid-template-columns:{{ L.eviCols }};gap:{{ L.eviGap }};padding-bottom:44px;border-bottom:1px solid var(--rule-1)">
+          <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.SupportingMetric" label="Readings used" value="{{ nUsed }}" qualifier="{{ nQualifier }}" hint-size="210px,80px"></x-import>
+          <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.SupportingMetric" label="Days without a reading" value="{{ gapDays }}" qualifier="{{ gapWindowQualifier }}" hint-size="210px,80px"></x-import>
+          <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.SupportingMetric" label="Readings per week" value="{{ perWeekCount }}" qualifier="Mean across the window &middot; the model treats three a week as its floor" hint-size="230px,80px"></x-import>
+          <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.SupportingMetric" label="Down-weighted" value="{{ nOutliers }}" qualifier="Kept in the ledger, ringed in the chart" hint-size="200px,80px"></x-import>
+        </div>
+        <div style="display:grid;grid-template-columns:{{ L.tierCols2 }};gap:{{ L.tierGap }};align-items:start;margin:{{ L.bleed }}">
+          <div style="min-width:0;display:flex;flex-direction:column;gap:14px;padding:{{ L.bleedPad }}">
+            <span class="ht-eyebrow">Recent readings against the estimate</span>
+            <div style="background:var(--paper-1);padding:4px 24px">
+              <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.MeasurementTable" rows="{{ rows }}" unit="{{ unit }}" columns="{{ L.tableCols }}" dense="{{ L.tableDense }}" hint-size="100%,360px"></x-import>
+            </div>
+          </div>
+          <div class="ht-body-sm" style="display:flex;flex-direction:column;gap:20px;line-height:1.65;padding:{{ L.tierRailPad }}">
+            <p>Each row states the measurement, the level the filter held that day, and the difference between them. The residual column is the evidence: readings scatter either side of the line without dragging it, which is what a trajectory estimate is for.</p>
+            <p style="color:var(--ink-3)">{{ gapNote }}</p>
+            <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.Qualifier" icon="circle-slash" hint-size="260px,34px">Ringed rows are down-weighted, never removed.</x-import>
+            <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.Qualifier" icon="info" hint-size="260px,34px">Fixture series &mdash; readings and residuals are invented for layout.</x-import>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ B.isSta }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:{{ L.tierCols2 }};gap:{{ L.tierGap }};align-items:start;margin:{{ L.bleed }}">
+        <div style="min-width:0;display:flex;flex-direction:column;padding:{{ L.bleedPad }}">
+          <sc-if value="{{ L.isWide }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) 96px 190px 230px;gap:24px;padding-bottom:12px;border-bottom:1px solid var(--rule-3)">
+            <span class="ht-eyebrow">Quantity</span>
+            <span class="ht-eyebrow">Notation</span>
+            <span class="ht-eyebrow" style="text-align:right">Value</span>
+            <span class="ht-eyebrow">Interval</span>
+          </div>
+          </sc-if>
+          <sc-for list="{{ statLedger }}" as="r" hint-placeholder-count="8">
+            <div style="display:grid;grid-template-columns:{{ L.ledCols }};gap:{{ L.ledGap }};align-items:baseline;padding:16px 0;border-bottom:1px solid var(--rule-1)">
+              <span class="ht-body-sm" style="color:var(--ink-1)">{{ r.label }}</span>
+              <span class="ht-axis" style="font-size:14px;color:var(--ink-3);text-align:{{ L.ledSymAlign }}">{{ r.sym }}</span>
+              <span class="ht-metric-support" style="font-size:22px;text-align:{{ L.ledValAlign }};color:var(--ink-1);white-space:nowrap">{{ r.value }}</span>
+              <span class="ht-qualifier" style="text-align:{{ L.ledIvAlign }};min-width:0">{{ r.interval }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div class="ht-body-sm" style="display:flex;flex-direction:column;gap:20px;line-height:1.65;padding:{{ L.tierRailPad }}">
+          <p>Forecasts are the filter&rsquo;s forward distribution under its own assumptions: the velocity state persists and no new information arrives. They are not predictions of what you will do.</p>
+          <p style="color:var(--ink-3)">Intervals are credible intervals on the states, printed one digit finer than the estimates they qualify.</p>
+          <x-import component-from-global-scope="HealthTrendDesignSystem_5b333a.Qualifier" icon="info" hint-size="260px,34px">Fixture series &mdash; every value in this ledger is invented for layout.</x-import>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+  </sc-if>
+</div>
+</div>
+
+
+</div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1000},&quot;unit&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;kg&quot;,&quot;lb&quot;],&quot;default&quot;:&quot;kg&quot;,&quot;tsType&quot;:&quot;'kg' | 'lb'&quot;,&quot;section&quot;:&quot;Display&quot;},&quot;showRaw&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Display&quot;},&quot;startDeep&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;none&quot;,&quot;why&quot;,&quot;evidence&quot;,&quot;statistics&quot;],&quot;default&quot;:&quot;none&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Deep tier&quot;},&quot;viewport&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;1440&quot;,&quot;390&quot;,&quot;320&quot;],&quot;default&quot;:&quot;1440&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Viewport&quot;},&quot;screenState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;no-span&quot;,&quot;no-readings&quot;,&quot;no-goal&quot;,&quot;short-window&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;State&quot;},&quot;days&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:60,&quot;max&quot;:240,&quot;step&quot;:30,&quot;default&quot;:120,&quot;unit&quot;:&quot;days&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Fixture series&quot;}}">
+class Component extends DCLogic {
+  // FIXTURE DATA — deterministic, invented, for layout only. Never ship as product copy.
+  state = {};
+
+  layout() {
+    const vp = this.props.viewport ?? '1440';
+    const M = vp !== '1440', S = vp === '320';
+    const g = S ? 24 : M ? 32 : 72;           // --space-7 / --space-8 / desktop gutter
+    const px = n => n + 'px';
+    return {
+      vp, isWide: !M, isNarrow: M,
+      frameW: px(Number(vp)),
+      headerH: M ? 'auto' : '72px',
+      headerDir: M ? 'column' : 'row',
+      headerAlign: M ? 'flex-start' : 'center',
+      headerGap: M ? '14px' : '56px',
+      headerPad: M ? '16px ' + px(g) : '0 72px',
+      navGap: M ? (S ? '14px' : '18px') : '34px',
+      navSize: M ? (S ? '15px' : '16px') : '17px',
+      wordmark: M ? '20px' : '23px',
+      badgePush: M ? '0' : 'auto',
+      mainCols: M ? '1fr' : '1fr 400px',
+      mainPad: M ? px(S ? 32 : 40) + ' ' + px(g) + ' ' + px(S ? 48 : 64) : '64px 56px 88px 72px',
+      mainGap: M ? px(S ? 48 : 56) : '96px',
+      // hero drops one existing tier (72 -> 46) and the rate follows it (46 -> 30),
+      // so the two-step relationship and the reading order survive.
+      heroSize: M ? 'var(--size-display)' : 'var(--size-metric-hero-sm)',
+      heroTrack: M ? '-0.02em' : '-0.028em',
+      rateSize: M ? 'var(--size-metric-support)' : 'var(--size-display)',
+      heroDir: M ? 'column' : 'row',
+      heroAlign: M ? 'stretch' : 'flex-end',
+      rateAlign: M ? 'flex-start' : 'flex-end',
+      rateMargin: M ? '24px 0 0' : '0 0 0 88px',
+      ratePad: M ? '24px 0 0' : '0 0 0 88px',
+      rateBorderL: M ? 'none' : '1px solid var(--rule-1)',
+      rateBorderT: M ? '1px solid var(--rule-1)' : 'none',
+      // desktop: a 40px escape past the right padding. narrow: full-bleed both
+      // edges, so the chart is the one element allowed to touch the screen.
+      bleed: M ? '0 ' + px(-g) : '0 -40px 0 0',
+      bleedPad: M ? '0 ' + px(g) : '0',
+      chartH: M ? (S ? 300 : 340) : 560,
+      bandDisplay: M ? 'grid' : 'flex',
+      bandCols: M ? (S ? '1fr' : '1fr 1fr') : 'none',
+      bandGap: M ? '32px' : '64px',
+      bandPad: M ? '32px' : '56px',
+      asideBorderL: M ? 'none' : '1px solid var(--rule-1)',
+      asideBorderT: M ? '1px solid var(--rule-1)' : 'none',
+      asidePad: M ? px(S ? 40 : 48) + ' ' + px(g) + ' ' + px(S ? 48 : 64) : '72px 72px 80px 48px',
+      asideGap: M ? '36px' : '44px',
+      deepPad: M ? px(S ? 40 : 48) + ' ' + px(g) + ' ' + px(S ? 56 : 72) : '72px 72px 88px',
+      deepGap: M ? '40px' : '56px',
+      deepHeadDir: M ? 'column' : 'row',
+      deepHeadAlign: M ? 'flex-start' : 'flex-end',
+      deepHeadGap: M ? '24px' : '56px',
+      deepTitle: M ? (S ? '28px' : '33px') : '38px',
+      tierCols: M ? '1fr' : 'minmax(0,34em) 300px',
+      tierCols2: M ? '1fr' : 'minmax(0,1fr) 300px',
+      tierGap: M ? '40px' : '0 88px',
+      noteBorderL: M ? 'none' : '1px solid var(--rule-1)',
+      noteBorderT: M ? '1px solid var(--rule-1)' : 'none',
+      notePad: M ? '32px 0 0' : '0 0 0 32px',
+      tierRailPad: M ? '0' : '0 40px 0 0',
+      eviCols: M ? (S ? '1fr' : '1fr 1fr') : 'repeat(4,minmax(0,1fr))',
+      eviGap: M ? '32px' : '56px',
+      tableCols: M ? ['date', 'reading', 'residual'] : ['date', 'reading', 'trend', 'residual'],
+      tableDense: M,
+      ledCols: M ? '1fr auto' : 'minmax(0,1fr) 96px 190px 230px',
+      ledGap: M ? '8px 16px' : '24px',
+      ledSymAlign: M ? 'right' : 'left',
+      ledValAlign: M ? 'left' : 'right',
+      ledIvAlign: M ? 'right' : 'left',
+    };
+  }
+
+  screen() { return this.props.screenState ?? 'normal'; }
+
+  base() {
+    const st = this.screen();
+    if (this._base && this._baseKey === st + ':' + (this.props.days ?? 120)) return this._base;
+    this._baseKey = st + ':' + (this.props.days ?? 120);
+    // span_days == 0 → readings from a single day. short-window → a window that
+    // does not cover 90 days, so no 90-day change can be computed from it.
+    const days = (st === 'no-span' || st === 'no-readings') ? 1 : st === 'short-window' ? 60 : (this.props.days ?? 120);
+    const startKg = 79.8, weekly = -0.27, perDay = weekly / 7;
+    const trend = [], raw = [];
+    let seed = 20260830;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < days; i++) {
+      const y = startKg + perDay * i + Math.sin(i / 40) * 0.12;
+      const s = 0.31 + 0.42 * Math.exp(-i / 26);
+      const d = new Date(2026, 7, 30 - (days - 1 - i));
+      const skip = st === 'no-readings' || (i % 7 === 3 && i > 30);
+      const r = rnd();
+      const measured = skip ? null : y + (r - 0.5) * 2.0;
+      const outlier = !skip && Math.abs(measured - y) > 0.93;
+      trend.push({
+        y, lo68: y - s, hi68: y + s, lo95: y - s * 1.96, hi95: y + s * 1.96,
+        label: d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+        month: d.toLocaleDateString('en-GB', { month: 'short' }),
+        rawY: measured == null ? undefined : measured,
+      });
+      if (measured != null) raw.push({ i, y: measured, outlier });
+    }
+    const projection = [];
+    let p = trend[trend.length - 1].y, sp = 0.2;
+    for (let j = 0; j < 90; j++) { p += perDay; sp += 0.028; projection.push({ y: p, lo: p - sp, hi: p + sp }); }
+    this._base = { trend, raw, projection, weekly, days };
+    return this._base;
+  }
+
+  conv(v) { return this.props.unit === 'lb' ? v / 0.45359237 : v; }
+
+  window(key) {
+    const { trend, raw } = this.base();
+    const range = this.state[key + 'Range'] ?? '90d';
+    const n = range === '30d' ? 30 : range === '90d' ? 90 : trend.length;
+    const start = Math.max(0, trend.length - n);
+    const c = v => this.conv(v);
+    const t = trend.slice(start).map(p => ({
+      y: c(p.y), lo68: c(p.lo68), hi68: c(p.hi68), lo95: c(p.lo95), hi95: c(p.hi95),
+      label: p.label, month: p.month, rawY: p.rawY == null ? undefined : c(p.rawY),
+    }));
+    const r = raw.filter(p => p.i >= start).map(p => ({ i: p.i - start, y: c(p.y), outlier: p.outlier }));
+    const step = n <= 30 ? 7 : n <= 90 ? 21 : 30;
+    const xTicks = [];
+    for (let i = 0; i < t.length; i += step) xTicks.push({ i, label: n <= 30 ? t[i].label : t[i].month });
+    return { trend: t, raw: r, xTicks, from: start / trend.length, to: 1, range };
+  }
+
+  treatment(key) {
+    const w = this.window(key);
+    const hasSpan = this.base().trend.length > 1;
+    const prop = this.props.startDeep ?? 'none';
+    if (this._seenDeep !== prop) { this._seenDeep = prop; this._deepOverride = prop; }
+    const ov = this._deepOverride;
+    const tab = (ov && ov !== 'none') ? ov : (this.state[key + 'Tab'] ?? 'why');
+    const open = hasSpan && (ov ? ov !== 'none' : (this.state[key + 'Open'] ?? false));
+    const set = o => { this._deepOverride = null; this.setState(o); };
+    const TIERS = {
+      why: ['How the estimate was reached', 'The two states the filter carries, how a reading moves them, and why the interval widens ahead of today.'],
+      evidence: ['The observations behind it', 'What the window actually contains: readings used, days missing, and how each measurement sits against the estimated level.'],
+      statistics: ['Values and their intervals', 'The quantities the filter produces, each with the interval it carries. Notation is set in mono; figures are tabular.'],
+    };
+    return {
+      trend: w.trend, raw: w.raw, xTicks: w.xTicks, range: w.range,
+      tierTitle: TIERS[tab][0], tierLede: TIERS[tab][1],
+      strip: { from: w.from, to: w.to },
+      setRange: v => set({ [key + 'Range']: v }),
+      open, tab,
+      isWhy: open && tab === 'why',
+      isEvi: open && tab === 'evidence',
+      isSta: open && tab === 'statistics',
+      setTab: v => set({ [key + 'Tab']: v, [key + 'Open']: true }),
+      openDeep: () => set({ [key + 'Open']: true, [key + 'Tab']: tab }),
+      closeDeep: () => set({ [key + 'Open']: false }),
+    };
+  }
+
+  renderVals() {
+    const { trend, raw, projection, weekly } = this.base();
+    const unit = this.props.unit ?? 'kg';
+    const c = v => this.conv(v);
+    const last = trend[trend.length - 1];
+    const f1 = v => c(v).toFixed(1);
+    const f2 = v => c(v).toFixed(2);
+    const sg = v => { const m = Math.abs(v).toFixed(2); return Number(m) === 0 ? m : (v < 0 ? '\u2212' : '+') + m; };
+    // the sign comes from the ROUNDED magnitude: a residual that rounds to zero
+    // is not a signed claim, so it prints unsigned.
+    const sgc = v => { const m = Math.abs(c(v)).toFixed(2); return Number(m) === 0 ? m : (v < 0 ? '\u2212' : '+') + m; };
+    const half68 = last.hi68 - last.y;
+    // σ is the residual RMS of the fixture readings around the fixture level.
+    const res = raw.map(p => p.y - trend[p.i].y);
+    const sigmaKg = res.length ? Math.sqrt(res.reduce((a, r) => a + r * r, 0) / res.length) : 0;
+    // SPEC: the velocity state has NO interval here. The fixture build generates a
+    // deterministic velocity and carries no velocity variance, and no other method
+    // may be substituted. At implementation the rate must take its interval from
+    // the model's own posterior for the velocity state.
+    const rateK = this.conv(weekly);
+    const gapDays = trend.length - raw.length;
+    const nOut = raw.filter(p => p.outlier).length;
+    const fc = i => ({ v: f1(projection[i].y), iv: '\u00b1' + f2(projection[i].hi - projection[i].y) + ' ' + unit + ' (68%)' });
+    const f7 = fc(6), f30 = fc(29), f90 = fc(89);
+    const change90 = last.y - trend[Math.max(0, trend.length - 91)].y;
+    const st = this.screen();
+    const hasSpan = trend.length > 1;
+    const hasGoal = st !== 'no-goal';
+    const hasChange90 = trend.length >= 91;
+    const railLede = hasSpan
+      ? 'Beneath the noise, the level is falling \u2014 and the model is confident about the direction, not the exact number.'
+      : 'There is no trajectory yet, and nothing here infers one from a single day of readings.';
+    const rows = raw.slice(-12).reverse().map(p => ({
+      date: trend[p.i].label,
+      reading: f1(p.y),
+      trend: f1(trend[p.i].y),
+      residual: sgc(p.y - trend[p.i].y),
+      outlier: p.outlier,
+    }));
+    return {
+      unit, digits: 5,
+      L: this.layout(),
+      hasSpan, noSpan: !hasSpan,
+      hasReadings: raw.length > 0, noReadings: raw.length === 0,
+      inspectNote: 'Unavailable: there is no estimate to inspect. Why, Evidence and Statistics all describe an estimated trajectory, and the model has produced none from '
+        + (raw.length === 0 ? 'an empty history.' : 'a single day of readings.'),
+      spanCopy: raw.length === 0
+        ? 'A trajectory is estimated across a span of days. There are no readings yet, so there is no span and nothing to estimate from: the model returns no level, no interval, no rate and no projection, and this screen draws none of them.'
+        : 'A trajectory is estimated across a span of days. These readings cover a single day, so there is no span to estimate across: the model returns no level, no interval, no rate and no projection, and this screen draws none of them.',
+      hasChange90: hasSpan && hasChange90, noChange90: hasSpan && !hasChange90,
+      change90Absent: 'No 90-day change: this window holds ' + trend.length + ' days. The figure is not estimated from a shorter span.',
+      readingRows: raw.map(p => ({ date: trend[p.i].label, reading: f1(p.y) + ' ' + unit })),
+      readingsNote: 'Fixture series \u2014 ' + raw.length + (raw.length === 1 ? ' reading, recorded today.' : ' readings, all recorded today.'),
+      railLede: raw.length === 0 && !hasSpan ? 'There are no readings yet, and nothing here infers a trajectory from an empty history.' : railLede,
+      projection: projection.slice(0, 30).map(p => ({ y: c(p.y), lo: c(p.lo), hi: c(p.hi) })),
+      showRaw: this.props.showRaw !== false,
+      reference: hasGoal ? { y: this.conv(74), label: 'goal ' + f1(74) } : null,
+      heroValue: f1(last.y),
+      heroInterval: '\u00b1' + f2(half68) + ' ' + unit + ' (68%)',
+      rate: sg(rateK),
+      rateUnit: unit + '/week',
+      rateDirection: Math.abs(weekly) < 0.05 ? 'flat' : weekly < 0 ? 'down' : 'up',
+      rateNote: '95% interval required from the model posterior \u2014 absent from the fixture series',
+      f7: f7.v, f7i: f7.iv, f30: f30.v, f30i: f30.iv, f90: f90.v, f90i: f90.iv,
+      change90: sgc(change90),
+      nUsed: String(raw.length),
+      nQualifier: 'of ' + trend.length + ' days \u00b7 ' + gapDays + ' without a reading',
+      nOutliers: String(nOut),
+      gapDays: String(gapDays),
+      gapWindowQualifier: 'in the ' + trend.length + '-day window \u00b7 gaps widen the band, they do not move the line',
+      perWeekCount: (raw.length / trend.length * 7).toFixed(1),
+      widenNote: 'at seven days the 68% half-width is ' + f2(projection[6].hi - projection[6].y) + '\u00a0' + unit + ', at ninety days ' + f2(projection[89].hi - projection[89].y) + '\u00a0' + unit + '.',
+      notation: [
+        { sym: '\u2113\u209c', gloss: 'level state \u2014 the estimated trajectory, in ' + unit },
+        { sym: 'v\u209c', gloss: 'velocity state \u2014 change in the level, in ' + unit + '/week' },
+        { sym: '\u03c3', gloss: 'residual scatter of readings around the level' },
+        { sym: 'n', gloss: 'readings the filter used in this window' },
+      ],
+      statLedger: [
+        { label: 'Estimated level, today', sym: '\u2113\u209c', value: f1(last.y) + ' ' + unit, interval: '\u00b1' + f2(half68) + ' ' + unit + ' (68%)' },
+        { label: 'Estimated level, 95%', sym: '\u2113\u209c', value: f1(last.lo95) + '\u2013' + f1(last.hi95) + ' ' + unit, interval: '95% credible interval' },
+        { label: 'Velocity state', sym: 'v\u209c', value: sg(rateK) + ' ' + unit + '/week', interval: 'Required from the model posterior \u2014 absent from the fixture series' },
+        { label: 'Residual scatter', sym: '\u03c3', value: f2(sigmaKg) + ' ' + unit, interval: 'of readings around the level' },
+        { label: 'Readings used', sym: 'n', value: String(raw.length), interval: 'of ' + trend.length + ' days \u00b7 ' + gapDays + ' without a reading' },
+        { label: 'Forecast, 7 days', sym: '\u2113\u209c\u208a\u2087', value: f7.v + ' ' + unit, interval: f7.iv },
+        { label: 'Forecast, 30 days', sym: '\u2113\u209c\u208a\u2083\u2080', value: f30.v + ' ' + unit, interval: f30.iv },
+        { label: 'Forecast, 90 days', sym: '\u2113\u209c\u208a\u2089\u2080', value: f90.v + ' ' + unit, interval: f90.iv },
+      ],
+      sigma: f2(sigmaKg) + ' ' + unit,
+      rawToday: f1(last.rawY ?? last.y),
+      rawTodayQualifier: 'scale reading, today 06:40 \u00b7 residual ' + sgc((last.rawY ?? last.y) - last.y) + ' ' + unit,
+      saysB: !hasSpan
+        ? (raw.length === 0
+          ? 'The filter has nothing to estimate from: no readings have been recorded, so there is no level, no interval and no velocity state. This screen states that rather than inferring anything from an empty history.'
+          : 'The filter has no span to estimate across, so it returns no level, no interval and no velocity state. What exists is the reading itself.')
+        : 'The velocity state sits at ' + sg(rateK) + '\u00a0' + unit + '/week. The level itself carries \u00b1' + f2(half68) + '\u00a0' + unit + ' at 68%, which is the band drawn around the line; the fixture series carries no posterior for the velocity state, so no interval is stated for the rate.',
+      gapNote: gapDays + ' days in this window have no reading. Gaps widen the band; they do not move the line.',
+      rangeOptions: [{ value: '30d', label: '30d' }, { value: '90d', label: '90d' }, { value: 'all', label: 'All' }],
+      deepTabs: [{ value: 'why', label: 'Why' }, { value: 'evidence', label: 'Evidence' }, { value: 'statistics', label: 'Statistics' }],
+      legend: [
+        { role: 'trend', label: 'Estimated trajectory' },
+        { role: 'band', label: '68% / 95% credible interval' },
+        { role: 'raw', label: 'Scale measurements' },
+        { role: 'projection', label: 'Projection, 30 days' },
+      ].concat(hasGoal ? [{ role: 'reference', label: 'Goal' }] : []),
+      rows,
+      B: this.treatment('b'),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+/* HealthTrend type. Three jobs, three families, one explicit metric hierarchy. */
+:root {
+  /* ── Prose (serif) ──────────────────────────────────────────────────── */
+  --size-display: 46px;   --lh-display: 1.08; /* @kind font */
+  --size-title: 33px;     --lh-title: 1.15; /* @kind font */
+  --size-subtitle: 24px;  --lh-subtitle: 1.25; /* @kind font */
+  --size-lede: 21px;      --lh-lede: 1.52; /* @kind font */
+  --size-body: 18px;      --lh-body: 1.62; /* @kind font */
+  --size-body-sm: 16px;   --lh-body-sm: 1.6; /* @kind font */
+
+  /* ── UI sans ────────────────────────────────────────────────────────── */
+  --size-ui: 14px;        --lh-ui: 1.35; /* @kind font */
+  --size-ui-sm: 13px;     --lh-ui-sm: 1.3; /* @kind font */
+  --size-eyebrow: 11px;   --lh-eyebrow: 1.1; /* @kind font */
+
+  /* ── Metric hierarchy — TIER 1..3, deliberately far apart ───────────── */
+  /* T1  estimated trajectory. The only number allowed to be huge. */
+  --size-metric-hero: 112px;      --lh-metric-hero: 0.86; /* @kind font */
+  --size-metric-hero-sm: 72px; /* @kind font */
+  /* T2  supporting statistical context: rate, projection, n, R². */
+  --size-metric-support: 30px;    --lh-metric-support: 1.0; /* @kind font */
+  --size-metric-support-sm: 22px; /* @kind font */
+  /* T3  raw measurements. Never larger than body text. */
+  --size-metric-raw: 15px;        --lh-metric-raw: 1.3; /* @kind font */
+
+  /* ── Statistical qualifier tier: intervals, n, units, staleness ─────── */
+  --size-qualifier: 12.5px;       --lh-qualifier: 1.35; /* @kind font */
+  --size-qualifier-sm: 11.5px; /* @kind font */
+  --tracking-qualifier: 0.01em; /* @kind font */
+
+  /* ── Notation (mono): axes, tick labels, symbols ────────────────────── */
+  --size-axis: 11.5px;    --lh-axis: 1; /* @kind font */
+  --size-notation: 15px;  --lh-notation: 1.5; /* @kind font */
+
+  /* Live readouts: crosshair value, terminal value flag. Between tier 2 and the
+     qualifier tier — a value that updates under the cursor needs more presence
+     than a label and less than a page metric. */
+  --size-metric-readout: 19px;    --lh-metric-readout: 1.15; /* @kind font */
+
+  /* ── Weights ────────────────────────────────────────────────────────── */
+  --weight-prose: 400; /* @kind font */
+  --weight-prose-semi: 600; /* @kind font */
+  --weight-ui: 450; /* @kind font */
+  --weight-ui-strong: 600; /* @kind font */
+  --weight-metric: 400; /* @kind font */
+
+  /* ── Tracking ───────────────────────────────────────────────────────── */
+  --tracking-display: -0.018em; /* @kind font */
+  --tracking-metric-hero: -0.035em; /* @kind font */
+  --tracking-eyebrow: 0.09em; /* @kind font */
+}
+
+@media (max-width: 900px) {
+  :root {
+    --size-metric-hero: var(--size-metric-hero-sm); /* @kind font */
+    --size-metric-support: var(--size-metric-support-sm); /* @kind font */
+    --size-display: 34px; /* @kind font */
+    --size-title: 27px; /* @kind font */
+  }
+}
+
+/* ── Utility classes: the tiers, so a consumer cannot get them wrong ──── */
+.ht-display { font: var(--weight-prose) var(--size-display)/var(--lh-display) var(--font-prose); letter-spacing: var(--tracking-display); color: var(--text-display); margin: 0; text-wrap: balance; }
+.ht-title { font: var(--weight-prose) var(--size-title)/var(--lh-title) var(--font-prose); letter-spacing: -0.014em; color: var(--text-display); margin: 0; text-wrap: balance; }
+.ht-subtitle { font: var(--weight-prose) var(--size-subtitle)/var(--lh-subtitle) var(--font-prose); color: var(--text-display); margin: 0; }
+.ht-lede { font: var(--weight-prose) var(--size-lede)/var(--lh-lede) var(--font-prose); color: var(--text-body); margin: 0; text-wrap: pretty; }
+.ht-body { font: var(--weight-prose) var(--size-body)/var(--lh-body) var(--font-prose); color: var(--text-body); margin: 0; text-wrap: pretty; }
+.ht-body-sm { font: var(--weight-prose) var(--size-body-sm)/var(--lh-body-sm) var(--font-prose); color: var(--text-body); margin: 0; text-wrap: pretty; }
+.ht-ui { font: var(--weight-ui) var(--size-ui)/var(--lh-ui) var(--font-numeric); color: var(--text-body); font-feature-settings: var(--feat-tabular); }
+.ht-eyebrow { font: var(--weight-ui-strong) var(--size-eyebrow)/var(--lh-eyebrow) var(--font-numeric); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; color: var(--text-qualifier); }
+.ht-metric-hero { font: var(--weight-metric) var(--size-metric-hero)/var(--lh-metric-hero) var(--font-numeric); letter-spacing: var(--tracking-metric-hero); font-feature-settings: var(--feat-tabular); color: var(--text-display); font-variant-numeric: tabular-nums; }
+.ht-metric-readout { font: var(--weight-ui) var(--size-metric-readout)/var(--lh-metric-readout) var(--font-numeric); letter-spacing: -0.012em; font-feature-settings: var(--feat-tabular); color: var(--text-display); font-variant-numeric: tabular-nums; }
+.ht-metric-support { font: var(--weight-ui) var(--size-metric-support)/var(--lh-metric-support) var(--font-numeric); letter-spacing: -0.015em; font-feature-settings: var(--feat-tabular); color: var(--text-display); }
+.ht-metric-raw { font: var(--weight-ui) var(--size-metric-raw)/var(--lh-metric-raw) var(--font-numeric); font-feature-settings: var(--feat-tabular); color: var(--text-secondary); }
+.ht-qualifier { font: var(--weight-ui) var(--size-qualifier)/var(--lh-qualifier) var(--font-numeric); letter-spacing: var(--tracking-qualifier); font-feature-settings: var(--feat-tabular); color: var(--text-qualifier); }
+.ht-axis { font: var(--weight-ui) var(--size-axis)/var(--lh-axis) var(--font-notation); color: var(--text-qualifier); font-feature-settings: var(--feat-tabular); }
+.ht-notation { font: var(--weight-prose) var(--size-notation)/var(--lh-notation) var(--font-notation); color: var(--text-body); }

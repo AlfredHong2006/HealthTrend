@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/colors.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/typography.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/layout.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/lines.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/motion.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/dataviz.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/tokens/base.css">
+<link rel="stylesheet" href="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/styles.css">
+<script src="_ds/healthtrend-design-system-5b333a1d-8c0d-434b-abe3-e923360b71f7/_ds_bundle.js"></script>
+<script src="./doc-page.js"></script>
+<style>
+doc-page:not(:defined){visibility:hidden}
+a{color:var(--azure-500)}
+a:hover{color:var(--azure-600)}
+</style>
+</helmet>
+
+<doc-page margin="0.85in">
+
+<div style="display:flex;align-items:baseline;gap:16px;padding-bottom:8px;margin-bottom:44px;border-bottom:1px solid var(--rule-1)">
+  <span class="ht-eyebrow">HealthTrend &middot; 1B Editorial &middot; frozen</span>
+  <span class="ht-qualifier" style="margin-left:auto">Implementation spec &middot; rev A</span>
+</div>
+
+<h1 class="ht-display" style="max-width:24em;margin:0">1B Editorial &mdash; implementation spec</h1>
+<p class="ht-body" style="max-width:44em;margin:20px 0 0;color:var(--ink-2)">The adopted visual language for the HealthTrend analysis surface. This document freezes it: tokens, the layout table at 1440 / 390 / 320, every screen and state, the Inspect analysis tier behaviour, and the list of values that must be supplied by the real model before this ships.</p>
+
+<div style="display:flex;flex-wrap:wrap;gap:32px 56px;margin-top:36px;padding-top:20px;border-top:1px solid var(--rule-2)">
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <span class="ht-eyebrow">Source of truth</span>
+    <span class="ht-body-sm"><code style="font:400 14px var(--font-notation)">Analysis Screen.dc.html</code></span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <span class="ht-eyebrow">Nav destination</span>
+    <span class="ht-body-sm"><code style="font:400 14px var(--font-notation)">Method.dc.html</code></span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <span class="ht-eyebrow">Component change</span>
+    <span class="ht-body-sm">TrajectoryChart density</span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <span class="ht-eyebrow">Data status</span>
+    <span class="ht-body-sm" style="color:var(--data-stale)">Fixture throughout</span>
+  </div>
+</div>
+
+<h2 class="ht-title" style="margin:64px 0 0">1 &middot; What is frozen</h2>
+<p class="ht-body" style="max-width:34em;margin:20px 0 0">The architecture does not change: a chart hero with the estimate and the rate above it, an editorial rail beside the chart, a tier&#8209;2 statistics band below it, one Inspect analysis entry that opens Why / Evidence / Statistics inline, and Method as a separate nav destination. The rail is a rail &mdash; grouping comes from alignment, spacing and typography, never from cards, boxes or panels. There are no cards anywhere in this design.</p>
+<p class="ht-body" style="max-width:34em;margin:24px 0 0">Two rules govern every value on screen. First, nothing is displayed that the model does not produce; where the model produces nothing, the slot is absent with a plain statement of why, not a dash or a placeholder. Second, parameters are fixed and documented &mdash; there is no per&#8209;user fitting and no EM step, and no copy may imply either.</p>
+
+<h2 class="ht-title" style="margin:64px 0 0">2 &middot; Tokens</h2>
+<p class="ht-body-sm" style="max-width:34em;margin:16px 0 0;color:var(--ink-3)">No new tokens were introduced for this direction, at any width. Everything below is an existing design&#8209;system token.</p>
+
+<div style="margin-top:28px;display:flex;flex-direction:column">
+  <div style="display:grid;grid-template-columns:170px 1fr;gap:20px;padding-bottom:10px;border-bottom:1px solid var(--rule-3)">
+    <span class="ht-eyebrow">Role</span><span class="ht-eyebrow">Token</span>
+  </div>
+  <sc-for list="{{ tokens }}" as="t" hint-placeholder-count="14">
+    <div style="display:grid;grid-template-columns:170px 1fr;gap:20px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--rule-1)">
+      <span class="ht-body-sm" style="color:var(--ink-1)">{{ t.role }}</span>
+      <span style="font:400 14px var(--font-notation);color:var(--ink-2)">{{ t.token }}</span>
+    </div>
+  </sc-for>
+</div>
+
+<p class="ht-body-sm" style="max-width:34em;margin:24px 0 0">Type roles are unchanged from the system: Source Serif 4 for all prose and for the rail and nav; IBM Plex Sans with tabular figures forced for every value; IBM Plex Mono for axes and notation. The hero reserves five character slots (<code style="font:400 14px var(--font-notation)">digits={5}</code>) so switching kg to lb moves nothing.</p>
+
+<h2 class="ht-title" style="margin:64px 0 0">3 &middot; Layout table</h2>
+<p class="ht-body" style="max-width:34em;margin:20px 0 0">One table drives all three widths, keyed off a single viewport value. The desktop structure does not survive 320 by shrinking, so the narrow columns are reflow decisions, not scale factors.</p>
+
+<div style="margin-top:28px;display:flex;flex-direction:column;break-inside:avoid">
+  <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:16px;padding-bottom:10px;border-bottom:1px solid var(--rule-3)">
+    <span class="ht-eyebrow">Property</span>
+    <span class="ht-eyebrow">1440</span>
+    <span class="ht-eyebrow">390</span>
+    <span class="ht-eyebrow">320</span>
+  </div>
+  <sc-for list="{{ layoutRows }}" as="r" hint-placeholder-count="18">
+    <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:16px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--rule-1)">
+      <span class="ht-body-sm" style="color:var(--ink-1)">{{ r.k }}</span>
+      <span style="font:400 13.5px var(--font-notation);color:var(--ink-2)">{{ r.a }}</span>
+      <span style="font:400 13.5px var(--font-notation);color:var(--ink-2)">{{ r.b }}</span>
+      <span style="font:400 13.5px var(--font-notation);color:var(--ink-2)">{{ r.c }}</span>
+    </div>
+  </sc-for>
+</div>
+
+<h3 class="ht-heading" style="margin:44px 0 0">3.1 The four reflow decisions</h3>
+<p class="ht-body" style="max-width:34em;margin:18px 0 0"><strong>The rail moves below the statistics band</strong> and becomes a single full&#8209;width column; its left hairline becomes a top hairline. It stays one stacked column of hairline&#8209;separated blocks. It must not become cards on the way down.</p>
+<p class="ht-body" style="max-width:34em;margin:20px 0 0"><strong>Gutters come down to existing steps</strong> &mdash; 32px (<code style="font:400 14px var(--font-notation)">--space-8</code>) at 390, 24px (<code style="font:400 14px var(--font-notation)">--space-7</code>) at 320. No new spacing token.</p>
+<p class="ht-body" style="max-width:34em;margin:20px 0 0"><strong>The 40px chart escape is replaced, not kept or dropped.</strong> At narrow widths the chart full&#8209;bleeds symmetrically to both screen edges (negative margin equal to the gutter, padding restored on the legend row beneath it). The chart is the only element permitted to touch the screen edge, which reads as deliberate rather than as a shrunken desktop chart.</p>
+<p class="ht-body" style="max-width:34em;margin:20px 0 0"><strong>The hero drops one existing tier and the rate follows it</strong> &mdash; 72&#8239;&rarr;&#8239;46px and 46&#8239;&rarr;&#8239;30px, both existing sizes, no new intermediate step. The two&#8209;step gap and therefore the reading order survive: the rate is still the second thing read. The vertical hairline between hero and rate becomes horizontal, with the rate directly beneath the hero.</p>
+<p class="ht-body-sm" style="max-width:34em;margin:20px 0 0;color:var(--ink-3)">Tabular figures must not wrap or truncate: ledger value spans are <code style="font:400 14px var(--font-notation)">white-space: nowrap</code> and the interval takes the remaining width and wraps instead. The widest lb values &mdash; a three&#8209;digit level, a level range and a signed rate &mdash; are the cases to test.</p>
+
+<h2 class="ht-title" style="margin:64px 0 0">4 &middot; TrajectoryChart density</h2>
+<p class="ht-body" style="max-width:34em;margin:20px 0 0">The chart's furniture reservation is fixed in the component, keyed off the width the component already measures. There is no density prop and no caller coordination: a chart placed in any column gets the right furniture. One invariant &mdash; the y&#8209;axis is never off screen, and no data is hidden at any density.</p>
+
+<div style="margin-top:28px;display:flex;flex-direction:column;break-inside:avoid">
+  <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:16px;padding-bottom:10px;border-bottom:1px solid var(--rule-3)">
+    <span class="ht-eyebrow">Property</span>
+    <span class="ht-eyebrow">&ge;640</span>
+    <span class="ht-eyebrow">360&ndash;639</span>
+    <span class="ht-eyebrow">&lt;360</span>
+  </div>
+  <sc-for list="{{ chartRows }}" as="r" hint-placeholder-count="7">
+    <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:16px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--rule-1)">
+      <span class="ht-body-sm" style="color:var(--ink-1)">{{ r.k }}</span>
+      <span style="font:400 13.5px var(--font-notation);color:var(--ink-2)">{{ r.a }}</span>
+      <span style="font:400 13.5px var(--font-notation);color:var(--ink-2)">{{ r.b }}</span>
+      <span style="font:400 13.5px var(--font-notation);color:var(--ink-2)">{{ r.c }}</span>
+    </div>
+  </sc-for>
+</div>
+
+<p class="ht-body" style="max-width:34em;margin:24px 0 0">Three consequences to preserve. The <strong>terminal flag</strong> is boxed at full width, becomes an inline azure value above a leader line at compact (same information, no filled box, 76px cheaper), and is absent below 360 because the hero states the identical number two blocks above. Below 360 the chart is therefore correct only on a screen that carries the hero &mdash; true of every screen in the product, but a constraint to honour if the chart is ever reused alone.</p>
+<p class="ht-body" style="max-width:34em;margin:20px 0 0"><strong>Axis ticks drop to zero decimals</strong> below 640 and from five to three. A tick is a scale, not a claim; the hero, the crosshair readout and the ledger all keep full precision. This makes the system's &ldquo;axis tick: one decimal&rdquo; precision rule density&#8209;dependent, and that should be written into the precision tokens when this lands.</p>
+<p class="ht-body" style="max-width:34em;margin:20px 0 0"><strong>Month ticks thin by measured spacing</strong>, not by a caller&#8209;supplied step, and a label repeated by thinning is dropped &mdash; at narrow widths only, so the desktop axis is untouched. The <strong>goal label</strong> moves from the plot's right edge to its left edge below 640, clear of the projection.</p>
+<p class="ht-body-sm" style="max-width:34em;margin:20px 0 0;color:var(--ink-3)">Guard, and the reason for it: a zero measurement means <em>not measured yet</em>, never a width. The mount host can be <code style="font:400 14px var(--font-notation)">display: contents</code>, and a zero reaching the density selector silently renders the 320 design on a 1440 screen with a zero&#8209;width viewBox. Zero&#8209;width observer entries are ignored, measurement also runs on mount / next frame / at 120ms, and all geometry reads one width that is never zero, defaulting to the full density.</p>
+
+<h2 class="ht-title" style="margin:64px 0 0">5 &middot; Screens</h2>
+<h3 class="ht-heading" style="margin:28px 0 0">5.1 Analysis</h3>
+<p class="ht-body" style="max-width:34em;margin:18px 0 0">Hero: estimated level, one decimal, with its 68% half&#8209;width at two decimals on the line beneath, plus the as&#8209;of clause. Rate adjacent to the hero at the display tier with its own air &mdash; it never joins the statistics band, where it would read as one diagnostic among many. Then the chart, its legend row, and the tier&#8209;2 statistics band: 7 / 30 / 90&#8209;day forecasts, 90&#8209;day change, readings used, and residual scatter. The rail carries the lede, the raw reading for today with its residual, the gap note, and the range control.</p>
+<h3 class="ht-heading" style="margin:32px 0 0">5.2 Method</h3>
+<p class="ht-body" style="max-width:34em;margin:18px 0 0">A nav destination, not a modal and not a tier of Inspect. Long&#8209;form Source Serif 4 prose at the prose measure, mono notation, margin notes, one figure well. It explains the level and velocity states, what the credible intervals mean, why parameters are fixed and documented rather than EM&#8209;fitted, and why short&#8209;history per&#8209;user fitting is not justified by the evaluation. It makes no claim about model behaviour beyond what the analysis screen already relies on. Its figure is a fixture and labelled as one.</p>
+
+<h2 class="ht-title" style="margin:64px 0 0">6 &middot; Inspect analysis</h2>
+<p class="ht-body" style="max-width:34em;margin:20px 0 0">One entry point below the chart opens a deeper region in the main column &mdash; never inside the rail. It reveals one tier at a time; opening one closes the others. Closing returns to the surface with the chart and the hero/rate band untouched. The three tiers, in order:</p>
+<div style="margin-top:24px;display:flex;flex-direction:column;gap:20px">
+  <sc-for list="{{ tiers }}" as="t" hint-placeholder-count="3">
+    <div style="display:grid;grid-template-columns:120px 1fr;gap:24px;align-items:baseline">
+      <span class="ht-body-sm" style="color:var(--ink-1)">{{ t.name }}</span>
+      <span class="ht-body-sm" style="max-width:30em;color:var(--ink-2)">{{ t.body }}</span>
+    </div>
+  </sc-for>
+</div>
+<p class="ht-body" style="max-width:34em;margin:24px 0 0">Layout: the tier body sits in a prose column with a margin&#8209;note column beside it at 1440 (34em + 300px, 88px gutter); at 390 and 320 the note column moves below the body and its left hairline becomes a top hairline. Evidence's metric row is four&#8209;up, two&#8209;up, then one&#8209;up. The measurement table drops its trend column and goes dense at both narrow widths. The statistics ledger's column headers are suppressed below 1440 rather than misaligning, and each row becomes label / symbol over value / interval.</p>
+<p class="ht-body-sm" style="max-width:34em;margin:20px 0 0;color:var(--ink-3)">Inspect is <em>unavailable</em>, not empty, when there is no span: all three tiers describe an estimated trajectory and the model has produced none. The entry point states that in one sentence and does not open.</p>
+
+<h2 class="ht-title" style="margin:64px 0 0">7 &middot; States</h2>
+<p class="ht-body" style="max-width:34em;margin:20px 0 0">These are the only states in scope. No thresholds, confidence tiers or intermediate states beyond them are defined, and none may be invented.</p>
+<div style="margin-top:28px;display:flex;flex-direction:column;gap:26px">
+  <sc-for list="{{ states }}" as="s" hint-placeholder-count="4">
+    <div style="display:flex;flex-direction:column;gap:8px;padding-top:18px;border-top:1px solid var(--rule-1);break-inside:avoid">
+      <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+        <span style="font:400 15px var(--font-notation);color:var(--ink-1)">{{ s.key }}</span>
+        <span class="ht-qualifier">{{ s.trigger }}</span>
+      </div>
+      <p class="ht-body-sm" style="max-width:34em;margin:0;color:var(--ink-2)">{{ s.body }}</p>
+    </div>
+  </sc-for>
+</div>
+
+<h2 class="ht-title" style="margin:64px 0 0">8 &middot; Required at implementation</h2>
+<p class="ht-body" style="max-width:34em;margin:20px 0 0;color:var(--ink-2)">Every item below is a value this design displays a slot for, or deliberately omits, that only the real model or the real evaluation can supply. Until each is supplied, the slot must stay absent or stay labelled &mdash; not filled with an approximation.</p>
+
+<h3 class="ht-heading" style="margin:32px 0 0">8.1 Velocity posterior interval</h3>
+<p class="ht-body" style="max-width:34em;margin:18px 0 0">The rate carries <strong>no interval</strong> in this design. The fixture series generates a deterministic velocity and carries no velocity variance, and an OLS slope standard error is not the uncertainty this model produces, so no substitute was used. At implementation the rate must take its 95% interval from the model's own posterior for the velocity state. Three places consume it:</p>
+<div style="margin-top:18px;display:flex;flex-direction:column">
+  <sc-for list="{{ velocitySlots }}" as="v" hint-placeholder-count="3">
+    <div style="display:grid;grid-template-columns:150px 1fr;gap:20px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--rule-1)">
+      <span style="font:400 14px var(--font-notation);color:var(--ink-1)">{{ v.where }}</span>
+      <span class="ht-body-sm" style="color:var(--ink-2)">{{ v.what }}</span>
+    </div>
+  </sc-for>
+</div>
+<p class="ht-body-sm" style="max-width:34em;margin:18px 0 0;color:var(--ink-3)">When the posterior lands: the rate prints two decimals per week, always signed, with its interval in the qualifier tier beside it. If that interval spans zero, TrendDelta must switch to <code style="font:400 14px var(--font-notation)">direction=&quot;flat&quot;</code>.</p>
+
+<h3 class="ht-heading" style="margin:36px 0 0">8.2 Evaluation figures</h3>
+<p class="ht-body" style="max-width:34em;margin:18px 0 0">Method argues that parameters are fixed and documented rather than EM&#8209;fitted, and that short&#8209;history per&#8209;user fitting is not justified by the evaluation. <strong>No evaluation figure is stated numerically anywhere in this design</strong>, deliberately: none exists to cite. The argument is currently carried by prose alone. At implementation, either supply the real evaluation figures &mdash; held&#8209;out error for fixed versus per&#8209;user&#8209;fitted parameters, the history length at which fitting stops hurting, and the sample the comparison was run on &mdash; or leave the prose as prose. Do not add a number to make the argument look quantified.</p>
+
+<h3 class="ht-heading" style="margin:36px 0 0">8.3 Fixture values</h3>
+<p class="ht-body" style="max-width:34em;margin:18px 0 0">Every number on both screens is generated by a deterministic fixture build for layout only. The generator, so it can be recognised and removed: level starts at 79.8&#8239;kg falling 0.27&#8239;kg/week with a small sinusoid; the 68% half&#8209;width shrinks from 0.73 to 0.31&#8239;kg as readings accumulate, and 95% is 1.96&#215; that; measurements are the level plus &plusmn;1.0&#8239;kg of seeded noise; one reading in seven is skipped after day 30; a reading more than 0.93&#8239;kg from the level is marked down&#8209;weighted; the projection widens 0.028&#8239;kg/day for 90 days; the goal is 74&#8239;kg; the default window is 120 days. lb is a display conversion at 0.45359237.</p>
+<div style="margin-top:20px;display:flex;flex-direction:column">
+  <sc-for list="{{ fixtureSlots }}" as="f" hint-placeholder-count="12">
+    <div style="display:grid;grid-template-columns:190px 1fr;gap:20px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--rule-1)">
+      <span class="ht-body-sm" style="color:var(--ink-1)">{{ f.slot }}</span>
+      <span class="ht-body-sm" style="color:var(--ink-2)">{{ f.note }}</span>
+    </div>
+  </sc-for>
+</div>
+<p class="ht-body-sm" style="max-width:34em;margin:20px 0 0;color:var(--ink-3)">Two quantities the design does <em>not</em> show, and should not gain: R&sup2; and p&#8209;values. A state&#8209;space filter does not produce them, and the statistics tier is values with their intervals, not a regression report.</p>
+
+<h2 class="ht-title" style="margin:64px 0 0">9 &middot; Temporary markers &mdash; remove when real data lands</h2>
+<p class="ht-body" style="max-width:34em;margin:20px 0 0;color:var(--ink-2)">The following exist only because the numbers are invented. They are honest while that is true and become clutter the moment it is not. Removing them is part of the work of connecting real model output, not a follow&#8209;up.</p>
+<div style="margin-top:24px;display:flex;flex-direction:column">
+  <sc-for list="{{ markers }}" as="m" hint-placeholder-count="7">
+    <div style="display:grid;grid-template-columns:1fr 150px;gap:20px;align-items:baseline;padding:12px 0;border-bottom:1px solid var(--rule-1)">
+      <span class="ht-body-sm" style="color:var(--ink-1)">{{ m.text }}</span>
+      <span class="ht-qualifier" style="text-align:right">{{ m.where }}</span>
+    </div>
+  </sc-for>
+</div>
+<p class="ht-body" style="max-width:34em;margin:28px 0 0">The &ldquo;required from the model posterior&rdquo; line on the velocity state is temporary in the same way, and its removal is conditional rather than automatic: it comes out when the posterior interval is wired in, and it must be replaced by that interval &mdash; never simply deleted, which would leave a rate asserting a direction with no stated uncertainty.</p>
+
+</doc-page>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1000,&quot;height&quot;:1200}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      tokens: [
+        { role: 'Gutter, 1440', token: '72px — screen gutter (design-system screen column)' },
+        { role: 'Gutter, 390', token: '--space-8 · 32px' },
+        { role: 'Gutter, 320', token: '--space-7 · 24px' },
+        { role: 'Hero, 1440', token: '--size-metric-hero-sm · 72px, tracking -0.028em' },
+        { role: 'Hero, narrow', token: '--size-display · 46px, tracking -0.02em' },
+        { role: 'Rate, 1440', token: '--size-display · 46px' },
+        { role: 'Rate, narrow', token: '--size-metric-support · 30px' },
+        { role: 'Raw reading', token: '--size-metric-raw · 15px' },
+        { role: 'Crosshair / flag', token: '--size-metric-readout · 19px' },
+        { role: 'Interval, unit, n', token: '--size-qualifier · 12.5px, tabular' },
+        { role: 'Prose', token: '--font-prose · Source Serif 4, --measure-prose 34em' },
+        { role: 'Values', token: '--font-numeric · IBM Plex Sans, --feat-tabular' },
+        { role: 'Axes, notation', token: '--font-notation · IBM Plex Mono' },
+        { role: 'Hairlines', token: '--rule-1 rows · --rule-2 sections · --rule-3 axes' },
+        { role: 'Data roles', token: '--data-trend · --data-band-68/95 · --data-raw · --data-projection · --data-reference' },
+      ],
+      layoutRows: [
+        { k: 'Gutter', a: '72', b: '32', c: '24' },
+        { k: 'Main grid', a: '1fr 400px', b: '1fr', c: '1fr' },
+        { k: 'Rail position', a: 'right of chart', b: 'below band', c: 'below band' },
+        { k: 'Rail edge', a: 'border-left', b: 'border-top', c: 'border-top' },
+        { k: 'Main padding', a: '64 56 88 72', b: '40 32 64', c: '32 24 48' },
+        { k: 'Section gap', a: '96', b: '56', c: '48' },
+        { k: 'Hero', a: '72px', b: '46px', c: '46px' },
+        { k: 'Rate', a: '46px', b: '30px', c: '30px' },
+        { k: 'Hero → rate', a: 'row, 88px, left rule', b: 'column, 24px, top rule', c: 'column, 24px, top rule' },
+        { k: 'Chart escape', a: '-40 right', b: 'full bleed ±32', c: 'full bleed ±24' },
+        { k: 'Chart height', a: '560', b: '340', c: '300' },
+        { k: 'Statistics band', a: 'flex, 64 gap', b: 'grid 2-up', c: 'grid 1-up' },
+        { k: 'Rail padding', a: '72 72 80 48', b: '48 32 64', c: '40 24 48' },
+        { k: 'Deep tier cols', a: '34em + 300px', b: '1fr', c: '1fr' },
+        { k: 'Evidence metrics', a: '4-up', b: '2-up', c: '1-up' },
+        { k: 'Measurement table', a: 'date reading trend residual', b: 'date reading residual, dense', c: 'date reading residual, dense' },
+        { k: 'Ledger row', a: '1fr 96 190 230', b: '1fr auto, no headers', c: '1fr auto, no headers' },
+        { k: 'Header', a: 'row, 72px tall', b: 'column, wraps', c: 'column, wraps' },
+        { k: 'Nav size', a: '17px', b: '16px', c: '15px' },
+        { k: 'Method page', a: '1144 max, 72 gutter', b: '390, 32 gutter', c: '320, 24 gutter' },
+      ],
+      chartRows: [
+        { k: 'Left axis pad', a: '52', b: '40', c: '34' },
+        { k: 'Right pad', a: '92', b: '16', c: '12' },
+        { k: 'Bottom pad', a: '30', b: '26', c: '26' },
+        { k: 'y ticks', a: '5 @ 1dp', b: '3 @ 0dp', c: '3 @ 0dp' },
+        { k: 'Tick label gap', a: '12', b: '8', c: '8' },
+        { k: 'x tick thinning', a: 'by spacing', a2: '', b: 'by spacing + dedupe', c: 'by spacing + dedupe' },
+        { k: 'Terminal flag', a: 'boxed', b: 'inline on axis', c: 'absent' },
+        { k: 'Goal label', a: 'plot right edge', b: 'plot left edge', c: 'plot left edge' },
+      ],
+      tiers: [
+        { name: 'Why', body: 'Prose on how the estimate was reached: the two states the filter carries, how a reading moves them in proportion to expected scale noise, how recent readings weigh without older ones dropping out, and why the interval widens across the forecast. It argues; it does not reassure. It states plainly that parameters are fixed and documented, not fitted to this history.' },
+        { name: 'Evidence', body: 'The observations behind the estimate: readings used against days in the window, days without a reading, readings per week, the recent measurements as a table with each residual against the estimated level, and down-weighted rows marked with the same ring the chart uses. Ringed rows are down-weighted, never removed.' },
+        { name: 'Statistics', body: 'Values with their intervals: level today with its 68% half-width, the 95% level range, the velocity state, residual scatter, readings used, and the 7 / 30 / 90-day forecasts. Tabular figures, notation in mono, interval printed one digit finer than the estimate it qualifies.' },
+      ],
+      states: [
+        { key: 'normal', trigger: 'span_days > 0, goal set, window ≥ 91 days', body: 'The full composition. Hero, rate, chart with bands and projection, statistics band, rail, Inspect available.' },
+        { key: 'no-span', trigger: 'span_days == 0', body: 'Covers both no readings at all and readings on a single day, and the two render differently on purpose. No trajectory, no interval, no projection, no rate — none of them are drawn and none are zeroed. The screen states that a trajectory is estimated across a span of days and that there is none, lists the readings that do exist, and says what the product will do once there is a span. Inspect analysis is unavailable in this state, not empty. With zero readings the reading list is absent rather than an empty list, and the copy addresses an empty history directly rather than reusing the single-day sentence.' },
+        { key: 'no-goal', trigger: 'no goal set', body: 'Chart and analysis behave normally. The goal line, the goal legend entry, the goal distance and every goal-relative sentence are absent, not zeroed. Nothing in the layout reserves space for them.' },
+        { key: 'short-window', trigger: 'window shorter than the figure requires', body: 'The example of an output the model cannot produce for the current data: the 90-day change. The slot is absent, with a plain statement that the window holds fewer days and that the figure is not estimated from a shorter span. Not a placeholder, not a dash, not an approximation from what is available.' },
+      ],
+      velocitySlots: [
+        { where: 'rate qualifier', what: 'the line beneath the rate in the hero band, currently the "required from the model posterior" note' },
+        { where: 'statistics ledger', what: 'the interval cell on the Velocity state row' },
+        { where: 'Why prose', what: 'the sentence stating that the fixture carries no posterior for the velocity state' },
+      ],
+      fixtureSlots: [
+        { slot: 'Estimated level', note: 'generated series; hero, chart, ledger, Why prose' },
+        { slot: '68% / 95% intervals', note: 'generated half-widths, not model posterior' },
+        { slot: 'Rate', note: 'the generator\u2019s constant weekly slope' },
+        { slot: 'Forecasts, 7/30/90', note: 'generated projection, widening at a fixed rate per day' },
+        { slot: '90-day change', note: 'difference of two generated levels' },
+        { slot: 'Residual scatter σ', note: 'RMS of generated readings around the generated level' },
+        { slot: 'Readings used, n', note: 'count from the generator\u2019s skip pattern' },
+        { slot: 'Days without a reading', note: 'same skip pattern' },
+        { slot: 'Readings per week', note: 'derived from that count' },
+        { slot: 'Down-weighted rows', note: 'generator threshold, 0.93 kg from the level' },
+        { slot: 'Raw reading, today', note: 'generated measurement and its residual' },
+        { slot: 'Goal, 74 kg', note: 'invented; real goals come from user settings' },
+        { slot: 'Dates', note: 'anchored to a fixed date, not the real clock' },
+        { slot: 'Method figure', note: 'the same generator, shorter window' },
+      ],
+      markers: [
+        { text: '"Fixture series" badge in the header', where: 'both screens' },
+        { text: '"Fixture data — layout only" beside the chart legend', where: 'Analysis' },
+        { text: '"Fixture series — these sentences describe the model; the numbers do not" qualifier', where: 'Why' },
+        { text: '"Fixture series — readings and residuals are invented for layout" qualifier', where: 'Evidence' },
+        { text: '"Fixture series — every value in this ledger is invented for layout" qualifier', where: 'Statistics' },
+        { text: '"Fixture series — n readings, all recorded today" note', where: 'no-span' },
+        { text: 'Figure source line labelling the figure a fixture', where: 'Method' },
+        { text: 'FIXTURE DATA comment and the whole generator in the logic class', where: 'both screens' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

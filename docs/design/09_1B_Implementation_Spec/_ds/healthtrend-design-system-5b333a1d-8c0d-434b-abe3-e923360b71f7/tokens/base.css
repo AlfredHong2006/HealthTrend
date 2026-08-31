@@ -1,0 +1,29 @@
+/* Minimal element defaults. Kept small deliberately: consumers compose with the
+   .ht-* tier classes and the components, not with tag styling. */
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text-body);
+  font: var(--weight-prose) var(--size-body)/var(--lh-body) var(--font-prose);
+  font-feature-settings: var(--feat-prose);
+  -webkit-font-smoothing: antialiased;
+}
+*, *::before, *::after { box-sizing: border-box; }
+
+a { color: var(--text-accent); text-decoration: none; border-bottom: 1px solid var(--azure-300); transition: var(--transition-control); }
+a:hover { color: var(--azure-600); border-bottom-color: var(--azure-500); }
+a:active { color: var(--azure-700); }
+
+h1, h2, h3, h4, p, figure, blockquote { margin: 0; }
+p + p { margin-top: var(--prose-para-gap); }
+
+hr { border: 0; border-top: var(--line-divider); margin: var(--gap-block) 0; }
+
+table { border-collapse: collapse; width: 100%; }
+
+button, input, select { font-family: var(--font-numeric); font-size: var(--size-ui); }
+:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-1); }
+
+/* Every numeral in the product is tabular. Non-negotiable. */
+.tnum, [data-numeric] { font-variant-numeric: tabular-nums; font-feature-settings: var(--feat-tabular); }

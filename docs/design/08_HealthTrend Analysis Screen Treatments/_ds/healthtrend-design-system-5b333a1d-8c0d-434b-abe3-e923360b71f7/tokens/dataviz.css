@@ -1,0 +1,51 @@
+/* Data-role colour. Every mark on a chart maps to exactly one of these roles.
+   A role is WHAT THE NUMBER IS, never whether the number is good news. */
+:root {
+  /* T1 the estimated trajectory — the only azure line on the chart */
+  --data-trend: var(--azure-500);
+  --data-trend-deep: var(--azure-700);
+
+  /* uncertainty around the trajectory: two nested bands, no outline */
+  --data-band-68: rgba(22, 104, 201, .17);
+  --data-band-95: rgba(22, 104, 201, .085);
+
+  /* WIDE UNCERTAINTY. When the band is wide enough that the trajectory claim is
+     weak, the band gains presence and the line loses it — the honest ratio.
+     Never a colour change: the estimate is not a different KIND of number. */
+  --data-band-68-wide: rgba(22, 104, 201, .24);
+  --data-band-95-wide: rgba(22, 104, 201, .13);
+  --data-trend-provisional: rgba(22, 104, 201, .62);
+
+  /* OUTLIER. A reading the model down-weighted. Hollow, so it reads as a
+     measurement that was kept, not a marked error. Never red. */
+  --data-outlier: var(--ink-3);
+  --data-outlier-fill: transparent;
+
+  /* T3 raw scale measurements — neutral, small, behind everything */
+  --data-raw: #9aa6b4;
+  --data-raw-fill: rgba(154, 166, 180, .55);
+  --data-raw-hover: var(--ink-3);
+
+  /* forward projection: same hue, dashed, never solid */
+  --data-projection: var(--azure-500);
+  --data-projection-band: rgba(22, 104, 201, .10);
+
+  /* reference marks the model did not produce (user goal, target date) */
+  --data-reference: var(--ink-4);
+
+  /* chart furniture */
+  --data-grid: #eceff3;
+  --data-grid-zero: var(--rule-3);
+  --data-axis-text: var(--ink-4);
+  --data-crosshair: var(--ink-4);
+  --data-selection: rgba(22, 104, 201, .07);
+
+  /* a gap in measurement, or an estimate gone stale */
+  --data-stale: var(--amber-500);
+  --data-stale-hatch: rgba(176, 116, 7, .14);
+  --data-stale-rule: rgba(176, 116, 7, .55);   /* the boundary at the last reading */
+
+  /* INSUFFICIENT DATA. No trajectory is drawn at all — these style the readings
+     that exist and the empty plot they sit in. */
+  --data-insufficient-frame: var(--rule-1);
+}
