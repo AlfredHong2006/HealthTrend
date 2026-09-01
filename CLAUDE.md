@@ -18,11 +18,26 @@ It is an estimation product, not a weight logger. Canonical product definition:
 
 ## Current stage
 
-- **Public V1 is deployed and live** — the Vercel-hosted frontend linked from the README, backed by
-  the FastAPI service. Shipped capability: numerical core, HTTP boundary, synthetic demo pages,
-  manual real-data entry, CSV history import.
-- **V2 is in active development.** V2 currently exists as product and design definition only. There
-  is no V2 implementation and no V2 prototype in this repository. Do not assume V2 code exists.
+- **V2 is implemented and deployed** — the Vercel-hosted frontend linked from the README, backed by
+  the FastAPI service. V2 is the public, recruiter-facing version of the product. Its routes are
+  `/v2/[scenario]` for the synthetic scenarios (`/v2/gradual-loss` is the primary entry point),
+  `/v2/analyse` for manual and CSV analysis of the user's own data, `/v2/method`, and `/v2/about`.
+- **The accepted Analysis composition is settled** — one centred column, read top to bottom:
+  hero → chart → analysis summary and supporting context → statistics → Inspect analysis. It is not
+  a split pane and has no persistent desktop rail. Do not reopen this.
+- **Real-data ingestion reuses the existing backend, API and ingestion logic** — `/v2/analyse` calls
+  the same `POST /api/analyse` and `POST /api/ingest/csv` V1 already used, through the same
+  `MeasurementForm` and `CsvImport` components, and hands the unchanged `AnalysisResponse` to the
+  same V2 presentation a synthetic scenario renders through. The ingestion path was not forked and
+  must not be.
+- **V1 is still present and still served** at `/demo/[scenario]` and `/analyse`, against the same
+  API. V2 was added beside it, not on top of it.
+- **Milestone 6 evaluation is complete and committed** — `docs/evaluation/` (report and generated
+  results), with the studies themselves in `backend/evaluation/`, which the application cannot
+  import. Its findings bound what the product may claim.
+- **Nothing here is globally finished.** V2 is accepted and shipped; the project continues.
+- **The current priority is CV and applications, not further V2 polish.** Treat the shipped V2 as
+  accepted work. Do not open speculative redesign, refactoring or polish tasks against it.
 
 ## Structure
 
@@ -33,16 +48,22 @@ backend/   FastAPI + NumPy, uv-managed, Python 3.11
   app/ingestion/ observations + CSV parsing   app/services/  clock, forecast-origin policy
   app/api/       routes, error table, metadata-only access log      app/main.py  create_app()
   testing/       deterministic generators, test-support only (never imported by app/)
-  tests/         core/ · api/ · test_layering.py · fixtures/ (committed golden output)
+  evaluation/    the M6 studies; importable by tests only, never by app/
+  tests/         core/ · api/ · evaluation/ · test_layering.py · fixtures/ (committed golden output)
   openapi.json   COMMITTED contract, generated from the app
 frontend/  Next.js 16 (App Router) · React 19 · TypeScript · CSS Modules · visx · Vitest
-  src/app/         /demo/[scenario] (server components) · /analyse (client workspace) · tokens.css
-  src/components/  Headline · RateReadout · ForecastCallout · TrendChart · MeasurementForm ·
+  src/app/v2/      SHIPPED V2: [scenario] · analyse · method · about · v2-tokens.css (own shell)
+  src/app/         V1, still served: /demo/[scenario] (server components) · /analyse · tokens.css
+  src/components/v2/  V2Header · V2Hero · V2Canvas · V2Summary · V2StatsBand · V2Inspector ·
+                   V2Workspace · V2AnalyseWorkspace · V2AnalysisShell · V2Method · V2About
+  src/components/  V1: Headline · RateReadout · ForecastCallout · TrendChart · MeasurementForm ·
                    CsvImport · AnalysisWorkspace · ScenarioNav · SyntheticBadge
   src/lib/         api/ (schema.d.ts GENERATED · client server-side · browserClient) ·
-                   chart/ (pure shaping, no React or HTTP) · privacy/ (no-persistence guard)
-docs/      architecture.md · mathematics.md · privacy.md · decisions/ADR-0001..0010 ·
-           product/V2_PRODUCT.md · design/V2_DESIGN.md
+                   chart/ (pure shaping, no React or HTTP) · v2/ (pure V2 shaping and copy) ·
+                   privacy/ (no-persistence guard)
+docs/      architecture.md · mathematics.md · privacy.md · decisions/ADR-0001..0011 ·
+           evaluation/ (report.md · results.md) · product/V2_PRODUCT.md ·
+           design/V2_DESIGN.md · design/IMPLEMENTATION_NOTES.md
 sample_data/  the only place a committed .csv is permitted
 ```
 

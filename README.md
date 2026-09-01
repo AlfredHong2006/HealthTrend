@@ -1,138 +1,312 @@
 # HealthTrend
 
-**Your scale is lying to you — not by much, but by more than the signal you are looking for.**
-HealthTrend estimates the *underlying* weight trajectory behind noisy readings, says how confident it
-is, and forecasts where the trajectory is heading.
+**HealthTrend tells you what your weight is actually doing, not merely what the scale said.**
 
-### ▶ [**Try the live demo →**](https://healthtrend-sigma.vercel.app)
+It estimates the underlying weight trajectory behind noisy, irregular scale readings, states how
+confident it is, and forecasts where that trajectory is heading.
 
-![HealthTrend estimating a weight trend through noisy daily readings](docs/images/noisy.png)
+### [Open the live demo →](https://healthtrend-sigma.vercel.app/v2/gradual-loss)
 
-<sub>Grey dots are the raw weigh-ins. The teal line is the estimated latent weight. The dashed line
-and shaded cone are the forecast and its 95% interval. Synthetic demo data.</sub>
+**Status:** V2 is deployed and is the public, recruiter-facing version of the product. The
+statistical core, the HTTP boundary, the V2 analysis experience and the own-data flow are shipped and
+in use. Development is ongoing.
+
+![The HealthTrend V2 analysis screen: an estimated trend weight of 75.9 kg with a 68% interval, a current rate of -0.42 kg/week with its 95% interval, and a trajectory chart showing raw scale readings, the estimated trend, its 95% range and a 30-day projection](docs/v1_images/Main.png)
+
+<sub>Grey dots are raw weigh-ins. The blue line is the estimated underlying weight, the shaded band
+its 95% range, and the dashed continuation the forecast. Synthetic demonstration series.</sub>
 
 ---
 
-## The problem
+## What HealthTrend does
 
-A scale reading moves with hydration, food still being digested, sodium, glycogen, and what time you
-stepped on it. Day-to-day differences are mostly measurement noise, not weight change. So the two
-things people actually want — *what is my weight really doing?* and *where is it heading?* — are not
-visible in the numbers themselves.
+A single scale reading moves with hydration, food still being digested, sodium, glycogen and the time
+of day you stepped on. Day-to-day differences are mostly measurement noise, not weight change. The
+two questions people actually want answered, *what is my weight really doing* and *where is it
+heading*, are therefore not visible in the readings themselves.
 
-HealthTrend treats that as an estimation problem: it models the measurement noise explicitly, and
-reports both what it infers and how sure it is.
+HealthTrend treats that as an estimation problem rather than a display problem:
 
-## What it does
+- **Takes noisy and irregularly spaced measurements.** Gaps, bursts, several readings in one day, any
+  timezone, kg or lb.
+- **Estimates the underlying weight trajectory**, not a moving average, with velocity carried as part
+  of the state.
+- **Estimates the current rate of change** in kg/week, the number that answers "am I progressing"
+  more directly than any single weight does.
+- **Quantifies its own uncertainty.** Every published quantity carries the interval the filter's
+  covariance actually produces.
+- **Produces probabilistic forecasts** at 7, 30 and 90 days, plus a daily forecast path with a band
+  that widens with horizon.
+- **Accepts your own data**, typed in by hand or imported from a CSV history.
+- **Lets you inspect the reasoning**, through a Why → Evidence → Statistics detail stack.
+- **Documents the model** on a dedicated [Method](https://healthtrend-sigma.vercel.app/v2/method)
+  page, down to the equations and the code that implements them.
 
-- **Separates signal from noise** — estimates latent weight and trend velocity, not a moving average
-- **Quantifies its own uncertainty** — every number carries a 95% interval, throughout
-- **Forecasts 7, 30 and 90 days ahead** — with a band that widens honestly with horizon
-- **Handles irregular weigh-ins** — gaps, bursts, any timezone, any order, kg or lb
-- **Imports your CSV history** — or takes measurements typed in by hand
-- **Stores nothing** — no accounts, no database, no browser storage
+This is trajectory intelligence, not a weight logger. Logging is the cost of entry here, not the
+value.
 
-## How it works
+---
 
-A **local linear trend state-space model**, estimated with a **Kalman filter**.
+## Analyse your own data
 
-The state is two numbers — latent weight *w* and its velocity *v* — evolving as an integrated Wiener
-process, with each scale reading treated as a noisy observation of *w* alone. Three consequences do
-most of the work.
+### [Try it with your own measurements →](https://healthtrend-sigma.vercel.app/v2/analyse)
 
-**Time is elapsed time, not a step index.** The transition and process-noise matrices are functions
-of the actual interval Δt, so a fortnight's gap widens the uncertainty by exactly as much as fourteen
-daily steps would — and weighing yourself twice in one morning is two updates, not a contradiction.
-Irregular data needs no resampling, interpolation or gap-filling.
+<img src="docs/v1_images/Analyse_your_data.png" alt="The own-data route on a narrow mobile viewport: a kg/lb toggle, a 'Your data, not saved' badge, the estimated weight of 78.8 kg with its interval, the current rate of -0.41 kg/week, and the same trajectory chart the demo scenarios use" width="360">
 
-<table>
-<tr>
-<td width="50%"><img src="docs/images/irregular.png" alt="Sparse, irregularly spaced weigh-ins"></td>
-<td width="50%"><img src="docs/images/reversal.png" alt="The estimate tracking a reversal in trend"></td>
-</tr>
-<tr>
-<td><sub><b>Irregular timing.</b> Sparse, uneven weigh-ins — the interval widens through the gaps and
-tightens on new evidence.</sub></td>
-<td><sub><b>Trend reversal.</b> Velocity is part of the state, so a genuine turn is tracked rather
-than smoothed away.</sub></td>
-</tr>
-</table>
+Enter measurements manually or import a CSV export. Weights can be given in kg or lb and are
+normalised to kilograms at the boundary. Timestamps carrying a UTC offset are used as given; naive
+timestamps are localised against an IANA timezone you choose, using that specific date's rule, so a
+summer row and a winter row in the same zone resolve correctly. Ambiguous and non-existent local
+times across a clock change are reported as such rather than silently guessed.
 
-**Uncertainty is propagated, not decorated.** The filter carries a full covariance, with Joseph-form
-updates for numerical stability, so the intervals on weight, on weekly rate and on every forecast all
-fall out of the same recursion instead of being estimated separately.
+Real measurements render through **exactly the same V2 presentation** as the synthetic scenarios:
+same hero, same canvas, same statistics band, same inspection tiers. There is no reduced "your data"
+mode.
 
-**The forecast is analytic.** Projecting the state forward gives a closed-form Gaussian at each
-horizon — no simulation, no sampling.
+**Nothing is persisted.** No accounts, no database, no session, no browser storage, no telemetry.
+Measurements are sent to the analysis service to produce the result on screen and are not stored;
+a reload starts from an empty page. Editing an input or switching entry mode discards the result
+rather than leaving a stale analysis beside changed inputs.
 
-The model parameters are **documented priors, not values fitted to data**. Every equation, and the
-code symbol implementing it, is in [docs/mathematics.md](docs/mathematics.md); the reasoning behind
-each choice is in the [architecture decision records](docs/decisions/).
+---
 
-## Bring your own data
+## Explainability
 
-<table>
-<tr>
-<td width="45%"><img src="docs/images/csv-import.png" alt="CSV import preview before analysis"></td>
-<td valign="top">
+![The analysis surface beneath the chart: 'The estimated weight is trending down', supported by the estimated rate and the fact that its 95% interval does not cross zero, alongside the latest reading, its difference from the estimate, and a statistics band showing the 30-day projection, the 90-day change and the readings the estimate rests on](docs/v1_images/Main_details.png)
 
-Upload a CSV of weight history, or enter measurements by hand — both feed the same analysis endpoint.
+The product is a hierarchy, and each layer is reachable from the one above it:
 
-The importer resolves the awkward parts explicitly rather than guessing. Rows without a timezone are
-interpreted in one you choose; a date with no time becomes midday in that zone; a weight column with
-no unit of its own takes a default you set. Rows are parsed, counted and previewed before anything is
-analysed.
+```
+Conclusion → Why → Evidence → Statistics → Method
+```
 
-There is a sample file at [sample_data/example.csv](sample_data/example.csv).
+- **Conclusion** is one plain sentence about this series.
+- **Why** is specific to this analysis: the latest reading beside the estimate for the same instant,
+  the difference between them, the measurement-noise assumption in force, and how the projection
+  follows from the rate.
+- **Evidence** is what the estimate rests on: readings used, span, days without a reading, readings
+  per week, and the recent readings themselves.
+- **Statistics** is the numbers with their intervals.
+- **Method** is a separate destination, not a tier, because generic model documentation reads
+  identically on every series and does not belong on the everyday analysis screen.
 
-</td>
-</tr>
-</table>
+**The language layer does not invent statistical findings.** The wording is a deterministic
+presentation of published numbers. "Trending down" is stated only when the rate's own 95% interval
+excludes zero, and "flat within its uncertainty" otherwise; that is a fact about an interval the
+backend computed, not a confidence label. Capabilities the model does not have are absent entirely
+rather than rendered as "unknown". There is no trend classification, no plateau detection, no
+change-point marker, no goal ETA and no outlier flagging in this product, so none of them appear
+anywhere in the interface.
 
-## Privacy, enforced by tests
+A target weight, and optionally a target weekly rate, can be added. The distance to the target and
+the comparison against the current estimated rate are transparent arithmetic over published numbers,
+so both are shown; an arrival date is not, because that would need a hitting-time distribution the
+backend does not compute. Goal state is held for the duration of the visit and written nowhere.
 
-Real health data never enters the repository, the logs, or the browser's storage — and this is
-checked mechanically rather than promised:
+---
 
-- **Nothing is persisted.** No accounts, no database. A test statically scans the whole frontend
-  source for `localStorage`, `sessionStorage`, IndexedDB and `document.cookie`, and fails if any of
-  them appear.
-- **Nothing leaks through errors or logs.** Sentinel weight values are pushed through the failure
-  paths; the tests fail if a sentinel ever surfaces in a message or a log line.
-- **The access log is metadata-only.** uvicorn's built-in access log is disabled and the application
-  writes its own ([docs/privacy.md](docs/privacy.md)).
-- **Only synthetic, explicitly-labelled data is committed.**
+## Statistics and uncertainty
 
-The same approach guards the architecture. The dependency direction — `api → services → core` — is
-enforced by an AST scan in the test suite rather than by convention: the numerical core stays
-importable with no web framework present, and nothing below the API layer may import upward.
+<img src="docs/v1_images/Statistics.png" alt="The Statistics tier: current trend weight with 68% and 95% intervals, current weekly rate with its 95% interval, measurement scatter around the estimated trajectory, and a forecast table giving the 7, 30 and 90-day estimates each with a 95% interval" width="560">
 
-The contract between the two halves is machine-checked too. The frontend's TypeScript types are
-generated from the backend's own OpenAPI document, and CI regenerates them and fails on any
-difference — so a backend schema change breaks the build rather than production.
+What the Statistics tier actually exposes, all of it derived from quantities the backend publishes:
 
-Every guarantee above is a CI gate, not a guideline: both suites run on each push (pytest; Vitest
-with Testing Library and `axe` accessibility assertions), alongside `ruff`, strict `mypy`, ESLint,
-`tsc` and a production build.
+| Quantity | What it is |
+| --- | --- |
+| Trend weight | The current estimated underlying weight, with 68% and 95% intervals |
+| Weekly rate | The current rate in kg/week, with a genuine 95% interval from the velocity posterior |
+| Measurement scatter | The spread of readings around the estimated trajectory, described as exactly that and never as a filter innovation |
+| Forecast | The 7, 30 and 90-day estimates, each with a 95% interval |
+
+Uncertainty is propagated through the covariance rather than decorated on afterwards, so the interval
+on the weight, the interval on the rate and the interval on every forecast all fall out of the same
+recursion.
+
+---
+
+## The statistical model
+
+A **continuous-time local linear trend state-space model**, estimated with a **Kalman filter**.
+
+The state is two numbers, latent weight `w` and its velocity `v`, evolving as an integrated Wiener
+process. Each scale reading is treated as a noisy observation of `w` alone. Four properties do most
+of the work:
+
+**Time is elapsed time, not a step index.** The transition matrix `F(Δt)` and the process-noise
+matrix `Q(Δt)` are functions of the real interval between readings, so a fortnight's gap widens the
+uncertainty by exactly as much as fourteen daily steps would, and two weigh-ins on the same morning
+are two updates rather than a contradiction. Irregular and fractional intervals need no resampling,
+interpolation or gap-filling.
+
+**The process noise is the exact integral, not an approximation.** For the integrated-acceleration
+process, `Q(Δt) = ∫₀^Δt F(s) Q_c F(s)' ds`, which evaluates in closed form to
+`σ_a² · [[Δt³/3, Δt²/2], [Δt²/2, Δt]]`. That form satisfies `F(b) Q(a) F(b)' + Q(b) = Q(a+b)`, so
+splitting an interval and stepping through it gives identically the same covariance as taking it in
+one step. Irregular spacing is therefore exact rather than tolerated (ADR-0002).
+
+**The covariance update is Joseph form.** Chosen for numerical stability over the shorter algebraic
+form; symmetry and positive-definiteness are maintained explicitly rather than assumed.
+
+**Forecasts are analytic.** Propagating the state forward gives a closed-form Gaussian at each
+horizon, so the 7, 30 and 90-day intervals are computed, not simulated or sampled.
+
+The model parameters are **documented priors, not values fitted to data**. Nothing is trained on user
+measurements, and the estimator is structurally goal-neutral: there is no parameter through which a
+user's lose, maintain or gain intent could reach it.
+
+Deeper reading: the [Method page](https://healthtrend-sigma.vercel.app/v2/method) and its
+mathematical appendix, and [docs/mathematics.md](docs/mathematics.md), which indexes every equation
+against the code symbol implementing it.
+
+---
+
+## Evaluation, and what it did not show
+
+The estimator was evaluated on synthetic data, where the hidden trajectory is known because it was
+generated. The full account, including every result that went against the model, is in
+[docs/evaluation/report.md](docs/evaluation/report.md); the measurements themselves are in
+[docs/evaluation/results.md](docs/evaluation/results.md), which is generated from committed result
+files and re-rendered by a test that fails on any drift.
+
+**What the evidence supports:**
+
+- **The arithmetic is right.** The filter's log-likelihood was checked against an independent
+  joint-Gaussian formulation of the same model, built from marginal covariances and evaluated with a
+  single Cholesky factorisation rather than a recursion. Across an 810-case battery the sequential
+  and lean recursions agree to `2.1e-14` relative, and the independent computation adjudicates 781 of
+  those cases and agrees to better than `1e-8`. Forecast means and variances match the conditional
+  moments of the same joint distribution. On the worst ill-conditioned case, 60-digit exact
+  arithmetic puts the filter's error at `7.4e-13` and the double-precision oracle's at `3.7e-05`, so
+  the check rather than the estimator is the party losing accuracy there. That exact-arithmetic
+  comparison is kept as a permanent test.
+- **Calibration is approximately nominal under the model's own assumptions.** Over 1,000 simulated
+  series (500 on a daily schedule, 500 on a deliberately awkward irregular one), latent-weight
+  coverage was 94.9% and velocity coverage 94.9% against a nominal 95%, with all eight calibration
+  checks within 0.73 standard errors. Inference is clustered by series, because posteriors within one
+  trajectory are not independent.
+- **Irregular spacing costs no calibration**, which is the process-noise splitting identity above
+  working as claimed, now measured rather than argued.
+
+**What the evidence went against:**
+
+- **The process-noise intensity `σ_a` is not identifiable from a month of data**, at any weighing
+  frequency. Thirty readings and three hundred readings over the same month both fail to close the
+  interval; calendar span, not reading count, is what identifies trend flexibility. A year of data
+  with only 30 readings identifies it about six times better than 300 readings crammed into a month.
+- **Short histories therefore do not support reliable per-user maximum-likelihood fitting.** At 30
+  daily readings the median fitted process-noise estimate sits at the floor of the search space in
+  54% of replicates. A per-user fit on the data a real user has after a month would report the shape
+  of its own search space with an air of having measured something. Production parameters remain
+  documented fixed priors for now.
+- **The estimator is not uniformly better than simpler methods.** On the 30-day forecast metric, the
+  horizon the product actually claims, a tuned Holt beat the shipped estimator in 6 of 8 tested
+  synthetic regimes, and a Kalman filter with parameters fitted to the regime beat it in 5 of 8. The
+  shipped estimator was best on the model-correct regime and on smooth curvature. **No method won
+  uniformly**, challengers included, and every baseline was tuned on the exact shape it was then
+  tested on, which no deployment could arrange.
+- **Intervals degrade under misspecification.** They are calibrated when the model holds and
+  demonstrably are not when it does not: on a genuine level shift, the 30-day interval covered the
+  truth 48% of the time against a nominal 95%.
+
+**What is explicitly not claimed.** No clinical or medical validation. No real health data has been
+used for any evaluation, so there is no demonstrated forecast accuracy on real people. No claim that
+the model is the right model, that the shipped parameter values are correct, or that a Kalman filter
+beats simpler methods in general.
+
+The point of the section is the shape of the evidence, not its polish. The project measures where the
+model works and where it loses rather than assuming that a more sophisticated method must be a better
+one.
+
+---
+
+## Engineering
+
+**Backend.** FastAPI and NumPy, Python 3.11, managed with [uv](https://docs.astral.sh/uv/). The
+dependency direction `api → services → core` is enforced by an AST scan in the test suite rather than
+by convention, and `app/core` is checked against an import allowlist: no web framework, no clock, no
+randomness, no filesystem, no environment access. The core is deterministic, so committed golden
+fixtures make an accidental change to the mathematics loud instead of silent. Any warning fails the
+build.
+
+**Frontend.** Next.js 16 (App Router), React 19, TypeScript, CSS Modules and visx. Chart shaping is
+pure and lives outside React and outside the HTTP layer, so what the chart draws is unit-testable
+without rendering anything.
+
+**The contract between them is generated, not hand-written.** `backend/openapi.json` is committed and
+produced from the app; `frontend/src/lib/api/schema.d.ts` is generated from that document and never
+edited by hand. CI regenerates both and fails on any diff, so a backend schema change breaks the
+build rather than production.
+
+**Ingestion.** CSV parsing with per-row unit declarations, a chosen default unit, IANA timezone
+resolution for naive timestamps with correct DST behaviour, explicit handling of ambiguous and
+non-existent local times, and a parsed preview with counts before anything is analysed. Manual entry
+uses the same validation path.
+
+**Privacy is a test, not a promise.** A static check fails the build if `localStorage`,
+`sessionStorage`, IndexedDB or `document.cookie` appears anywhere under `frontend/src`. Sentinel
+weight values are pushed through the failure paths and the suite fails if one ever surfaces in an
+error message or a log line. The access log carries counts and route templates only; error responses
+come from an explicit table rather than exception text. Only synthetic, explicitly-labelled data is
+committed, and `.gitignore` blocks real exports.
+
+**Responsive.** The V2 composition holds from narrow mobile viewports through desktop, in one column
+on small screens and a centred two-column analysis surface on wide ones. The chart stays the primary
+surface at every width without permanently consuming half a phone screen.
+
+**Validation at the final local run:**
+
+| Check | Result |
+| --- | --- |
+| `npm run test` (Vitest, Testing Library, `axe`) | 290 passed, 38 files |
+| `npm run lint` | clean |
+| `npm run typecheck` | clean |
+| `npm run build` | clean |
+| `uv run pytest -q` | 840 passed |
+
+CI runs the same commands in two independent workflows on every push, alongside `ruff`, `ruff format`
+and strict `mypy`.
+
+---
+
+## CSV ingestion
+
+<img src="docs/v1_images/csv_one.png" alt="The CSV import preview: 48 measurements accepted, the first 20 listed with resolved dates, times and weights, and a button to analyse them" width="340">
+
+Rows are parsed, counted and previewed before anything is analysed. The importer resolves the awkward
+parts explicitly rather than guessing: a row with no UTC offset is localised against the timezone you
+select, a date with no time becomes midday in that zone (ADR-0010), and a weight column with no unit
+of its own takes the default you set. The committed sample above is
+[sample_data/example.csv](sample_data/example.csv), a synthetic 48-row history across 63 days with
+deliberate gaps and deliberately date-only rows.
+
+---
+
+## About
+
+### [Read the About page →](https://healthtrend-sigma.vercel.app/v2/about)
+
+I built HealthTrend after finding daily scale readings genuinely frustrating while cutting.
+Individual measurements moved around substantially for reasons that had nothing to do with fat loss,
+while what I cared about was the underlying direction and how fast it was moving. The About page has
+the rest.
 
 ---
 
 ## Running it locally
 
-**Backend** — requires [uv](https://docs.astral.sh/uv/). From `backend/`:
+**Backend**, from `backend/`, requires [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv sync                        # provision Python 3.11 and dependencies
+uv sync --locked               # provision; fails on a drifted lockfile
 uv run pytest -q               # full test suite
 uv run ruff check .            # lint
-uv run mypy app                # strict type checking
+uv run mypy                    # strict type checking
 ```
 
-`HEALTHTREND_ALLOWED_ORIGINS` is the CORS allow-list for the browser-side real-data page
-(`/analyse`). It is empty by default and fails closed, so nothing is permitted until you name the
-frontend's origin. `--no-access-log` disables uvicorn's access log as privacy hardening: that log
-records request metadata — method, raw path, query string — never JSON bodies, but raw paths are
-caller-controlled strings, and the application writes its own metadata-only log instead.
+`HEALTHTREND_ALLOWED_ORIGINS` is the CORS allow-list for the browser-side routes. It is empty by
+default and fails closed, so nothing is permitted until you name the frontend's origin.
+`--no-access-log` disables uvicorn's access log as privacy hardening; the application writes its own
+metadata-only log instead.
 
 ```bash
 # bash / zsh
@@ -142,8 +316,8 @@ HEALTHTREND_ALLOWED_ORIGINS=http://localhost:3000 uv run uvicorn app.main:app --
 $env:HEALTHTREND_ALLOWED_ORIGINS = "http://localhost:3000"; uv run uvicorn app.main:app --no-access-log
 ```
 
-**Frontend** — requires Node (version pinned in [frontend/.nvmrc](frontend/.nvmrc)). From
-`frontend/`, with the backend already running:
+**Frontend**, from `frontend/`, with the backend already running. Node version is pinned in
+[frontend/.nvmrc](frontend/.nvmrc):
 
 ```bash
 npm ci                         # install from the committed lockfile
@@ -153,16 +327,15 @@ npm run dev                    # http://localhost:3000
 ```
 
 Copy [frontend/.env.example](frontend/.env.example) to `.env.local` to point at a backend that is not
-on `localhost:8000`. Two variables exist because two request paths exist:
+on `localhost:8000`. Two variables exist because two request paths exist: `HEALTHTREND_API_URL` is
+read server-side by the scenario pages and never reaches the browser, while
+`NEXT_PUBLIC_HEALTHTREND_API_URL` is used by the own-data route, which calls the API directly from
+the browser and is why that origin must appear in `HEALTHTREND_ALLOWED_ORIGINS`.
 
-- `HEALTHTREND_API_URL` — used by the demo pages (`/demo/{scenario}`), fetched from a Next.js server
-  component, so it never reaches the browser. There is no client-side data fetching, state library or
-  caching layer on that path: switching scenarios is a URL change handled by the router.
-- `NEXT_PUBLIC_HEALTHTREND_API_URL` — used by the real-data page (`/analyse`), which calls
-  `POST /api/analyse` and `POST /api/ingest/csv` directly from the browser. This is why the backend
-  needs that origin in `HEALTHTREND_ALLOWED_ORIGINS` above.
-
-Opening `/` redirects to `/demo/gradual-loss`.
+The V2 routes are `/v2/{scenario}`, `/v2/analyse`, `/v2/method` and `/v2/about`; `/v2` alone lands on
+`gradual-loss`. Scenarios are `gradual-loss`, `plateau`, `reversal`, `noisy` and `irregular`, all
+synthetic and labelled as such. The earlier V1 presentation is still served at `/demo/{scenario}` and
+`/analyse` against the same API.
 
 ### API
 
@@ -186,52 +359,54 @@ curl -X POST localhost:8000/api/analyse -H 'content-type: application/json' -d '
 }'
 ```
 
-Horizons are fixed at 7, 30 and 90 days, measured from **now** by default — so a stale series carries
-the extra elapsed uncertainty. The response publishes `origin_timestamp`,
+Horizons are fixed at 7, 30 and 90 days and are measured from **now** by default, so a stale series
+carries the extra elapsed uncertainty. The response publishes `origin_timestamp`,
 `last_observation_timestamp` and `lead_days`; pass `"forecast_from": "last_observation"` for the
 series-relative view.
 
-## Documentation
+---
+
+## Repository navigation
+
+```
+backend/   FastAPI + NumPy, uv-managed, Python 3.11
+  app/core/       pure layer: units · time_axis · types · model · kalman · filter · forecast · analyse
+  app/schemas/    Pydantic wire contract        app/demo/      synthetic scenarios
+  app/ingestion/  observations and CSV parsing  app/services/  clock, forecast-origin policy
+  app/api/        routes, error table, metadata-only access log
+  evaluation/     the M6 studies, importable by nothing in app/
+  tests/          core · api · layering · committed golden fixtures
+  openapi.json    committed contract, generated from the app
+frontend/  Next.js 16 · React 19 · TypeScript · CSS Modules · visx · Vitest
+  src/app/v2/         the shipped V2 routes: [scenario] · analyse · method · about
+  src/components/v2/  V2Hero · V2Canvas · V2Summary · V2StatsBand · V2Inspector · V2Method · V2About
+  src/lib/            api/ (schema.d.ts generated) · chart/ (pure shaping) · v2/ · privacy/
+docs/      mathematics · architecture · privacy · evaluation · decisions/ · product/ · design/
+sample_data/  the only place a committed .csv is permitted
+```
 
 | Document | Contents |
 | --- | --- |
-| [docs/mathematics.md](docs/mathematics.md) | Every equation, and the code symbol that implements it |
+| [docs/mathematics.md](docs/mathematics.md) | Every equation, and the code symbol implementing it |
 | [docs/architecture.md](docs/architecture.md) | Layer boundaries and the dependency rules |
 | [docs/privacy.md](docs/privacy.md) | What must never be committed or logged |
 | [docs/evaluation/report.md](docs/evaluation/report.md) | What the estimator was measured to do, including where it loses |
 | [docs/evaluation/results.md](docs/evaluation/results.md) | The measurements themselves (generated) |
-| [docs/decisions/](docs/decisions/) | Architecture decision records (ADR-0001 to ADR-0011) |
+| [docs/product/V2_PRODUCT.md](docs/product/V2_PRODUCT.md) | What HealthTrend is for |
+| [docs/design/V2_DESIGN.md](docs/design/V2_DESIGN.md) | The V2 design direction and the honesty ledger |
+| [docs/decisions/](docs/decisions/) | Architecture decision records, ADR-0001 to ADR-0011 |
 
-## Limitations
+## Not implemented
 
-The parameters are priors chosen and documented up front, not values fitted to data, and **the model
-has never been calibrated or benchmarked against a real dataset. No real health data has been used
-for any evaluation.**
-
-Milestone 6 evaluated the estimator on synthetic data, where the hidden trajectory is known. It
-confirmed the arithmetic against an independent computation, and confirmed that when the data really
-does come from the model, the 95% intervals cover about 95% of the time — on regular and on irregular
-weighing schedules alike. It also found the limits, which are worth stating plainly:
-
-- on a **flat** trajectory, the 30-day forecast is about seven times worse than a tuned moving
-  average; on a **plateau**, about six times worse. The estimator extrapolates a velocity that is
-  mostly noise, and a method with no notion of a trend is right for exactly that reason.
-- the intervals are calibrated when the model holds and are not when it does not: on a genuine level
-  shift, the 30-day interval covers the truth **48%** of the time against a nominal 95%.
-- the process-noise parameter is not identifiable from a month of data at any weighing frequency,
-  which is why the parameters remain documented priors rather than per-user fits.
-
-So: the implementation is verified, on synthetic data. The model is not, and there are known regimes
-where simpler methods do better. [docs/evaluation/report.md](docs/evaluation/report.md) has the full
-account.
-
-Not implemented: Apple Health parsing, trend classification, plateau detection, change detection,
-goal projection, robust outlier handling, RTS smoothing, real-data evaluation, contextual machine
-learning, accounts.
+Stated so the absences are not read as oversights: trend classification, plateau or change-point
+detection, goal hitting-time or ETA, robust outlier handling, RTS smoothing, per-user parameter
+fitting, accounts and persistent history, Apple Health or smart-scale integration, body-composition
+inference, and real-data evaluation.
 
 ## Not a medical device
 
-HealthTrend estimates and forecasts a measurement trend. It does not diagnose, treat or prescribe.
+HealthTrend estimates and forecasts a measurement trend. It does not diagnose, treat or prescribe,
+and it makes no claim about health outcomes.
 
 ## License
 
