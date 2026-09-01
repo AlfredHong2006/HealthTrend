@@ -9,6 +9,11 @@ import styles from "./V2About.module.css";
  * Everything on this page is a plain statement about the project; nothing is derived from an
  * analysis, so this component takes no props and fetches nothing.
  *
+ * The "Why I built it" and "What building it involved" copy is Alfred's own account, supplied
+ * verbatim. Edit it only on his say-so: it is a first-person statement about why the project
+ * exists, not product prose to be tightened or paraphrased. It also sets the page's punctuation
+ * convention, which is plain sentences and no em dashes.
+ *
  * The claims stay inside the honesty ledger the rest of the product observes
  * (CLAUDE.md, "Claim only what is implemented and measured"): it describes what HealthTrend
  * estimates and publishes, and makes no claim about accuracy, health or outcomes.
@@ -32,24 +37,30 @@ export function V2About() {
 
       <Section title="Why I built it">
         <p>
-          I wanted a calmer and more analytical alternative to basic weight loggers — something
-          that focuses on the underlying trajectory rather than noisy day-to-day fluctuations, and
-          that explains the reasoning behind the estimate rather than only showing raw numbers.
+          HealthTrend started from a problem I kept running into while cutting. I could weigh
+          myself every day and still have no idea what my weight was actually doing. A single
+          reading could jump up or down because of food, water, timing, or normal day-to-day
+          noise, while what I actually cared about was whether my underlying weight was trending
+          down and how quickly.
         </p>
         <p>
-          A bathroom scale does not measure the thing you actually want to know. Weight moves by a
-          kilogram or more within a single day for reasons that have nothing to do with a trend,
-          so a logger that plots readings faithfully still leaves you to guess at the signal.
-          HealthTrend estimates that signal, states how uncertain it is, and shows its working.
+          I wanted something more useful than a basic weight log or a moving average. I wanted to
+          separate the signal from the noise, quantify how certain that estimate was, and make the
+          result easy to understand rather than hiding everything behind a single smoothed number.
+        </p>
+        <p>
+          So I built HealthTrend. It estimates the underlying weight trajectory from noisy and
+          irregular measurements, then presents the current estimate, rate of change, uncertainty,
+          and forecast in a form that I would actually want to use myself.
         </p>
       </Section>
 
-      <Section title="What this version demonstrates">
+      <Section title="What building it involved">
         <p>
-          This version is built to show product thinking, statistical communication and frontend
-          implementation together: deciding what a number is allowed to claim, presenting an
-          estimate and its uncertainty without overstating either, and building the interface that
-          carries them.
+          Building it also became a way for me to bring together statistical modelling, software
+          engineering, product design, and rigorous evaluation. An important part of the project
+          was testing where the model does and does not work, rather than assuming that a more
+          sophisticated model must automatically be better.
         </p>
         <p className={styles.note}>
           The estimator, its assumptions and its limitations are set out in full on{" "}

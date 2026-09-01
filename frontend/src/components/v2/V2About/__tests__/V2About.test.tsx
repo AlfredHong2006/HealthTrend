@@ -15,10 +15,40 @@ describe("V2About", () => {
   it("says what the product estimates without claiming more than it computes", () => {
     render(<V2About />);
 
+    // The standfirst and the personal account name the same four published quantities, so the
+    // whole standfirst sentence is asserted rather than a fragment that now matches twice.
     expect(
-      screen.getByText(/estimates an underlying weight trend from noisy scale readings/),
+      screen.getByText(
+        /^HealthTrend estimates an underlying weight trend from noisy scale readings and presents the current estimate, rate of change, uncertainty, and forecast\.$/,
+      ),
     ).toBeInTheDocument();
-    expect(screen.getByText(/rate of change, uncertainty, and forecast/)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /estimates the underlying weight trajectory from noisy and irregular measurements/,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  /** Why the project exists, in Alfred's own words, and still his name on it. */
+  it("gives a first-person account of why the project was built", () => {
+    render(<V2About />);
+
+    expect(screen.getByText("Alfred Hong")).toBeInTheDocument();
+    expect(
+      screen.getByText(/started from a problem I kept running into while cutting/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/more useful than a basic weight log or a moving average/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/testing where the model does and does not work/),
+    ).toBeInTheDocument();
+  });
+
+  /** A settled punctuation decision for this page: plain sentences, no em dashes. */
+  it("uses no em dashes anywhere in its copy", () => {
+    const { container } = render(<V2About />);
+    expect(container.textContent ?? "").not.toContain("—");
   });
 
   /**
