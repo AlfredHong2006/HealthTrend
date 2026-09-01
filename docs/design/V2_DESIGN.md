@@ -11,7 +11,7 @@ A hybrid, deliberately combining four things:
 
 | Element | Source direction |
 | --- | --- |
-| Persistent analytical canvas + synchronized analysis rail on desktop | **C** — architecture |
+| Persistent analytical canvas + synchronized analysis surface | **C** — architecture |
 | Serious, instrument-style chart interaction | **A** — chart discipline |
 | Editorial, conversational explanation and readable mathematics | **B** — communication |
 | Mobile composition that does not force a permanently sticky ~45vh chart | **B-like** — mobile |
@@ -27,22 +27,53 @@ a fitness app.
 
 ## Desktop
 
-Roughly:
+**One centred composition, read top to bottom.** Not a split pane:
 
-- **60–65%** chart / canvas
-- **35–40%** analysis rail
+```
+hero (estimate + rate)
+→ trajectory chart
+→ analysis summary + supporting context
+→ statistics
+→ Inspect analysis
+```
+
+This supersedes the earlier direction of a persistent right-hand analysis rail taking 35–40% of
+the width beside a 60–65% canvas. A rail is a reasonable instrument layout, and it was built and
+shipped in the prototype; the reason it is gone is specific and does not generalise. Reserving a
+fixed ~400px column pushed the hero and the canvas well left of the viewport's centre on a
+1440–1600px display, so the page read as left-heavy — and the canvas is the page's subject, not
+something to be pushed aside for a column of supporting text. Recomposing that content below the
+chart puts the chart back in the middle of the page and costs it almost no width.
 
 The canvas should feel **open**, not boxed inside a dashboard card.
 
-The analysis rail is **one continuous analytical surface**, separated by typography and hairlines.
-**Never allow the rail to decay into a stack of SaaS cards.**
+The analysis summary is **one continuous analytical surface**, separated by typography, alignment
+and hairlines. At desktop it is two columns — the interpretation on the left at the prose measure,
+the supporting reading and the goal on the right behind a vertical hairline — collapsing to one
+column on narrow widths. **Never allow it to decay into a stack of SaaS cards.** That rule was
+written for the rail and outlives it.
 
-Chart and rail are synchronized: selecting a point, an event or a forecast region should eventually
-focus the relevant information in both places.
+Chart and analysis are synchronized: selecting a point, an event or a forecast region should
+eventually focus the relevant information in both places.
+
+### Frame widths
+
+Two widths, and only two:
+
+| Frame | Width | Used by |
+| --- | --- | --- |
+| Outer frame (`--v2-frame`) | **1320px** | The masthead, on every V2 route. Shared, so the wordmark never shifts horizontally as you navigate. |
+| Analysis composition (`--v2-frame-analysis`) | **1120px** | The Analysis page's hero, canvas, summary, statistics, Inspect entry and deep panel. |
+
+Both are centred, and the reading pages (Method, About, the pre-result "Analyse your data" entry)
+sit in a narrower centred column of their own, sized so the prose measure fills it. The masthead
+being wider than the composition beneath it is deliberate: it is the same masthead-to-article
+relationship Method already has, and both blocks are individually centred in the viewport.
 
 ## Mobile
 
-Do not simply shrink the desktop split-pane. Prefer:
+The same order the desktop composition uses, in one column — there is no split pane to shrink and
+nothing to reassemble:
 
 ```
 conclusion
@@ -89,9 +120,9 @@ trajectory — trend weight and current rate.
 Two different jobs, and they do not share a surface.
 
 **Analysis** answers *what does this say about my data*. **Method** answers *how does HealthTrend
-calculate this*. The analysis rail carries analysis-specific content only.
+calculate this*. The analysis surface carries analysis-specific content only.
 
-The analysis rail is:
+The analysis surface is:
 
 ```
 Summary
@@ -100,11 +131,12 @@ Summary
 → Statistics
 ```
 
-**Only one deep tier occupies the rail at a time.** The rail's default state is a short summary and
-an affordance to go deeper; choosing a tier *replaces* that affordance rather than lengthening the
-rail, and a back control returns. Reaching Statistics must never mean scrolling through Why and
-Evidence on the way, so the tiers are directly reachable from one another. This is a detail stack,
-not an accordion, and mobile uses the same pushed detail rather than one long expanded document.
+**Only one deep tier is on screen at a time.** The default state is a short summary and an
+affordance to go deeper (the Inspect analysis entry, closing the composition); choosing a tier
+*replaces* that affordance rather than lengthening the page, and a back control returns. Reaching
+Statistics must never mean scrolling through Why and Evidence on the way, so the tiers are directly
+reachable from one another. This is a detail stack, not an accordion, and mobile uses the same
+pushed detail rather than one long expanded document.
 
 Each tier stays specific to the analysis on screen. In particular **Why** means *why this estimate,
 for this series* — the latest reading beside the estimate for the same instant, the difference
@@ -152,7 +184,7 @@ The chart itself should provide much of the page's visual structure.
 Motion communicates continuity and selection:
 
 - chart range transitions
-- rail and detail transitions
+- summary and detail transitions
 - synchronized highlight states
 - disclosure expansion
 
@@ -258,8 +290,13 @@ Settled. Do not reopen these while prototyping.
   shared tokens merely to prototype V2.
 - **Goal state is ephemeral, and there is no goal until the user adds one.** No example target, no
   default reference line: a goal nobody chose is a product decision made by a default.
-- **Method is a separate destination, never a rail tier.** The everyday analysis screen carries no
-  generic model documentation, and the full equations live in a Mathematical Appendix within Method.
-- **The rail is a detail stack, not an accordion.** One deep tier at a time, with a back control.
+- **Method is a separate destination, never a tier of the analysis.** The everyday analysis screen
+  carries no generic model documentation, and the full equations live in a Mathematical Appendix
+  within Method.
+- **The deep tiers are a detail stack, not an accordion.** One tier at a time, with a back control.
+- **Analysis is one centred composition, not a split pane.** There is no persistent desktop
+  analysis rail: the summary, today's reading and the goal sit below the chart in the document
+  flow, at `--v2-frame-analysis` (1120px), while the masthead keeps the shared `--v2-frame`
+  (1320px) across every V2 route.
 - **`FilterStep` exposure is deferred.** The prototype uses the current API only, unchanged.
 - **ADR and README updates are deferred** until a V2 direction is accepted for production.

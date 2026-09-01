@@ -1,67 +1,82 @@
-import { HEADLINE_FORECAST_HORIZON_DAYS } from "@/lib/analysis";
-import { formatWeeklyRateKg, formatWeightKg, formatWeightRangeKg } from "@/lib/chart/format";
-import { formatRateMagnitude } from "@/lib/v2/format";
+import type { ReactNode } from "react";
+import { formatFullDate } from "@/lib/chart/format";
+import { formatTimeOfDay } from "@/lib/v2/format";
+import { formatSignedWeightUnit, formatWeightUnit } from "@/lib/v2/units";
+import type { DisplayUnit } from "@/lib/v2/units";
+import { analysisLede } from "@/lib/v2/lede";
+import { latestObservation } from "@/lib/v2/latest";
 import { summaryLine } from "@/lib/v2/narrative";
-import type { AnalysisResponse, ForecastPoint } from "@/lib/api/types";
+import type { AnalysisResponse } from "@/lib/api/types";
 import styles from "./V2Summary.module.css";
 
 interface V2SummaryProps {
   analysis: AnalysisResponse;
-  headlineForecast: ForecastPoint;
+  unit: DisplayUnit;
+  /**
+   * Whether an estimated trajectory exists to describe (`lib/v2/span.ts`). Passed down rather
+   * than recomputed so the whole screen answers the question once, in one place.
+   */
+  hasSpan: boolean;
+  /**
+   * The goal control, rendered into the supporting column. Injected rather than imported
+   * because the goal's draft state is ephemeral and lives in `V2Workspace`, which owns it for
+   * the length of the visit (docs/privacy.md); this component stays free of that state.
+   */
+  goal?: ReactNode;
 }
 
 /**
- * The calm top of the analysis surface: the estimate, the rate, where the trajectory
- * projects, and one line saying what that was estimated from.
+ * What this analysis says, and beside it the supporting context: the most recent raw scale
+ * reading against the estimate for the same instant, and the goal reference.
  *
- * What is deliberately *not* here is as important as what is. The canvas already reports the
- * latest scale reading, the estimate at that instant and its interval in its own readout, and
- * flags the trend weight on the weight axis; restating all of it here in larger type made the
- * right-hand side a second dashboard rather than an interpretation of the first. So the raw
- * reading is gone from this block (it is evidence, and it lives in the canvas readout and in
- * the Evidence detail), and the rate and the projection -- the two figures the canvas does not
- * state numerically -- stay.
+ * That reading is the last one in the series, which is not necessarily one taken today -- a
+ * user analysing an export may last have weighed in months ago. It is labelled "Latest reading"
+ * and carries its own date for exactly that reason: "Reading today" asserted a fact about the
+ * calendar that nothing in the response supports.
  *
- * There are no cards: hierarchy is type size and hairlines. Nothing here classifies the trend.
+ * This was the persistent right rail. It now sits in the centred main composition directly
+ * below the canvas: a reserved 400px column beside the chart pushed the canvas visibly left of
+ * centre at desktop widths, which is the opposite of what the rail was for. The content, the
+ * copy and the honesty rules are unchanged -- only where it sits is.
+ *
+ * There are still no cards: hierarchy is type size, alignment and hairlines, and at desktop the
+ * two columns are separated by a vertical rule rather than boxed. The lede states only what
+ * `lib/v2/lede.ts` computes from published numbers -- nothing here classifies the trend, and the
+ * word "residual" is avoided per docs/design/IMPLEMENTATION_NOTES.md, "2. Residual terminology":
+ * the reading-versus-estimate gap is named plainly as a difference.
  */
-export function V2Summary({ analysis, headlineForecast }: V2SummaryProps) {
-  const { current } = analysis;
+export function V2Summary({ analysis, unit, hasSpan, goal }: V2SummaryProps) {
+  const lede = analysisLede(analysis, unit);
+  const latest = latestObservation(analysis);
 
   return (
-    <div className={styles.summary}>
-      <h2 className={styles.eyebrow}>Analysis</h2>
-
-      <div className={styles.lead}>
-        <p className={styles.leadValue}>{formatWeightKg(current.w_kg)}</p>
-        <p className={styles.leadCaption}>
-          Estimated underlying weight
-          <span className={styles.leadRange}>
-            95% {formatWeightRangeKg(current.w_lower95, current.w_upper95)}
-          </span>
-        </p>
+    <section className={styles.summary} aria-label="Analysis summary">
+      <div className={styles.says}>
+        <h2 className={styles.eyebrow}>What this analysis says</h2>
+        <p className={styles.lede}>{lede.headline}</p>
+        <p className={styles.detail}>{lede.detail}</p>
       </div>
 
-      <div className={styles.pair}>
-        <div className={styles.figure}>
-          <p className={styles.figureValue}>{formatWeeklyRateKg(current.weekly_rate_kg)}</p>
-          <p className={styles.figureLabel}>Current weekly rate</p>
-          <p className={styles.figureDetail}>
-            sd {formatRateMagnitude(current.weekly_rate_sd_kg)}
-          </p>
-        </div>
+      <div className={styles.support}>
+        {latest === null ? null : (
+          <div className={styles.today}>
+            <span className={styles.eyebrow}>Latest reading</span>
+            <div className={styles.readingRow}>
+              <span className={styles.readingValue}>
+                {formatWeightUnit(latest.readingKg, unit)}
+              </span>
+              <span className={styles.readingQualifier}>
+                scale reading on {formatFullDate(latest.date)}, {formatTimeOfDay(latest.date)} ·
+                difference from estimate {formatSignedWeightUnit(latest.differenceKg, unit)}
+              </span>
+            </div>
+            {/* The extent sentence names a span the series has to actually have. */}
+            {hasSpan ? <p className={styles.gapNote}>{summaryLine(analysis)}</p> : null}
+          </div>
+        )}
 
-        <div className={styles.figure}>
-          <p className={styles.figureValue}>{formatWeightKg(headlineForecast.w_kg)}</p>
-          <p className={styles.figureLabel}>
-            {HEADLINE_FORECAST_HORIZON_DAYS} days ahead
-          </p>
-          <p className={styles.figureDetail}>
-            95% {formatWeightRangeKg(headlineForecast.w_lower95, headlineForecast.w_upper95)}
-          </p>
-        </div>
+        {goal}
       </div>
-
-      <p className={styles.provenance}>{summaryLine(analysis)}</p>
-    </div>
+    </section>
   );
 }

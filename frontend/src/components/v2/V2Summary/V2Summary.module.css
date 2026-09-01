@@ -1,110 +1,117 @@
-/* One continuous analytical surface. Separation is hairlines and space, never a border-box
-   with a radius and a shadow -- the design direction rules out the rail decaying into a stack
-   of SaaS cards, and this is the part most likely to drift that way. */
+/* One continuous analytical surface, separated by hairlines and alignment rather than cards
+   (docs/design/V2_DESIGN.md, "Desktop": "never allow it to decay into a stack of SaaS cards").
 
+   Formerly a 400px column beside the canvas. It is now a full-width section of the centred main
+   composition, directly under the chart: the interpretation on the left at the prose measure,
+   the supporting reading and the goal on the right behind a vertical hairline. Two columns, one
+   rule, no boxes -- the same idiom `V2Hero` already uses between the estimate and the rate. */
 .summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  align-items: start;
+  min-width: 0;
+  padding-top: var(--v2-space-9);
+  border-top: 1px solid var(--v2-rule-1);
+}
+
+.says {
   display: flex;
   flex-direction: column;
-  gap: var(--v2-space-4);
+  gap: var(--v2-space-5);
   min-width: 0;
+  max-width: var(--v2-measure);
+  padding-right: var(--v2-space-10);
+}
+
+.support {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-6);
+  min-width: 0;
+  padding-left: var(--v2-space-10);
+  border-left: 1px solid var(--v2-rule-1);
+}
+
+/* The column's own rule already separates it from the interpretation, so whichever block leads
+   it does not draw a second one. Which block that is varies: "Latest reading" is absent until
+   there is a reading, and the goal then leads. */
+.support > :first-child {
+  padding-top: 0;
+  border-top: none;
 }
 
 .eyebrow {
-  font-size: var(--v2-size-micro);
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  display: block;
+  font: 600 var(--v2-size-eyebrow) var(--v2-font-numeric);
+  letter-spacing: var(--v2-tracking-eyebrow);
   text-transform: uppercase;
-  color: var(--v2-ink-faint);
+  color: var(--v2-ink-4);
 }
 
-.lead {
-  min-width: 0;
+.lede {
+  font: 400 20px / 1.5 var(--v2-font-prose);
+  color: var(--v2-ink-1);
 }
 
-/* Smaller than a hero number by design: the canvas already flags this value on the weight
-   axis, so the rail states it once, clearly, without competing with the chart. */
-.leadValue {
-  font-size: clamp(2rem, 1.5rem + 1.6vw, 2.75rem);
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
+.detail {
+  font-size: var(--v2-size-body-sm);
+  line-height: 1.65;
+  color: var(--v2-ink-2);
 }
 
-.leadCaption {
+/* `.support`'s own gap already separates this block from whatever follows it; the padding here
+   is only the breathing room between a hairline and this block's own content, and it is reset
+   away by `.support > :first-child` whenever this block leads the column. */
+.today {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--v2-space-1) var(--v2-space-3);
-  margin-top: var(--v2-space-2);
-  font-size: var(--v2-size-small);
-  color: var(--v2-ink);
-}
-
-.leadRange {
-  color: var(--v2-ink-muted);
-  font-variant-numeric: tabular-nums;
-}
-
-.pair {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  flex-direction: column;
   gap: var(--v2-space-4);
-  padding-top: var(--v2-space-4);
-  border-top: 1px solid var(--v2-rule);
+  padding-top: var(--v2-space-5);
+  border-top: 1px solid var(--v2-rule-1);
 }
 
-.figure {
-  min-width: 0;
+.readingRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-2);
 }
 
-/* A single hairline between the two figures: the separation a card would have provided, at a
-   fraction of the visual weight. */
-.pair > .figure + .figure {
-  padding-left: var(--v2-space-4);
-  border-left: 1px solid var(--v2-rule);
-}
-
-.figureValue {
-  font-size: var(--v2-size-metric);
-  line-height: 1.15;
-  letter-spacing: -0.01em;
+.readingValue {
+  font: 400 var(--v2-size-raw) var(--v2-font-numeric);
   font-variant-numeric: tabular-nums;
+  color: var(--v2-ink-3);
 }
 
-.figureLabel {
-  margin-top: var(--v2-space-1);
-  font-size: var(--v2-size-small);
-  color: var(--v2-ink);
-}
-
-.figureDetail {
-  margin-top: 2px;
-  font-size: var(--v2-size-small);
-  color: var(--v2-ink-muted);
+.readingQualifier {
+  font-size: var(--v2-size-qualifier);
   font-variant-numeric: tabular-nums;
+  color: var(--v2-ink-4);
 }
 
-.provenance {
-  padding-top: var(--v2-space-3);
-  border-top: 1px solid var(--v2-rule);
-  font-size: var(--v2-size-small);
-  line-height: 1.55;
-  color: var(--v2-ink-muted);
-  font-variant-numeric: tabular-nums;
-  text-wrap: pretty;
+.gapNote {
+  font-size: var(--v2-size-qualifier);
+  line-height: 1.6;
+  color: var(--v2-ink-4);
 }
 
 /* ---- Goal ---- */
 
+/* Secondary by construction: an eyebrow and a compact text affordance on one hairline row, at
+   the bottom of the supporting column. */
 .goalIdle {
   display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--v2-space-5);
+  padding-top: var(--v2-space-5);
+  border-top: 1px solid var(--v2-rule-1);
 }
 
 .goalAdd {
   padding: var(--v2-space-1) 0;
   font: inherit;
-  font-size: var(--v2-size-small);
-  color: var(--v2-ink-muted);
+  font-size: var(--v2-size-body-sm);
+  color: var(--v2-ink-3);
   background: none;
   border: none;
   cursor: pointer;
@@ -118,57 +125,61 @@
 .goal {
   display: flex;
   flex-direction: column;
-  gap: var(--v2-space-2);
+  gap: var(--v2-space-3);
   min-width: 0;
+  padding-top: var(--v2-space-5);
+  border-top: 1px solid var(--v2-rule-1);
 }
 
 .goalHead {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--v2-space-3);
+  gap: var(--v2-space-5);
 }
 
 .goalTitle {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--v2-space-2);
-  font-size: var(--v2-size-small);
-  font-weight: 500;
-  color: var(--v2-ink);
+  gap: var(--v2-space-3);
+  font-size: var(--v2-size-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--v2-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--v2-ink-4);
 }
 
 .goalTag {
-  font-size: var(--v2-size-micro);
+  font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--v2-ink-faint);
+  color: var(--v2-ink-5);
 }
 
 .goalToggle {
   flex: none;
-  padding: 2px var(--v2-space-2);
+  padding: 2px var(--v2-space-6);
   font: inherit;
-  font-size: var(--v2-size-small);
-  color: var(--v2-ink-muted);
+  font-size: var(--v2-size-ui-sm);
+  color: var(--v2-ink-3);
   background: none;
-  border: 1px solid var(--v2-rule);
+  border: 1px solid var(--v2-rule-1);
   border-radius: var(--v2-radius);
   cursor: pointer;
   transition: color 140ms ease, border-color 140ms ease;
 }
 
 .goalToggle:hover {
-  color: var(--v2-ink);
-  border-color: var(--v2-rule-strong);
+  color: var(--v2-ink-1);
+  border-color: var(--v2-rule-2);
 }
 
 .goalReadout {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--v2-space-1) var(--v2-space-3);
+  gap: var(--v2-space-2) var(--v2-space-5);
 }
 
 .goalValue {
@@ -178,17 +189,17 @@
 }
 
 .goalMeta {
-  font-size: var(--v2-size-small);
-  color: var(--v2-ink-muted);
+  font-size: var(--v2-size-ui-sm);
+  color: var(--v2-ink-3);
   font-variant-numeric: tabular-nums;
 }
 
 .goalRate {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--v2-space-1) var(--v2-space-3);
-  font-size: var(--v2-size-small);
-  color: var(--v2-ink-muted);
+  gap: var(--v2-space-2) var(--v2-space-5);
+  font-size: var(--v2-size-ui-sm);
+  color: var(--v2-ink-3);
   font-variant-numeric: tabular-nums;
 }
 
@@ -200,61 +211,61 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: var(--v2-space-3);
-  padding-top: var(--v2-space-2);
+  gap: var(--v2-space-4) var(--v2-space-5);
+  padding-top: var(--v2-space-3);
   animation: disclose 180ms ease both;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: var(--v2-space-1);
+  gap: var(--v2-space-2);
   min-width: 0;
   flex: 1 1 150px;
 }
 
 .fieldLabel {
-  font-size: var(--v2-size-micro);
+  font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--v2-ink-faint);
+  color: var(--v2-ink-4);
 }
 
 .input {
   width: 100%;
   min-width: 0;
-  padding: var(--v2-space-2);
+  padding: var(--v2-space-3);
   font: inherit;
-  font-size: var(--v2-size-small);
+  font-size: var(--v2-size-ui-sm);
   font-variant-numeric: tabular-nums;
-  color: var(--v2-ink);
-  background: var(--v2-raised);
-  border: 1px solid var(--v2-rule-strong);
+  color: var(--v2-ink-1);
+  background: var(--v2-paper-1);
+  border: 1px solid var(--v2-rule-2);
   border-radius: var(--v2-radius);
 }
 
 .goalClear {
   flex: none;
-  padding: var(--v2-space-2) var(--v2-space-3);
+  padding: var(--v2-space-3) var(--v2-space-5);
   font: inherit;
-  font-size: var(--v2-size-small);
-  color: var(--v2-ink-muted);
+  font-size: var(--v2-size-ui-sm);
+  color: var(--v2-ink-3);
   background: none;
-  border: 1px solid var(--v2-rule);
+  border: 1px solid var(--v2-rule-1);
   border-radius: var(--v2-radius);
   cursor: pointer;
 }
 
 .goalClear:hover {
-  color: var(--v2-ink);
-  border-color: var(--v2-rule-strong);
+  color: var(--v2-ink-1);
+  border-color: var(--v2-rule-2);
 }
 
 .goalNote {
   flex: 1 1 100%;
-  font-size: var(--v2-size-micro);
+  font-size: 11px;
   line-height: 1.5;
-  color: var(--v2-ink-faint);
+  color: var(--v2-ink-4);
 }
 
 @keyframes disclose {
@@ -274,17 +285,25 @@
   }
 }
 
-@media (max-width: 559px) {
+/* Below the desktop breakpoint the two columns stack, and the vertical rule becomes a
+   horizontal one -- the same single-column reading order the phone already had: what this
+   analysis says, then the latest reading, then the goal. */
+@media (max-width: 959px) {
   .summary {
-    gap: var(--v2-space-3);
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--v2-space-6);
+    padding-top: var(--v2-space-8);
   }
 
-  .pair {
-    gap: var(--v2-space-3);
-    padding-top: var(--v2-space-3);
+  .says {
+    max-width: none;
+    padding-right: 0;
   }
 
-  .pair > .figure + .figure {
-    padding-left: var(--v2-space-3);
+  .support {
+    padding-left: 0;
+    padding-top: var(--v2-space-6);
+    border-left: none;
+    border-top: 1px solid var(--v2-rule-1);
   }
 }

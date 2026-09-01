@@ -6,9 +6,8 @@ import { V2Workspace } from "../V2Workspace";
 
 /**
  * jsdom has no `matchMedia`, so the canvas's domain tween would otherwise run its real
- * `requestAnimationFrame` loop during these tests and land state updates after they finish.
- * Reporting reduced motion is both the honest stub and the branch worth pinning: a reader who
- * asks for reduced motion must get the new domain immediately, not a shortened animation.
+ * `requestAnimationFrame` loop during these tests. Reporting reduced motion is both the honest
+ * stub and the branch worth pinning.
  */
 beforeAll(() => {
   Object.defineProperty(window, "matchMedia", {
@@ -25,145 +24,145 @@ beforeAll(() => {
 });
 
 function renderWorkspace() {
-  return render(<V2Workspace analysis={demoAnalysisFixture} />);
+  return render(<V2Workspace analysis={demoAnalysisFixture} unit="kg" />);
+}
+
+/**
+ * A response with `span_days === 0`. The instant is shared by every reading, which is the case
+ * a point-count test alone lets through: four observations produce four filtered points, so
+ * `trajectory.length > 1` passes while no time has elapsed and the velocity posterior is still
+ * exactly the model's prior (ADR-0003).
+ *
+ * The velocity here is written as that prior -- zero, with the prior's own spread -- rather than
+ * as a fitted value, because that is what the backend actually returns for a zero span.
+ */
+const SAME_INSTANT = "2026-04-26T08:50:16.705Z";
+
+function sameInstantAnalysis(readings: number[]) {
+  return {
+    ...demoAnalysisFixture,
+    n_obs: readings.length,
+    span_days: 0,
+    observations: readings.map((weight_kg) => ({ timestamp: SAME_INSTANT, weight_kg })),
+    trajectory: readings.map(() => ({
+      timestamp: SAME_INSTANT,
+      w_kg: 81.9,
+      w_sd: 0.5,
+      w_lower95: 80.92,
+      w_upper95: 82.88,
+    })),
+    current: {
+      timestamp: SAME_INSTANT,
+      w_kg: 81.9,
+      w_sd: 0.5,
+      w_lower95: 80.92,
+      w_upper95: 82.88,
+      weekly_rate_kg: 0,
+      weekly_rate_sd_kg: 1,
+    },
+  };
 }
 
 const summary = () => screen.getByRole("region", { name: "Analysis summary" });
 const detail = () => screen.getByRole("region", { name: "Analysis detail" });
 
-describe("V2Workspace summary", () => {
-  it("answers the three questions the rail exists for, and no more", () => {
+const hero = () => screen.getByRole("group", { name: "Estimate and rate" });
+
+describe("V2Workspace hero", () => {
+  it("states the estimate, its 68% half-width, and the rate beside it", () => {
     renderWorkspace();
 
-    expect(within(summary()).getByText("81.7 kg")).toBeInTheDocument();
-    expect(within(summary()).getByText(/95% 81\.2–82\.3 kg/)).toBeInTheDocument();
-    expect(within(summary()).getByText("−0.42 kg/week")).toBeInTheDocument();
-    expect(within(summary()).getByText(/sd 0\.85 kg\/week/)).toBeInTheDocument();
-    expect(within(summary()).getByText("72.2 kg")).toBeInTheDocument();
-    expect(within(summary()).getByText(/95% 67\.4–76\.9 kg/)).toBeInTheDocument();
+    expect(within(hero()).getByText("81.7 kg")).toBeInTheDocument();
+    expect(within(hero()).getByText(/±0\.28 kg \(68%\)/)).toBeInTheDocument();
+    expect(within(hero()).getByText("−0.42 kg/week")).toBeInTheDocument();
   });
 
   /**
-   * The canvas already reports the latest reading in its own readout, and flags the trend
-   * weight on the weight axis. Restating the raw reading in the rail is what turned the right
-   * side into a second dashboard, so it is gone from here.
+   * The fixture's own numbers put the rate's 95% interval across zero, so "flat" is the honest
+   * label -- not a stylistic default, but the rule the frozen design names once a real posterior
+   * exists (docs/design/09_1B_Implementation_Spec §8.1).
    */
-  it("does not repeat the raw scale reading the canvas readout already carries", () => {
+  it("labels the rate flat when its own 95% interval spans zero", () => {
     renderWorkspace();
-    expect(within(summary()).queryByText(/Latest scale reading/)).toBeNull();
-    expect(within(summary()).queryByText("82.1 kg")).toBeNull();
+    expect(within(hero()).getByText("Current rate, flat")).toBeInTheDocument();
+  });
+});
+
+describe("V2Workspace statistics band", () => {
+  it("shows the fixed 30-day projection and how many readings the estimate rests on", () => {
+    renderWorkspace();
+    expect(screen.getByText("Projected, 30 days")).toBeInTheDocument();
+    expect(screen.getByText("72.2 kg")).toBeInTheDocument();
+    expect(screen.getByText("Readings used")).toBeInTheDocument();
+    expect(screen.getByText("4")).toBeInTheDocument();
   });
 
-  it("says what the estimate was made from, without repeating the figures above it", () => {
+  /**
+   * The fixture spans 3 days, so a 90-day change cannot honestly be computed from it -- the
+   * absent state names the real span rather than approximating from what is available.
+   */
+  it("states the 90-day change is absent, with the real span rather than a placeholder", () => {
     renderWorkspace();
-    expect(
-      within(summary()).getByText(
-        "Estimated from 4 readings spanning 3 days, the most recent on 26 April 2026.",
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/No 90-day change: this series spans 3 days/)).toBeInTheDocument();
+  });
+});
+
+describe("V2Workspace analysis summary", () => {
+  it("carries a lede resting only on the published rate and its interval", () => {
+    renderWorkspace();
+    const region = summary();
+    expect(within(region).getByText("The estimated weight is flat within its uncertainty.")).toBeInTheDocument();
+    expect(within(region).getByText(/its 95% interval spans zero/)).toBeInTheDocument();
+  });
+
+  it("shows today's reading beside the estimate, named as a difference rather than a residual", () => {
+    renderWorkspace();
+    const region = summary();
+    expect(within(region).getByText("82.1 kg")).toBeInTheDocument();
+    expect(within(region).getByText(/difference from estimate/)).toBeInTheDocument();
+    expect(within(region).queryByText(/residual/i)).toBeNull();
   });
 });
 
 describe("V2Workspace inspection", () => {
-  it("offers depth rather than displaying it, and links to the method behind the numbers", () => {
+  it("offers depth from the main column, opening the deep panel below the whole stack", () => {
     renderWorkspace();
-
-    expect(
-      within(detail()).getByRole("button", { name: /Inspect this analysis/ }),
-    ).toBeInTheDocument();
-    expect(
-      within(detail()).getByRole("link", { name: /How HealthTrend calculates this/ }),
-    ).toHaveAttribute("href", "/v2/method");
+    expect(screen.getByRole("button", { name: /Inspect analysis/ })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Analysis detail" })).toBeNull();
   });
 
-  /**
-   * The entry has to read as a way into something, not as a sentence. Saying what it opens is
-   * what makes that legible without hover -- which a phone never has -- and it has to be in the
-   * accessible name too, because a screen-reader user gets no visual affordance at all.
-   */
-  it("says what the entry opens, in its accessible name too", () => {
+  it("opens Why by default, showing this analysis's own numbers rather than model documentation", () => {
     renderWorkspace();
-    const entry = within(detail()).getByRole("button", { name: /Inspect this analysis/ });
-
-    expect(entry).toHaveAccessibleName("Inspect this analysis Opens Why, Evidence, Statistics");
-    expect(within(entry).getByText("Opens Why, Evidence, Statistics")).toBeInTheDocument();
-  });
-
-  /**
-   * A labelled section, not a loose row: the eyebrow is what says something lives here before
-   * the entry has to argue for itself. It is a real heading so the structure a screen reader
-   * hears is the one the eye sees.
-   */
-  it("labels the inspection block as a section of its own", () => {
-    renderWorkspace();
-    expect(
-      within(detail()).getByRole("heading", { name: "Deeper analysis", level: 2 }),
-    ).toBeInTheDocument();
-  });
-
-  it("shows no tier content at all until asked", () => {
-    renderWorkspace();
-    expect(screen.queryByRole("heading", { name: "Why this estimate?" })).toBeNull();
-    expect(screen.queryByText("Latest observation")).toBeNull();
-    expect(screen.queryByText("Current rate")).toBeNull();
-  });
-
-  it("pushes into Why, showing this analysis's own numbers rather than model documentation", () => {
-    renderWorkspace();
-    fireEvent.click(screen.getByRole("button", { name: /Inspect this analysis/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Inspect analysis/ }));
 
     const panel = detail();
     expect(within(panel).getByRole("heading", { name: "Why this estimate?" })).toBeInTheDocument();
     expect(within(panel).getByText("Latest reading")).toBeInTheDocument();
     expect(within(panel).getByText("82.1 kg")).toBeInTheDocument();
-    expect(within(panel).getByText("Estimate, same instant")).toBeInTheDocument();
-    expect(within(panel).getByText("+0.4 kg")).toBeInTheDocument();
     expect(within(panel).getByText(/measurement noise assumed here is 0\.50 kg/)).toBeInTheDocument();
   });
 
-  it("keeps the summary on screen while a detail is open, as context for it", () => {
+  it("shows exactly one tier at a time, and moves straight to any other", () => {
     renderWorkspace();
-    fireEvent.click(screen.getByRole("button", { name: /Inspect this analysis/ }));
-    expect(within(summary()).getByText("81.7 kg")).toBeInTheDocument();
-  });
-
-  it("shows exactly one tier at a time", () => {
-    renderWorkspace();
-    fireEvent.click(screen.getByRole("button", { name: /Inspect this analysis/ }));
-
-    expect(screen.getByRole("heading", { name: "Why this estimate?" })).toBeInTheDocument();
-    expect(screen.queryByText("Series")).toBeNull(); // Evidence
-    expect(screen.queryByText("Current estimate")).toBeNull(); // Statistics
-  });
-
-  /** Reaching Statistics must not mean reading Why and Evidence on the way. */
-  it("moves straight to any tier from any other", () => {
-    renderWorkspace();
-    fireEvent.click(screen.getByRole("button", { name: /Inspect this analysis/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Inspect analysis/ }));
     fireEvent.click(within(detail()).getByRole("button", { name: "Statistics" }));
 
-    expect(screen.getByRole("heading", { name: "Statistics" })).toBeInTheDocument();
+    expect(within(detail()).getByRole("heading", { name: "Values and their intervals" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Why this estimate?" })).toBeNull();
-    expect(within(detail()).getByRole("button", { name: "Statistics" })).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
   });
 
-  it("returns to the summary from a detail", () => {
+  it("closes back to the entry point in the main column", () => {
     renderWorkspace();
-    fireEvent.click(screen.getByRole("button", { name: /Inspect this analysis/ }));
-    fireEvent.click(within(detail()).getByRole("button", { name: /Analysis/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Inspect analysis/ }));
+    fireEvent.click(within(detail()).getByRole("button", { name: "Close" }));
 
-    expect(screen.queryByRole("heading", { name: "Why this estimate?" })).toBeNull();
-    expect(
-      within(detail()).getByRole("button", { name: /Inspect this analysis/ }),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Analysis detail" })).toBeNull();
+    expect(screen.getByRole("button", { name: /Inspect analysis/ })).toBeInTheDocument();
   });
 
-  it("keeps the recent-readings table on demand rather than letting it fill the rail", () => {
+  it("keeps the recent-readings table on demand in Evidence", () => {
     renderWorkspace();
-    fireEvent.click(screen.getByRole("button", { name: /Inspect this analysis/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Inspect analysis/ }));
     fireEvent.click(within(detail()).getByRole("button", { name: "Evidence" }));
 
     expect(screen.queryByRole("columnheader", { name: "Reading" })).toBeNull();
@@ -171,9 +170,9 @@ describe("V2Workspace inspection", () => {
     expect(screen.getByRole("columnheader", { name: "Reading" })).toBeInTheDocument();
   });
 
-  it("publishes every horizon in Statistics, whatever the canvas draws", () => {
+  it("publishes every horizon in Statistics", () => {
     renderWorkspace();
-    fireEvent.click(screen.getByRole("button", { name: /Inspect this analysis/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Inspect analysis/ }));
     fireEvent.click(within(detail()).getByRole("button", { name: "Statistics" }));
 
     for (const horizon of ["7 days", "30 days", "90 days"]) {
@@ -181,15 +180,12 @@ describe("V2Workspace inspection", () => {
     }
   });
 
-  /**
-   * Generic model explanation is the same on every series, so it is not analysis-specific
-   * content and does not belong on this screen at all -- it is a page of its own.
-   */
+  /** Generic model explanation is the same on every series and belongs to /v2/method instead. */
   it("carries no equations or model mechanics anywhere in the workspace", () => {
     renderWorkspace();
     for (const tier of ["Why", "Evidence", "Statistics"]) {
       fireEvent.click(
-        screen.queryByRole("button", { name: /Inspect this analysis/ }) ??
+        screen.queryByRole("button", { name: /Inspect analysis/ }) ??
           within(detail()).getByRole("button", { name: tier }),
       );
       const text = document.body.textContent ?? "";
@@ -200,14 +196,22 @@ describe("V2Workspace inspection", () => {
       expect(text).not.toContain("transition_matrix");
     }
   });
+
+  /**
+   * docs/design/IMPLEMENTATION_NOTES.md, "1. No fake down-weighting": the shipped model has no
+   * such rule, so there is no "Down-weighted" metric and no ringed row anywhere in Evidence.
+   */
+  it("has no down-weighting metric or ringed-row marker in Evidence", () => {
+    renderWorkspace();
+    fireEvent.click(screen.getByRole("button", { name: /Inspect analysis/ }));
+    fireEvent.click(within(detail()).getByRole("button", { name: "Evidence" }));
+
+    expect(screen.queryByText("Down-weighted")).toBeNull();
+    expect(screen.queryByText(/ringed/i)).toBeNull();
+  });
 });
 
 describe("V2Workspace honesty", () => {
-  /**
-   * The binding rule from the honesty ledger: no qualitative status, confidence label,
-   * plateau claim, change point or goal ETA may reach the interface, and an unimplemented
-   * capability is absent rather than rendered as "unknown / not enough evidence".
-   */
   it("renders no classification, confidence label or ETA in any state", () => {
     renderWorkspace();
     const forbidden = [
@@ -231,7 +235,7 @@ describe("V2Workspace honesty", () => {
     };
 
     check();
-    fireEvent.click(screen.getByRole("button", { name: /Inspect this analysis/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Inspect analysis/ }));
     check();
     for (const tier of ["Evidence", "Statistics"]) {
       fireEvent.click(within(detail()).getByRole("button", { name: tier }));
@@ -245,8 +249,6 @@ describe("V2Workspace goal", () => {
     renderWorkspace();
 
     expect(screen.queryByRole("region", { name: "Goal reference" })).toBeNull();
-    expect(screen.queryByText(/below the current estimate/)).toBeNull();
-    expect(screen.queryByText("Goal reference")).toBeNull(); // no chart key either
     expect(screen.getByRole("button", { name: "+ Add a goal" })).toBeInTheDocument();
   });
 
@@ -259,7 +261,6 @@ describe("V2Workspace goal", () => {
     expect(within(goal).getByText("78.5 kg")).toBeInTheDocument();
     expect(within(goal).getByText("3.2 kg below the current estimate")).toBeInTheDocument();
 
-    // The chart gains its key at the same moment it gains the line.
     const legend = screen.getByRole("figure").querySelector("figcaption")!;
     expect(within(legend).getByText("Goal reference")).toBeInTheDocument();
   });
@@ -290,18 +291,31 @@ describe("V2Workspace goal", () => {
 
 describe("V2Workspace composition", () => {
   /**
-   * One DOM order serves both layouts: it is the mobile order from the design direction, and
-   * desktop folds it into two columns with grid areas rather than re-rendering it.
+   * One order at every width, since there is no rail to reassemble: hero and chart, then what
+   * the analysis says, then the statistics band, then the way into the deep tiers. The summary
+   * sitting between the canvas and the statistics band is the whole point of removing the rail
+   * -- if it drifts back below the band, the desktop composition has regressed.
    */
-  it("renders in the mobile order: summary, chart, inspection", () => {
+  it("renders one column in reading order: chart, summary, statistics, inspect", () => {
     renderWorkspace();
-    const canvas = screen.getByRole("img", { name: /Weight trend canvas/ });
-
     const follows = (a: Element, b: Element) =>
       Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
 
-    expect(follows(summary(), canvas)).toBe(true);
-    expect(follows(canvas, detail())).toBe(true);
+    const canvas = screen.getByRole("img", { name: /Weight trend canvas/ });
+    const statistics = screen.getByText("Projected, 30 days");
+    const inspect = screen.getByRole("button", { name: /Inspect analysis/ });
+
+    expect(follows(canvas, summary())).toBe(true);
+    expect(follows(summary(), statistics)).toBe(true);
+    expect(follows(statistics, inspect)).toBe(true);
+  });
+
+  /** The goal is part of the summary section now, not a separate surface beside the chart. */
+  it("keeps the goal control inside the analysis summary", () => {
+    renderWorkspace();
+    expect(
+      within(summary()).getByRole("button", { name: "+ Add a goal" }),
+    ).toBeInTheDocument();
   });
 
   it("has no accessibility violations in its default state", async () => {
@@ -311,7 +325,7 @@ describe("V2Workspace composition", () => {
 
   it("has no accessibility violations with a detail tier open", async () => {
     const { container } = renderWorkspace();
-    fireEvent.click(screen.getByRole("button", { name: /Inspect this analysis/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Inspect analysis/ }));
     fireEvent.click(within(detail()).getByRole("button", { name: "Evidence" }));
     expect(await axe(container)).toHaveNoViolations();
   });
@@ -347,23 +361,109 @@ describe("V2Workspace canvas", () => {
     expect(screen.getByText("81.5 kg")).toBeInTheDocument();
   });
 
-  it("narrows the drawn forecast when a shorter look-ahead is chosen", () => {
-    renderWorkspace();
-    const slider = () => screen.getByRole("slider", { name: "Inspect a point on the chart" });
-
-    // Default 30d: four trajectory points plus the 0, 7 and 30-day forecast points.
-    expect(slider()).toHaveAttribute("max", "6");
-
-    fireEvent.click(screen.getByRole("button", { name: "seven days ahead" }));
-    expect(slider()).toHaveAttribute("max", "5");
-
-    fireEvent.click(screen.getByRole("button", { name: "ninety days ahead" }));
-    expect(slider()).toHaveAttribute("max", "7");
-  });
-
   it("offers only history ranges shorter than the series, so no control does nothing", () => {
     renderWorkspace();
     expect(screen.getByRole("button", { name: "all history" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "one month of history" })).toBeNull();
+  });
+});
+
+/**
+ * The zero-span state, which `span_days === 0` defines and a point count does not. `span_days`
+ * is elapsed days from the first observation to the last (`backend/app/core/analyse.py`), so it
+ * reaches zero three ways -- no readings, one reading, and any number of readings recorded at
+ * one instant -- and all three must land in the same honest state.
+ */
+describe("V2Workspace with no elapsed span", () => {
+  it("suppresses every trend-dependent surface for readings that share one instant", () => {
+    render(<V2Workspace analysis={sameInstantAnalysis([81.8, 82.0, 81.9, 82.1])} unit="kg" />);
+
+    // The regression this guards: four readings mean four trajectory points, so a
+    // `trajectory.length > 1` gate would have drawn all of this from a prior velocity.
+    expect(screen.getByText("Trend not established yet.")).toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Estimate and rate" })).toBeNull();
+    expect(screen.queryByRole("img", { name: /Weight trend canvas/ })).toBeNull();
+    expect(screen.queryByText("Projected, 30 days")).toBeNull();
+    expect(screen.queryByText("Readings per week")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Inspect analysis/ })).toBeNull();
+  });
+
+  it("prints no rate, no rate interval and no direction anywhere on the screen", () => {
+    render(<V2Workspace analysis={sameInstantAnalysis([81.8, 82.0, 81.9, 82.1])} unit="kg" />);
+    const text = document.body.textContent ?? "";
+
+    expect(text).not.toContain("/week");
+    expect(text).not.toContain("trending");
+    expect(text).not.toContain("Projected");
+    expect(within(summary()).getByText("There is no trend yet.")).toBeInTheDocument();
+  });
+
+  /**
+   * The target-rate comparison republishes `current.weekly_rate_kg`, which at zero span is the
+   * documented prior rather than a finding, so the field itself is absent -- not disabled, and
+   * not shown against a placeholder.
+   */
+  it("offers a goal target but not a target rate to compare against a prior", () => {
+    render(<V2Workspace analysis={sameInstantAnalysis([81.8, 82.0])} unit="kg" />);
+    fireEvent.click(screen.getByRole("button", { name: "+ Add a goal" }));
+
+    expect(screen.getByLabelText("Target weight (kg)")).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Target rate/)).toBeNull();
+  });
+
+  it("lists the readings in the displayed unit rather than a hardcoded one", () => {
+    const analysis = sameInstantAnalysis([81.8, 82.0]);
+
+    const { unmount } = render(<V2Workspace analysis={analysis} unit="kg" />);
+    expect(within(screen.getByRole("list")).getByText("81.8 kg")).toBeInTheDocument();
+    expect(within(screen.getByRole("list")).getByText("82.0 kg")).toBeInTheDocument();
+    unmount();
+
+    render(<V2Workspace analysis={analysis} unit="lb" />);
+    expect(within(screen.getByRole("list")).getByText("180.3 lb")).toBeInTheDocument();
+    expect(within(screen.getByRole("list")).getByText("180.8 lb")).toBeInTheDocument();
+  });
+
+  it("describes zero, one and many same-instant readings each in its own words", () => {
+    const empty = { ...sameInstantAnalysis([]), n_obs: 0 };
+    const { unmount: unmountEmpty } = render(<V2Workspace analysis={empty} unit="kg" />);
+    expect(screen.getByText(/There are no readings yet/)).toBeInTheDocument();
+    unmountEmpty();
+
+    const { unmount: unmountOne } = render(
+      <V2Workspace analysis={sameInstantAnalysis([81.8])} unit="kg" />,
+    );
+    expect(screen.getByText(/There is one reading so far/)).toBeInTheDocument();
+    unmountOne();
+
+    render(<V2Workspace analysis={sameInstantAnalysis([81.8, 82.0, 81.9])} unit="kg" />);
+    expect(screen.getByText(/Every reading here carries the same timestamp/)).toBeInTheDocument();
+  });
+
+  it("has no accessibility violations", async () => {
+    const { container } = render(
+      <V2Workspace analysis={sameInstantAnalysis([81.8, 82.0, 81.9])} unit="kg" />,
+    );
+    expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("V2Workspace latest reading", () => {
+  /**
+   * The series' last observation is not necessarily one taken today -- an imported export may
+   * end months ago -- so the label states what it is and the date says when.
+   */
+  it("labels the most recent reading with its own date rather than claiming it is today's", () => {
+    renderWorkspace();
+    const region = summary();
+
+    expect(within(region).getByText("Latest reading")).toBeInTheDocument();
+    expect(within(region).queryByText("Reading today")).toBeNull();
+    // The time is rendered in the reader's own zone, so only the date is pinned here.
+    expect(
+      within(region).getByText(
+        /scale reading on 26 April 2026, \d\d:\d\d · difference from estimate/,
+      ),
+    ).toBeInTheDocument();
   });
 });

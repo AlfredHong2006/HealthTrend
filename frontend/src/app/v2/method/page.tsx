@@ -19,8 +19,8 @@ const PARAMETER_SOURCE_SCENARIO = "gradual-loss";
 /**
  * How HealthTrend calculates an estimate: the V2 prototype's second destination.
  *
- * A separate route rather than a tier in the analysis rail. None of this content is specific to
- * one series, so it belongs to the product rather than to an analysis -- and as its own page it
+ * A separate route rather than a tier of the analysis. None of this content is specific to one
+ * series, so it belongs to the product rather than to an analysis -- and as its own page it
  * gets the width the equations need, and browser Back works the way a reader expects
  * (docs/design/V2_DESIGN.md).
  *
@@ -33,7 +33,7 @@ export default async function V2MethodPage() {
   return (
     <main id="main-content" className={styles.page}>
       <V2Header current="method" />
-      <V2Method params={analysis?.params ?? null} />
+      <V2Method analysis={analysis} />
     </main>
   );
 }

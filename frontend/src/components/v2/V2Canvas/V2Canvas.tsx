@@ -1,36 +1,36 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { AxisBottom, AxisRight } from "@visx/axis";
+import { AxisBottom, AxisLeft } from "@visx/axis";
 import { localPoint } from "@visx/event";
 import { GridRows } from "@visx/grid";
 import { Group } from "@visx/group";
 import { ParentSize } from "@visx/responsive";
 import { scaleLinear, scaleTime } from "@visx/scale";
 import { AreaClosed, Circle, Line, LinePath } from "@visx/shape";
-import {
-  formatFullDate,
-  formatShortDate,
-  formatWeightKg,
-  formatWeightRangeKg,
-} from "@/lib/chart/format";
+import { formatFullDate, formatShortDate } from "@/lib/chart/format";
 import type { ChartSeries } from "@/lib/chart/series";
-import { formatDayCount, formatMonthYear, formatNumber } from "@/lib/v2/format";
+import { formatMonthYear } from "@/lib/v2/format";
 import { nearestInspectionIndex, type InspectionPoint } from "@/lib/v2/inspect";
 import {
+  v2AxisDecimals,
   v2DateTickCount,
+  v2GoalLabelSide,
   v2MarginFor,
+  v2TerminalFlagStyle,
   v2WeightTickCount,
-  V2_COMPACT_BREAKPOINT,
+  V2_WIDE_BREAKPOINT,
 } from "@/lib/v2/layout";
-import type { ForecastWindow, HistoryRange } from "@/lib/v2/view";
+import { convertKg, formatWeightRangeUnit, formatWeightUnit } from "@/lib/v2/units";
+import type { DisplayUnit } from "@/lib/v2/units";
+import type { HistoryRange } from "@/lib/v2/view";
 import styles from "./V2Canvas.module.css";
 
 const MS_PER_DAY = 86_400_000;
 const MONTHLY_AXIS_THRESHOLD_DAYS = 300;
 
 export interface CanvasCurrent {
-  /** The estimated trend weight, which the right-edge value flag reports. */
+  /** The estimated trend weight, which the terminal flag reports. */
   weightKg: number;
   lowerKg: number;
   upperKg: number;
@@ -47,26 +47,26 @@ interface V2CanvasProps {
   current: CanvasCurrent;
   /** The ephemeral goal reference, or `null` when none is set. */
   goalKg: number | null;
+  unit: DisplayUnit;
   historyRanges: readonly HistoryRange[];
   historyRangeId: string;
   onHistoryRangeChange: (id: string) => void;
-  forecastWindows: readonly ForecastWindow[];
-  forecastWindowId: string;
-  onForecastWindowChange: (id: string) => void;
 }
 
 /**
- * The analytical canvas: the primary product surface, and the main way a conclusion is seen,
- * interrogated and believed.
+ * The analytical canvas: the primary product surface, matching the frozen 1B Editorial chart
+ * (docs/design/09_1B_Implementation_Spec §4, "TrajectoryChart density").
+ *
+ * Two structural changes from the earlier V2 prototype's chart, both from the frozen spec: the
+ * weight axis moves to the **left**, in the manner of an ordinary chart rather than a trading
+ * instrument, freeing the right edge for the goal label at full width; and there is a single
+ * "Trajectory" range control rather than a separate history/forecast pair -- the frozen mock
+ * always draws a fixed 30-day projection (the legend and the tier-2 statistics band both name it
+ * "Projected, 30 days"), so only the history window is a user choice.
  *
  * Every mark is a value the backend published, mapped to a pixel. Nothing here derives a
- * statistic, and the marks whose mathematics does not exist yet -- checkpoint markers above
- * all -- are simply absent, not drawn greyed out (docs/design/V2_DESIGN.md).
- *
- * What it borrows from a charting instrument is discipline, not aesthetic: the weight axis
- * sits on the right beside a value flag reporting the current trend weight, inspection is a
- * crosshair with an axis-linked readout rather than a floating tooltip card, and the two view
- * controls window data that is already on the page.
+ * statistic, and marks whose mathematics does not exist yet -- checkpoint markers above all --
+ * are simply absent, not drawn greyed out (docs/design/V2_DESIGN.md).
  */
 export function V2Canvas({
   series,
@@ -75,40 +75,42 @@ export function V2Canvas({
   onInspect,
   current,
   goalKg,
+  unit,
   historyRanges,
   historyRangeId,
   onHistoryRangeChange,
-  forecastWindows,
-  forecastWindowId,
-  onForecastWindowChange,
 }: V2CanvasProps) {
   const inspected = inspectIndex === null ? null : (points[inspectIndex] ?? null);
 
   return (
     <figure className={styles.canvas}>
       <div className={styles.head}>
-        <CanvasReadout inspected={inspected} current={current} originDate={series.originDate} />
-        <div className={styles.controls}>
-          <ControlGroup
-            label="History"
-            options={historyRanges}
-            selectedId={historyRangeId}
-            onSelect={onHistoryRangeChange}
-          />
-          <ControlGroup
-            label="Ahead"
-            options={forecastWindows}
-            selectedId={forecastWindowId}
-            onSelect={onForecastWindowChange}
-          />
+        <span className={styles.eyebrow}>Trajectory</span>
+        <div className={styles.controls} role="group" aria-label="History">
+          {historyRanges.map((range) => (
+            <button
+              key={range.id}
+              type="button"
+              aria-pressed={range.id === historyRangeId}
+              aria-label={range.description}
+              className={
+                range.id === historyRangeId ? `${styles.control} ${styles.controlOn}` : styles.control
+              }
+              onClick={() => onHistoryRangeChange(range.id)}
+            >
+              {range.label}
+            </button>
+          ))}
         </div>
       </div>
 
+      <CanvasReadout inspected={inspected} current={current} unit={unit} />
+
       <div className={styles.plotShell}>
         <div className={styles.plot}>
-          {/* initialSize gives the server-rendered HTML a real chart at a plausible size
-              rather than an empty box until the client's ResizeObserver reports the true
-              one; it is replaced on hydration, at every width. */}
+          {/* initialSize gives the server-rendered HTML a real chart at a plausible size rather
+              than an empty box until the client's ResizeObserver reports the true one; it is
+              replaced on hydration, at every width. */}
           <ParentSize initialSize={{ width: 900, height: 460 }}>
             {({ width, height }) =>
               width > 0 && height > 0 ? (
@@ -121,23 +123,24 @@ export function V2Canvas({
                   onInspect={onInspect}
                   current={current}
                   goalKg={goalKg}
+                  unit={unit}
                 />
               ) : null
             }
           </ParentSize>
         </div>
-        <InspectionSlider points={points} inspectIndex={inspectIndex} onInspect={onInspect} />
+        <InspectionSlider points={points} inspectIndex={inspectIndex} onInspect={onInspect} unit={unit} />
       </div>
 
       <figcaption className={styles.legend}>
         <Key markClass={styles.keyObservation} label="Scale readings" />
         <Key markClass={styles.keyTrend} label="Estimated trend" />
         <Key markClass={styles.keyBand} label="95% range" />
-        <Key markClass={styles.keyForecast} label="Forecast" />
+        <Key markClass={styles.keyForecast} label="Projection, 30 days" />
         {goalKg === null ? null : <Key markClass={styles.keyGoal} label="Goal reference" />}
       </figcaption>
 
-      <AccessibleSummary series={series} current={current} />
+      <AccessibleSummary series={series} current={current} unit={unit} />
     </figure>
   );
 }
@@ -151,62 +154,19 @@ function Key({ markClass, label }: { markClass: string | undefined; label: strin
   );
 }
 
-interface ControlOption {
-  id: string;
-  label: string;
-  description: string;
-}
-
-function ControlGroup({
-  label,
-  options,
-  selectedId,
-  onSelect,
-}: {
-  label: string;
-  options: readonly ControlOption[];
-  selectedId: string;
-  onSelect: (id: string) => void;
-}) {
-  return (
-    <div className={styles.controlGroup} role="group" aria-label={label}>
-      <span className={styles.controlLabel} aria-hidden="true">
-        {label}
-      </span>
-      {options.map((option) => (
-        <button
-          key={option.id}
-          type="button"
-          aria-pressed={option.id === selectedId}
-          aria-label={option.description}
-          className={
-            option.id === selectedId ? `${styles.control} ${styles.controlOn}` : styles.control
-          }
-          onClick={() => onSelect(option.id)}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 /**
  * The axis-linked readout: one line reporting either the inspected point or, when nothing is
- * being inspected, the current estimate. It stands in for the floating tooltip card the
+ * being inspected, the current estimate. It stands in for a floating tooltip card, which the
  * design direction rules out wherever an integrated readout can work instead.
- *
- * The first cell's label doubles as the region indicator -- history, forecast, or the last
- * weigh-in -- so no separate chip is needed to say where the crosshair is.
  */
 function CanvasReadout({
   inspected,
   current,
-  originDate,
+  unit,
 }: {
   inspected: InspectionPoint | null;
   current: CanvasCurrent;
-  originDate: Date;
+  unit: DisplayUnit;
 }) {
   const date = inspected?.date ?? current.timestamp;
   const weightKg = inspected?.weightKg ?? current.weightKg;
@@ -214,29 +174,18 @@ function CanvasReadout({
   const upperKg = inspected?.upperKg ?? current.upperKg;
   const readingKg = inspected === null ? current.readingKg : inspected.readingKg;
 
-  // The label doubles as the region indicator, and is worded so it never reads as one of the
-  // view controls beside it ("History", "Ahead") -- two different meanings of the same word on
-  // one line would be ambiguous on screen, not only in a test.
   const region =
     inspected === null ? "Last weigh-in" : inspected.isForecast ? "Forecast for" : "Estimate on";
-  const horizonDays = Math.round((date.getTime() - originDate.getTime()) / MS_PER_DAY);
 
-  // On a phone the rail's summary sits directly above the chart and already states the estimate
-  // and its interval, so at rest the readout would repeat them a centimetre lower. It appears
-  // there only while a point is being inspected, which is when it is saying something new.
   return (
     <dl className={inspected ? `${styles.readout} ${styles.readoutActive}` : styles.readout}>
       <Cell label={region} value={formatFullDate(date)} />
-      <Cell label="Estimated weight" value={formatWeightKg(weightKg)} />
-      <Cell label="95% range" value={formatWeightRangeKg(lowerKg, upperKg)} />
-      {inspected?.isForecast ? (
-        <Cell label="Horizon" value={`+${formatDayCount(horizonDays)}`} />
-      ) : (
-        <Cell
-          label="Scale reading"
-          value={readingKg === null ? "none at this point" : formatWeightKg(readingKg)}
-        />
-      )}
+      <Cell label="Estimated weight" value={formatWeightUnit(weightKg, unit)} />
+      <Cell label="95% range" value={formatWeightRangeUnit(lowerKg, upperKg, unit)} />
+      <Cell
+        label="Scale reading"
+        value={readingKg === null ? "none at this point" : formatWeightUnit(readingKg, unit)}
+      />
     </dl>
   );
 }
@@ -252,18 +201,20 @@ function Cell({ label, value }: { label: string; value: string }) {
 
 /**
  * Keyboard and assistive-technology access to the crosshair, as a real slider over the points
- * rather than a bespoke key handler on a focusable div: arrow keys, Home and End come from
- * the platform, and `aria-valuetext` reports the point in words instead of an index. It is
- * visually hidden; the plot draws the focus ring through `:focus-within`.
+ * rather than a bespoke key handler: arrow keys, Home and End come from the platform, and
+ * `aria-valuetext` reports the point in words. Visually hidden; the plot draws the focus ring
+ * through `:focus-within`.
  */
 function InspectionSlider({
   points,
   inspectIndex,
   onInspect,
+  unit,
 }: {
   points: readonly InspectionPoint[];
   inspectIndex: number | null;
   onInspect: (index: number | null) => void;
+  unit: DisplayUnit;
 }) {
   if (points.length === 0) {
     return null;
@@ -284,8 +235,8 @@ function InspectionSlider({
       aria-valuetext={
         point
           ? `${formatFullDate(point.date)}, ${point.isForecast ? "forecast" : "estimate"} ` +
-            `${formatWeightKg(point.weightKg)}, 95% range ` +
-            `${formatWeightRangeKg(point.lowerKg, point.upperKg)}`
+            `${formatWeightUnit(point.weightKg, unit)}, 95% range ` +
+            `${formatWeightRangeUnit(point.lowerKg, point.upperKg, unit)}`
           : undefined
       }
       onChange={(event) => onInspect(Number(event.target.value))}
@@ -307,23 +258,17 @@ interface PlotProps {
   onInspect: (index: number | null) => void;
   current: CanvasCurrent;
   goalKg: number | null;
+  unit: DisplayUnit;
 }
 
-function Plot({
-  width,
-  height,
-  series,
-  points,
-  inspectIndex,
-  onInspect,
-  current,
-  goalKg,
-}: PlotProps) {
+function Plot({ width, height, series, points, inspectIndex, onInspect, current, goalKg, unit }: PlotProps) {
   const clipId = useId();
   const margin = v2MarginFor(width);
   const innerWidth = Math.max(0, width - margin.left - margin.right);
   const innerHeight = Math.max(0, height - margin.top - margin.bottom);
-  const compact = width < V2_COMPACT_BREAKPOINT;
+  const flagStyle = v2TerminalFlagStyle(width);
+  const goalSide = v2GoalLabelSide(width);
+  const decimals = v2AxisDecimals(width);
 
   const [targetMinKg, targetMaxKg] = useMemo(() => weightExtent(series, goalKg), [series, goalKg]);
   const [minKg, maxKg] = useTweenedRange(targetMinKg, targetMaxKg);
@@ -367,8 +312,10 @@ function Plot({
   }
 
   const originX = xScale(series.originDate);
-  const flagWidth = margin.right - 12;
+  const flagWidth = flagStyle === "boxed" ? margin.right - 12 : 0;
   const flagHeight = 17;
+  const goalX = goalSide === "right" ? innerWidth - 4 : 4;
+  const goalAnchor = goalSide === "right" ? "end" : "start";
 
   return (
     <svg
@@ -377,23 +324,17 @@ function Plot({
       viewBox={`0 0 ${width} ${height}`}
       className={styles.svg}
       role="img"
-      aria-label={ariaLabel(current, series)}
+      aria-label={ariaLabel(current, series, unit)}
     >
       <defs>
-        {/* A few pixels of bleed: the clip exists to stop marks spilling into the axes during
-            a range transition, not to slice the first and last observation dots in half. */}
         <clipPath id={clipId}>
           <rect x={-3} y={-3} width={innerWidth + 6} height={innerHeight + 6} />
         </clipPath>
       </defs>
 
       <Group left={margin.left} top={margin.top}>
-        {/* Colours are written as presentation attributes carrying a custom property, the way
-            V1's TrendChart does, rather than through the CSS module: several visx marks set a
-            default `stroke`/`fill` attribute of their own, and an attribute beats a class. */}
         <g clipPath={`url(#${clipId})`} pointerEvents="none">
-          {/* The forecast half of the canvas, washed just enough to read as a different
-              region rather than as decoration. */}
+          {/* The forecast half of the canvas, washed just enough to read as a different region. */}
           <rect
             x={originX}
             y={0}
@@ -406,7 +347,7 @@ function Plot({
           <GridRows
             scale={yScale}
             width={innerWidth}
-            numTicks={v2WeightTickCount(innerHeight)}
+            numTicks={v2WeightTickCount(width)}
             stroke="var(--v2-rule)"
           />
 
@@ -437,12 +378,13 @@ function Plot({
                 strokeDasharray="6,4"
               />
               <text
-                x={4}
+                x={goalX}
                 y={yScale(goalKg) - 6}
+                textAnchor={goalAnchor}
                 className={styles.goalLabel}
                 fill="var(--v2-goal)"
               >
-                Goal {formatNumber(goalKg, 1)}
+                Goal {formatWeightUnit(goalKg, unit)}
               </text>
             </>
           )}
@@ -520,15 +462,14 @@ function Plot({
           now
         </text>
 
-        <AxisRight
-          left={innerWidth}
+        <AxisLeft
           scale={yScale}
-          numTicks={v2WeightTickCount(innerHeight)}
+          numTicks={v2WeightTickCount(width)}
           hideAxisLine
           tickLength={4}
           tickStroke="var(--v2-rule-strong)"
-          tickFormat={(value) => formatNumber(Number(value), 1)}
-          tickLabelProps={{ fill: "var(--v2-ink-faint)", fontSize: 10.5, dx: 2, dy: 3 }}
+          tickFormat={(value) => convertKg(Number(value), unit).toFixed(decimals)}
+          tickLabelProps={{ fill: "var(--v2-ink-faint)", fontSize: 10.5, dx: -4, dy: 3, textAnchor: "end" }}
         />
         <AxisBottom
           top={innerHeight}
@@ -541,37 +482,45 @@ function Plot({
           tickLabelProps={{ fill: "var(--v2-ink-faint)", fontSize: 10.5, dy: 2 }}
         />
 
-        {/* The right-edge value flag: the current trend weight, read off the same axis, the
-            way an instrument tags its last price. It has no leader line running across the
-            forecast region -- a horizontal rule there would read as a prediction of no
-            change, which is not what the model says. */}
-        <g transform={`translate(${innerWidth}, ${yScale(current.weightKg)})`} pointerEvents="none">
-          <line x1={0} x2={5} y1={0} y2={0} stroke="var(--v2-trend)" />
-          <rect
-            x={5}
-            y={-flagHeight / 2}
-            width={flagWidth}
-            height={flagHeight}
-            rx={2}
-            fill="var(--v2-trend)"
-          />
-          <text
-            x={5 + flagWidth / 2}
-            y={4}
-            textAnchor="middle"
-            className={styles.flagText}
-            fill="var(--v2-flag-ink)"
-          >
-            {formatNumber(current.weightKg, 1)}
-          </text>
-        </g>
+        {/* The terminal value flag: the current trend weight, read off the same axis. Boxed at
+            full width, an inline value above a leader line at compact, absent below 360 -- the
+            hero states the identical number two blocks above the chart. */}
+        {flagStyle === "absent" ? null : (
+          <g transform={`translate(${innerWidth}, ${yScale(current.weightKg)})`} pointerEvents="none">
+            {flagStyle === "boxed" ? (
+              <>
+                <line x1={0} x2={5} y1={0} y2={0} stroke="var(--v2-trend)" />
+                <rect x={5} y={-flagHeight / 2} width={flagWidth} height={flagHeight} rx={2} fill="var(--v2-trend)" />
+                <text
+                  x={5 + flagWidth / 2}
+                  y={4}
+                  textAnchor="middle"
+                  className={styles.flagText}
+                  fill="var(--v2-flag-ink)"
+                >
+                  {convertKg(current.weightKg, unit).toFixed(decimals)}
+                </text>
+              </>
+            ) : (
+              // The compact flag needs no horizontal reservation at all: the value sits above a
+              // short leader line rising from the terminal point, right-aligned so it never
+              // extends past the plot's own right edge (Implementation Spec §4: "76px cheaper").
+              <>
+                <line x1={0} x2={0} y1={0} y2={-9} stroke="var(--v2-trend)" strokeDasharray="2,2" />
+                <text x={0} y={-13} textAnchor="end" className={styles.flagTextInline} fill="var(--v2-trend)">
+                  {convertKg(current.weightKg, unit).toFixed(decimals)}
+                </text>
+              </>
+            )}
+          </g>
+        )}
 
         {inspected ? (
           <DateChip
             x={clamp(xScale(inspected.date), 28, Math.max(28, innerWidth - 28))}
             y={innerHeight}
             label={formatShortDate(inspected.date)}
-            compact={compact}
+            compact={width < V2_WIDE_BREAKPOINT}
           />
         ) : null}
 
@@ -579,9 +528,6 @@ function Plot({
           width={innerWidth}
           height={innerHeight}
           fill="transparent"
-          // `onPointerDown` matters on touch: a tap generates pointerdown but never
-          // pointermove, so without it the crosshair is unreachable by touch. `touchAction`
-          // stops the browser claiming a drag here for page scrolling, so a finger scrubs.
           style={{ touchAction: "none" }}
           onPointerDown={handlePointerMove}
           onPointerMove={handlePointerMove}
@@ -593,35 +539,12 @@ function Plot({
   );
 }
 
-function DateChip({
-  x,
-  y,
-  label,
-  compact,
-}: {
-  x: number;
-  y: number;
-  label: string;
-  compact: boolean;
-}) {
+function DateChip({ x, y, label, compact }: { x: number; y: number; label: string; compact: boolean }) {
   const chipWidth = compact ? 46 : 52;
   return (
     <g transform={`translate(${x}, ${y})`} pointerEvents="none">
-      <rect
-        x={-chipWidth / 2}
-        y={4}
-        width={chipWidth}
-        height={16}
-        rx={2}
-        fill="var(--v2-ink)"
-      />
-      <text
-        x={0}
-        y={15.5}
-        textAnchor="middle"
-        className={styles.chipText}
-        fill="var(--v2-bg)"
-      >
+      <rect x={-chipWidth / 2} y={4} width={chipWidth} height={16} rx={2} fill="var(--v2-ink)" />
+      <text x={0} y={15.5} textAnchor="middle" className={styles.chipText} fill="var(--v2-bg)">
         {label}
       </text>
     </g>
@@ -633,9 +556,8 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 /**
- * The weight extent the axis must cover: every drawn value, plus the goal reference when one
- * is set. The goal extends the domain rather than being clipped to an edge -- a reference
- * line pinned to the frame would misreport where it sits relative to the trend.
+ * The weight extent the axis must cover: every drawn value, plus the goal reference when one is
+ * set. The goal extends the domain rather than being clipped to an edge.
  */
 function weightExtent(series: ChartSeries, goalKg: number | null): [number, number] {
   const values = [
@@ -653,12 +575,12 @@ function weightExtent(series: ChartSeries, goalKg: number | null): [number, numb
   return [min - padding, max + padding];
 }
 
-function ariaLabel(current: CanvasCurrent, series: ChartSeries): string {
+function ariaLabel(current: CanvasCurrent, series: ChartSeries, unit: DisplayUnit): string {
   return (
     `Weight trend canvas. ${series.observations.length} scale readings drawn as points, the ` +
     `estimated underlying trend as a line with its 95% range, and the forecast continuing it. ` +
-    `Estimated underlying weight ${formatWeightKg(current.weightKg)}, 95% range ` +
-    `${formatWeightRangeKg(current.lowerKg, current.upperKg)}.`
+    `Estimated underlying weight ${formatWeightUnit(current.weightKg, unit)}, 95% range ` +
+    `${formatWeightRangeUnit(current.lowerKg, current.upperKg, unit)}.`
   );
 }
 
@@ -667,7 +589,15 @@ function ariaLabel(current: CanvasCurrent, series: ChartSeries): string {
  * wrapper carries `.visuallyHidden`, not the table: a table treats `width: 1px` as a minimum
  * rather than a cap, and would otherwise overflow a phone-width page.
  */
-function AccessibleSummary({ series, current }: { series: ChartSeries; current: CanvasCurrent }) {
+function AccessibleSummary({
+  series,
+  current,
+  unit,
+}: {
+  series: ChartSeries;
+  current: CanvasCurrent;
+  unit: DisplayUnit;
+}) {
   const lastForecast = series.forecastLine.at(-1);
   return (
     <div className="visuallyHidden">
@@ -676,20 +606,20 @@ function AccessibleSummary({ series, current }: { series: ChartSeries; current: 
         <tbody>
           <tr>
             <th scope="row">Latest scale reading</th>
-            <td>{current.readingKg === null ? "none" : formatWeightKg(current.readingKg)}</td>
+            <td>{current.readingKg === null ? "none" : formatWeightUnit(current.readingKg, unit)}</td>
           </tr>
           <tr>
             <th scope="row">Estimated underlying weight</th>
             <td>
-              {formatWeightKg(current.weightKg)}, 95% range{" "}
-              {formatWeightRangeKg(current.lowerKg, current.upperKg)}
+              {formatWeightUnit(current.weightKg, unit)}, 95% range{" "}
+              {formatWeightRangeUnit(current.lowerKg, current.upperKg, unit)}
             </td>
           </tr>
           <tr>
             <th scope="row">End of the drawn forecast</th>
             <td>
               {lastForecast
-                ? `${formatFullDate(lastForecast.date)}, ${formatWeightKg(lastForecast.weightKg)}`
+                ? `${formatFullDate(lastForecast.date)}, ${formatWeightUnit(lastForecast.weightKg, unit)}`
                 : "none"}
             </td>
           </tr>
@@ -702,17 +632,12 @@ function AccessibleSummary({ series, current }: { series: ChartSeries; current: 
 const TWEEN_MS = 280;
 
 /**
- * Ease a scale domain to a new one instead of cutting to it.
- *
- * The one place the design direction asks for motion on the canvas: a range change is a
- * continuity problem, and a chart that jumps makes the reader re-find the trend. It is not
- * decoration -- nothing animates on load, on hover or on selection, and a reader who has
- * asked for reduced motion gets the new domain immediately.
+ * Ease a scale domain to a new one instead of cutting to it -- the one place the design
+ * direction asks for motion on the canvas, since a chart that jumps makes the reader re-find the
+ * trend. A reader who has asked for reduced motion gets the new domain immediately.
  */
 function useTweenedRange(targetMin: number, targetMax: number): [number, number] {
   const [range, setRange] = useState<[number, number]>([targetMin, targetMax]);
-  // Written only from inside the animation frame, never during render: the state it mirrors
-  // has no other writer, and the effect needs the value it starts from without depending on it.
   const rangeRef = useRef(range);
 
   useEffect(() => {
@@ -721,8 +646,6 @@ function useTweenedRange(targetMin: number, targetMax: number): [number, number]
       return;
     }
 
-    // Reduced motion is expressed as a zero-length tween rather than an early assignment, so
-    // there is one code path: the first frame lands on the target and the loop stops there.
     const duration = prefersReducedMotion() ? 0 : TWEEN_MS;
     let frame = 0;
     let startedAt: number | null = null;

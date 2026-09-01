@@ -1,0 +1,15 @@
+/* The same outer frame the analysis route uses, so the masthead does not shift horizontally
+   between destinations. Before a result exists the entry column is centred more tightly inside
+   it; once one does, `V2Workspace` uses the full frame (`V2AnalyseWorkspace.module.css`). */
+.page {
+  width: 100%;
+  max-width: var(--v2-frame);
+  margin: 0 auto;
+  padding-top: var(--v2-space-8);
+}
+
+@media (max-width: 959px) {
+  .page {
+    padding-top: var(--v2-space-6);
+  }
+}

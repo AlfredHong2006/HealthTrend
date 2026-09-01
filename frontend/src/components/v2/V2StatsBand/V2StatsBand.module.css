@@ -1,0 +1,57 @@
+/* Tier-2 statistics: values with their qualifiers, laid out with hairlines and spacing rather
+   than cards -- flex on desktop (metrics simply sit in a row), a 2-up then 1-up grid once the
+   canvas narrows (docs/design/09_1B_Implementation_Spec §3). */
+.band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--v2-space-11);
+  padding-top: var(--v2-space-9);
+  border-top: 1px solid var(--v2-rule-1);
+}
+
+.metric {
+  min-width: 0;
+}
+
+.value {
+  font: 400 30px / 1 var(--v2-font-numeric);
+  letter-spacing: -0.015em;
+  font-variant-numeric: tabular-nums;
+  color: var(--v2-ink-1);
+}
+
+.label {
+  margin-top: var(--v2-space-2);
+  font-size: var(--v2-size-ui-sm);
+  color: var(--v2-ink-2);
+}
+
+.qualifier {
+  margin-top: 2px;
+  font-size: var(--v2-size-qualifier);
+  font-variant-numeric: tabular-nums;
+  color: var(--v2-ink-4);
+}
+
+.absent {
+  max-width: 24em;
+  font-size: var(--v2-size-ui-sm);
+  line-height: 1.6;
+  color: var(--v2-ink-4);
+}
+
+@media (max-width: 959px) {
+  .band {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--v2-space-8);
+    padding-top: var(--v2-space-8);
+  }
+}
+
+@media (max-width: 359px) {
+  .band {
+    grid-template-columns: 1fr;
+  }
+}

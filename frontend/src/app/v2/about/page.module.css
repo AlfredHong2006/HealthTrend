@@ -1,0 +1,15 @@
+/* The same outer frame every other V2 route uses, so the masthead does not shift horizontally
+   between destinations. The article itself is centred more tightly inside it
+   (`V2About.module.css`, `--v2-frame-reading`). */
+.page {
+  width: 100%;
+  max-width: var(--v2-frame);
+  margin: 0 auto;
+  padding-top: var(--v2-space-8);
+}
+
+@media (max-width: 959px) {
+  .page {
+    padding-top: var(--v2-space-6);
+  }
+}

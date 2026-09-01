@@ -1,9 +1,8 @@
 import { V2MathAppendix } from "./V2MathAppendix";
+import { V2MethodFigure } from "./V2MethodFigure";
 import { formatNumber } from "@/lib/v2/format";
-import type { components } from "@/lib/api/schema.d.ts";
+import type { DemoAnalysis } from "@/lib/api/types";
 import styles from "./V2Method.module.css";
-
-type ModelParams = components["schemas"]["ModelParamsOut"];
 
 const SECTIONS = [
   { id: "estimates", title: "What HealthTrend estimates" },
@@ -16,19 +15,22 @@ const SECTIONS = [
 ] as const;
 
 /**
- * Method: how HealthTrend calculates an estimate.
+ * Method: how HealthTrend calculates an estimate -- restyled to the 1B Editorial typography
+ * (docs/design/09_1B_Implementation_Spec §5.2: "long-form Source Serif 4 prose at the prose
+ * measure, mono notation, margin notes, one figure well").
  *
- * This is the page that used to be a tier inside the analysis rail, and moving it out is the
- * point. None of it is specific to one series -- how a reading moves the estimate, what an
- * interval describes, why a band widens -- so carrying it on the everyday analysis screen made
- * that screen a documentation page and left the rail saying almost nothing about the data in
- * front of the reader (docs/design/V2_DESIGN.md).
+ * A separate route rather than a tier of the analysis. None of this content is specific to one
+ * series, so it belongs to the product rather than to an analysis (docs/design/V2_DESIGN.md).
  *
- * The order is a ramp, not a specification dump: plain language first, then the parameters and
- * the assumptions they rest on, then the full mathematics as an appendix. A reader who wants
- * only the first paragraph should be able to stop there and have learned something true.
+ * The figure is real, not a fixture: the frozen mock's Figure 1 is an invented generator
+ * explicitly labelled as one (Implementation Spec §8.3, "Method figure"); this page already
+ * fetches a real generated demo scenario for the parameter table, so the same response supplies
+ * the figure too, labelled with its real provenance the way `V2Header`'s badge already is
+ * (`meta.source`) rather than as a fixture.
  */
-export function V2Method({ params }: { params: ModelParams | null }) {
+export function V2Method({ analysis }: { analysis: DemoAnalysis | null }) {
+  const params = analysis?.params ?? null;
+
   return (
     <article className={styles.method}>
       <header className={styles.masthead}>
@@ -39,6 +41,11 @@ export function V2Method({ params }: { params: ModelParams | null }) {
           model behind every number the analysis screen shows, from the idea to the equations,
           and names the code that implements each one.
         </p>
+        <div className={styles.metaRow}>
+          <MetaItem label="Model" value="Local linear trend" />
+          <MetaItem label="Estimator" value="Kalman filter, fixed documented parameters" />
+          <MetaItem label="Reading time" value="≈ 6 min" />
+        </div>
       </header>
 
       <nav aria-label="On this page" className={styles.contents}>
@@ -73,6 +80,8 @@ export function V2Method({ params }: { params: ModelParams | null }) {
           interpreted above the model, never inside it, so the same series produces the same
           estimate whatever anyone is aiming for.
         </p>
+
+        {analysis ? <V2MethodFigure analysis={analysis} /> : null}
       </Section>
 
       <Section id="reading" index={2} title="How a reading changes the estimate">
@@ -270,6 +279,15 @@ export function V2Method({ params }: { params: ModelParams | null }) {
         <V2MathAppendix params={params} />
       </Section>
     </article>
+  );
+}
+
+function MetaItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className={styles.metaItem}>
+      <span className={styles.metaLabel}>{label}</span>
+      <span className={styles.metaValue}>{value}</span>
+    </div>
   );
 }
 

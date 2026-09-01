@@ -1,133 +1,51 @@
-"use client";
-
-import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { EvidenceDetail, StatisticsDetail, WhyDetail } from "./V2InspectorDetails";
-import type { DemoAnalysis } from "@/lib/api/types";
 import styles from "./V2Inspector.module.css";
 
-/** The analysis tiers, in the order the product definition puts them. */
-const TIERS = [
-  { id: "why", label: "Why", title: "Why this estimate?" },
-  { id: "evidence", label: "Evidence", title: "Evidence" },
-  { id: "statistics", label: "Statistics", title: "Statistics" },
-] as const;
-
-type TierId = (typeof TIERS)[number]["id"];
-type View = "summary" | TierId;
+interface V2InspectorProps {
+  /** Whether the model has an estimated trajectory at all to inspect (`lib/v2/span.ts`). */
+  hasSpan: boolean;
+  onOpen: () => void;
+}
 
 /**
- * The inspection half of the analysis rail: a summary that offers to go deeper, and a detail
- * stack that shows exactly one tier at a time.
+ * The single entry into the deep tiers: an offer to go deeper, not the depth itself. It closes
+ * the centred stack, directly below the chart, the analysis summary and the tier-2 statistics
+ * band. `V2Workspace` renders the deep tier itself (`V2InspectPanel`) as a separate block below
+ * that stack, so there is exactly one entry point and exactly one place the tiers render;
+ * neither is duplicated.
  *
- * ```
- * Summary -> Why -> Evidence -> Statistics
- * ```
- *
- * This replaces an accordion, deliberately. Four tiers that all expanded in place turned the
- * rail into one long document: the everyday screen carried the whole model explanation, and
- * reaching Statistics meant scrolling past everything above it. Here a tier *replaces* the
- * entry point rather than lengthening it, a back control returns, and a switcher moves between
- * tiers directly. The summary block above stays on screen throughout, so the detail always has
- * its context (docs/design/V2_DESIGN.md: a rail plus a detail stack).
- *
- * Generic model explanation is not here at all. How a Kalman filter absorbs a reading, what
- * the covariance does and why a band widens are the same on every series, so they belong to
- * the product, not to one analysis: they live on `/v2/method`.
- *
- * The same component serves both layouts. On a phone it sits after the chart, and pushing into
- * a tier replaces the affordance in place rather than growing an accordion below it.
+ * `Inspect analysis is unavailable, not empty, when there is no span`: all three tiers describe
+ * an estimated trajectory, and a series with one or no readings has none to describe
+ * (Implementation Spec §6).
  */
-export function V2Inspector({ analysis }: { analysis: DemoAnalysis }) {
-  const [view, setView] = useState<View>("summary");
-  const enterRef = useRef<HTMLButtonElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const navigated = useRef(false);
-
-  // Moving between views is a navigation, so it moves focus the way one does -- otherwise a
-  // keyboard or screen-reader user pushes into a tier and is left where the button used to be.
-  useEffect(() => {
-    if (!navigated.current) {
-      return;
-    }
-    const target = view === "summary" ? enterRef.current : titleRef.current;
-    target?.focus({ preventScroll: true });
-  }, [view]);
-
-  function go(next: View) {
-    navigated.current = true;
-    setView(next);
-  }
-
-  if (view === "summary") {
-    return (
-      <div className={styles.inspector}>
-        {/* A section label, in the same micro-eyebrow the summary above uses. It is the cheapest
-            way to say that something lives here: without it the button below is one more row in
-            a rail made of rows, which is how it was being read past. */}
-        <h2 className={styles.eyebrow}>Deeper analysis</h2>
-
-        {/* The entry has to look like a way in, not like a sentence. It states what pressing it
-            opens, is drawn as a control rather than as text so it reads that way at rest, and
-            carries a chevron rather than the arrow the Method link uses -- one pushes deeper
-            into this analysis, the other leaves it for a page. Hover, press and focus all move
-            the same things, since a phone gets no hover to discover it with. */}
-        <button ref={enterRef} type="button" className={styles.enter} onClick={() => go("why")}>
-          <span className={styles.enterText}>
-            <span className={styles.enterTitle}>Inspect this analysis</span>{" "}
-            {/* That space is load-bearing: without it the two lines concatenate into one word
-                in the button's accessible name. A whitespace-only anonymous flex item is not
-                rendered, so it changes nothing visually. */}
-            <span className={styles.enterTiers}>
-              Opens {TIERS.map((tier) => tier.label).join(", ")}
-            </span>
-          </span>
-          <span className={styles.chevron} aria-hidden="true" />
-        </button>
-        <Link href="/v2/method" className={styles.methodLink}>
-          <span>How HealthTrend calculates this</span>
-          <span aria-hidden="true">→</span>
-        </Link>
-      </div>
-    );
-  }
-
-  const tier = TIERS.find((entry) => entry.id === view) ?? TIERS[0];
-
+export function V2Inspector({ hasSpan, onOpen }: V2InspectorProps) {
   return (
-    <div className={styles.inspector}>
-      <div className={styles.detail}>
-        <button type="button" className={styles.back} onClick={() => go("summary")}>
-          <span aria-hidden="true">←</span>
-          <span>Analysis</span>
-        </button>
-
-        <nav aria-label="Analysis detail" className={styles.switcher}>
-          {TIERS.map((entry) => (
-            <button
-              key={entry.id}
-              type="button"
-              aria-current={entry.id === view ? "page" : undefined}
-              className={
-                entry.id === view ? `${styles.switch} ${styles.switchOn}` : styles.switch
-              }
-              onClick={() => go(entry.id)}
-            >
-              {entry.label}
-            </button>
-          ))}
-        </nav>
-
-        <h3 ref={titleRef} tabIndex={-1} className={styles.detailTitle}>
-          {tier.title}
-        </h3>
-
-        <div className={styles.detailBody}>
-          {view === "why" ? <WhyDetail analysis={analysis} /> : null}
-          {view === "evidence" ? <EvidenceDetail analysis={analysis} /> : null}
-          {view === "statistics" ? <StatisticsDetail analysis={analysis} /> : null}
-        </div>
+    <div className={styles.entry}>
+      <div className={styles.entryContent}>
+        <h2 className={styles.entryTitle}>Inspect analysis</h2>
+        {hasSpan ? (
+          <p className={styles.entryBody}>
+            Why the model reached this estimate, the observations that support it, and the
+            inference behind the forecast.
+          </p>
+        ) : (
+          <p className={styles.entryQuiet}>
+            Unavailable: there is no estimated trajectory to inspect. Why, Evidence and Statistics
+            all describe one, and the model has produced none from too short a history.
+          </p>
+        )}
       </div>
+
+      {hasSpan ? (
+        <button
+          type="button"
+          className={styles.enter}
+          onClick={onOpen}
+          aria-label="Inspect analysis. Opens Why, Evidence, Statistics."
+        >
+          <span aria-hidden="true">Inspect analysis</span>
+          <span aria-hidden="true">→</span>
+        </button>
+      ) : null}
     </div>
   );
 }

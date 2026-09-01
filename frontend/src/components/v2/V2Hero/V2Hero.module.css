@@ -1,0 +1,91 @@
+/* The chart hero: the estimate at display size, the rate beside it with its own air. Desktop
+   sets them side by side on a shared baseline with a hairline between; narrow stacks them with
+   a hairline above the rate instead (docs/design/09_1B_Implementation_Spec §3, §5.1). */
+.hero {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+}
+
+.level {
+  flex: 0 0 auto;
+}
+
+.value {
+  font: 400 var(--v2-size-hero) / 0.86 var(--v2-font-numeric);
+  letter-spacing: -0.028em;
+  font-variant-numeric: tabular-nums;
+  color: var(--v2-ink-1);
+}
+
+.interval,
+.asOf {
+  margin-top: var(--v2-space-2);
+  font-size: var(--v2-size-qualifier);
+  font-variant-numeric: tabular-nums;
+  color: var(--v2-ink-4);
+}
+
+.asOf {
+  margin-top: var(--v2-space-1);
+}
+
+.rate {
+  flex: 0 0 auto;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 0 0 0 88px;
+  padding: 0 0 0 88px;
+  border-left: 1px solid var(--v2-rule-1);
+}
+
+.rateValue {
+  font: 400 var(--v2-size-support) / 1 var(--v2-font-numeric);
+  letter-spacing: -0.015em;
+  font-variant-numeric: tabular-nums;
+  color: var(--v2-ink-1);
+}
+
+.rateFlat {
+  color: var(--v2-ink-3);
+}
+
+.rateLabel {
+  font-size: var(--v2-size-ui-sm);
+  color: var(--v2-ink-3);
+}
+
+.rateInterval {
+  font-size: var(--v2-size-qualifier);
+  font-variant-numeric: tabular-nums;
+  color: var(--v2-ink-4);
+}
+
+@media (max-width: 959px) {
+  .hero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .value {
+    font-size: var(--v2-size-hero-sm);
+    letter-spacing: -0.02em;
+  }
+
+  .rate {
+    align-self: auto;
+    flex-direction: column;
+    justify-content: flex-start;
+    margin: var(--v2-space-6) 0 0;
+    padding: var(--v2-space-6) 0 0;
+    border-left: none;
+    border-top: 1px solid var(--v2-rule-1);
+  }
+
+  .rateValue {
+    font-size: var(--v2-size-support-sm);
+  }
+}

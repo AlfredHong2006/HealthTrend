@@ -1,0 +1,163 @@
+/* The pre-result entry column: an editorial introduction, then the reused V1 ingestion
+   components. There is no chart yet, so nothing here needs the wide frame `V2Workspace` uses --
+   it takes the same centred reading frame Method and About do, which puts the form in the
+   middle of the viewport and gives a measurement row room to stay on one line. */
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-9);
+  max-width: var(--v2-frame-reading);
+  margin: 0 auto;
+  padding: var(--v2-space-10) var(--v2-gutter-wide) var(--v2-space-11);
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-4);
+}
+
+.eyebrow {
+  font: 600 var(--v2-size-eyebrow) var(--v2-font-numeric);
+  letter-spacing: var(--v2-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--v2-ink-4);
+}
+
+.title {
+  font: 400 var(--v2-size-title) / 1.15 var(--v2-font-prose);
+  letter-spacing: -0.02em;
+  color: var(--v2-ink-1);
+  text-wrap: balance;
+}
+
+/* A comfortable measure for a four-sentence note, deliberately a little narrower than the form
+   below it -- a standfirst reads as one, and the form fills the column, so the intro being
+   inset does not leave the page looking half-empty. */
+.privacy {
+  font-size: var(--v2-size-body-sm);
+  line-height: 1.65;
+  color: var(--v2-ink-3);
+  max-width: 60ch;
+}
+
+/* The 1B Editorial skin for the reused V1 ingestion components.
+
+   `MeasurementForm` and `CsvImport` are styled entirely against V1's `--ht-*` tokens, and V1's
+   token file carries a `prefers-color-scheme: dark` palette. 1B Editorial is light-only
+   (`v2-tokens.css`), so in dark mode those tokens resolved to V1's near-black surfaces and the
+   form rendered as a dark slab in the middle of a white page. Re-declaring the tokens here
+   fixes that at the source: a custom property resolves from the nearest ancestor that sets it,
+   so these values win over `:root` in either colour scheme, and V1's own routes are untouched.
+
+   Only the properties the two components actually reference are listed. Anything not remapped
+   would silently fall through to V1's palette, which is the bug this block exists to close. */
+.formSurface {
+  /* Paper and ink */
+  --ht-bg: var(--v2-paper-1);
+  --ht-surface: var(--v2-paper-2);
+  --ht-border: var(--v2-rule-2);
+  --ht-text: var(--v2-ink-1);
+  --ht-text-muted: var(--v2-ink-3);
+  --ht-text-faint: var(--v2-ink-4);
+
+  /* One accent, azure: the hue the canvas already uses for the estimated trend. Amber is the
+     system's attention tint and backs the validation message, the one place V1 reached for
+     `--ht-forecast-soft`. Neither ever encodes a judgement about the data. */
+  --ht-accent: var(--v2-azure-600);
+  --ht-accent-soft: var(--v2-azure-100);
+  --ht-forecast: var(--v2-amber-500);
+  --ht-forecast-soft: var(--v2-amber-100);
+  --ht-focus-ring: var(--v2-focus);
+
+  /* Restrained lines, not rounded cards */
+  --ht-radius: var(--v2-radius);
+
+  /* Sans for the controls, matching every other interactive surface in V2 */
+  --ht-size-body: var(--v2-size-body-sm);
+  --ht-size-caption: var(--v2-size-ui);
+  font-family: var(--v2-font-sans);
+  font-variant-numeric: tabular-nums;
+  color: var(--v2-ink-2);
+}
+
+.modeTabs {
+  display: flex;
+  gap: var(--v2-space-6);
+  border-bottom: 1px solid var(--v2-rule-1);
+}
+
+.modeTab {
+  font: 400 16px var(--v2-font-prose);
+  color: var(--v2-ink-3);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: var(--v2-space-3) var(--v2-space-1);
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.modeTab[aria-pressed="true"] {
+  color: var(--v2-ink-1);
+  border-bottom-color: var(--v2-ink-1);
+}
+
+.modeTab:hover {
+  color: var(--v2-ink-1);
+}
+
+/* The way back to the entry form, below the finished composition.
+
+   It takes `--v2-frame-analysis` and the same gutters `V2Workspace.module.css` gives `.main`, so
+   the control's left edge lines up with the hero, the chart and the summary above it rather than
+   floating in the outer frame. No top padding: `.main` already closes with 88px, which is the
+   separation this row needs, and adding more would leave it stranded. */
+.restart {
+  width: 100%;
+  max-width: var(--v2-frame-analysis);
+  margin: 0 auto;
+  padding: 0 var(--v2-gutter-wide) var(--v2-space-11);
+}
+
+/* Deliberately the quietest kind of action the system has -- the same outlined, ink-3 shape
+   `.goalToggle` uses. Starting a new analysis is a plain navigation step, not the page's
+   conclusion, and a filled primary button here would compete with the analysis itself. */
+.restartAction {
+  padding: var(--v2-space-3) var(--v2-space-6);
+  font: inherit;
+  font-family: var(--v2-font-sans);
+  font-size: var(--v2-size-ui-sm);
+  color: var(--v2-ink-3);
+  background: none;
+  border: 1px solid var(--v2-rule-1);
+  border-radius: var(--v2-radius);
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.restartAction:hover {
+  color: var(--v2-ink-1);
+  border-color: var(--v2-rule-2);
+}
+
+@media (max-width: 959px) {
+  .entry {
+    padding: var(--v2-space-8) var(--v2-gutter-compact) var(--v2-space-9);
+  }
+
+  .restart {
+    padding: 0 var(--v2-gutter-compact) var(--v2-space-9);
+  }
+}
+
+@media (max-width: 359px) {
+  .entry {
+    padding: var(--v2-space-7) var(--v2-gutter-narrow) var(--v2-space-8);
+  }
+
+  .restart {
+    padding: 0 var(--v2-gutter-narrow) var(--v2-space-8);
+  }
+}

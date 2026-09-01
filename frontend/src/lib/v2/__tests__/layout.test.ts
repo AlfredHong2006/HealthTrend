@@ -1,46 +1,65 @@
 import { describe, expect, it } from "vitest";
 import {
+  v2AxisDecimals,
   v2DateTickCount,
-  v2MarginFor,
-  v2WeightTickCount,
+  v2DensityFor,
   V2_COMPACT_BREAKPOINT,
+  V2_WIDE_BREAKPOINT,
+  v2GoalLabelSide,
+  v2MarginFor,
+  v2TerminalFlagStyle,
+  v2WeightTickCount,
 } from "../layout";
 
+describe("v2DensityFor", () => {
+  it("splits at the frozen breakpoints", () => {
+    expect(v2DensityFor(V2_WIDE_BREAKPOINT)).toBe("wide");
+    expect(v2DensityFor(V2_WIDE_BREAKPOINT - 1)).toBe("compact");
+    expect(v2DensityFor(V2_COMPACT_BREAKPOINT)).toBe("compact");
+    expect(v2DensityFor(V2_COMPACT_BREAKPOINT - 1)).toBe("narrow");
+  });
+});
+
 describe("v2MarginFor", () => {
-  it("puts almost all of the gutter on the right, where the axis and value flag are", () => {
-    const margin = v2MarginFor(1000);
-    expect(margin.right).toBeGreaterThan(margin.left * 3);
+  it("reserves the left margin for the axis, matching the frozen table (52/40/34)", () => {
+    expect(v2MarginFor(1440).left).toBe(52);
+    expect(v2MarginFor(390).left).toBe(40);
+    expect(v2MarginFor(320).left).toBe(34);
   });
 
-  it("leaves room for the value flag inside the right margin at every width", () => {
-    // The flag is drawn `margin.right - 12` wide, offset 5px from the plot edge, so the
-    // margin has to hold both without the flag escaping the SVG.
-    for (const width of [320, 375, 430, 560, 900, 1280]) {
-      const margin = v2MarginFor(width);
-      const flagWidth = margin.right - 12;
-      expect(flagWidth).toBeGreaterThan(28); // wide enough for "76.5" at 11px
-      expect(5 + flagWidth).toBeLessThanOrEqual(margin.right);
-    }
+  it("reserves the right margin for the terminal flag, matching the frozen table (92/16/12)", () => {
+    expect(v2MarginFor(1440).right).toBe(92);
+    expect(v2MarginFor(390).right).toBe(16);
+    expect(v2MarginFor(320).right).toBe(12);
   });
 
-  it("tightens below the compact breakpoint and is unchanged at and above it", () => {
-    const compact = v2MarginFor(V2_COMPACT_BREAKPOINT - 1);
-    const wide = v2MarginFor(V2_COMPACT_BREAKPOINT);
-    expect(compact.right).toBeLessThan(wide.right);
-    expect(compact.bottom).toBeLessThan(wide.bottom);
-    expect(v2MarginFor(1280)).toEqual(wide);
+  it("reserves the bottom margin for one row of date ticks, matching the frozen table (30/26/26)", () => {
+    expect(v2MarginFor(1440).bottom).toBe(30);
+    expect(v2MarginFor(390).bottom).toBe(26);
+    expect(v2MarginFor(320).bottom).toBe(26);
   });
 
-  it("gives a 320px phone more than three quarters of its width to the plot", () => {
+  it("gives a 320px phone most of its width to the plot", () => {
     const margin = v2MarginFor(320);
-    expect((320 - margin.left - margin.right) / 320).toBeGreaterThan(0.75);
+    expect((320 - margin.left - margin.right) / 320).toBeGreaterThan(0.7);
+  });
+});
+
+describe("v2WeightTickCount and v2AxisDecimals", () => {
+  it("shows 5 ticks at one decimal when wide, 3 ticks at zero decimals otherwise", () => {
+    expect(v2WeightTickCount(1440)).toBe(5);
+    expect(v2AxisDecimals(1440)).toBe(1);
+    expect(v2WeightTickCount(390)).toBe(3);
+    expect(v2AxisDecimals(390)).toBe(0);
+    expect(v2WeightTickCount(320)).toBe(3);
+    expect(v2AxisDecimals(320)).toBe(0);
   });
 });
 
 describe("v2DateTickCount", () => {
   it("thins the date axis as the canvas narrows", () => {
-    expect(v2DateTickCount(320)).toBeLessThan(v2DateTickCount(375 + 100));
-    expect(v2DateTickCount(1280)).toBeGreaterThan(v2DateTickCount(560));
+    expect(v2DateTickCount(320)).toBeLessThan(v2DateTickCount(390));
+    expect(v2DateTickCount(1280)).toBeGreaterThan(v2DateTickCount(390));
   });
 
   it("never asks for so few ticks that the axis stops being readable", () => {
@@ -48,8 +67,18 @@ describe("v2DateTickCount", () => {
   });
 });
 
-describe("v2WeightTickCount", () => {
-  it("drops a tick on a short plot so the labels do not crowd", () => {
-    expect(v2WeightTickCount(260)).toBeLessThan(v2WeightTickCount(520));
+describe("v2TerminalFlagStyle", () => {
+  it("is boxed at wide, an inline value at compact, and absent below 360", () => {
+    expect(v2TerminalFlagStyle(1440)).toBe("boxed");
+    expect(v2TerminalFlagStyle(390)).toBe("inline");
+    expect(v2TerminalFlagStyle(320)).toBe("absent");
+  });
+});
+
+describe("v2GoalLabelSide", () => {
+  it("moves from the plot's right edge to its left edge below 640", () => {
+    expect(v2GoalLabelSide(1440)).toBe("right");
+    expect(v2GoalLabelSide(390)).toBe("left");
+    expect(v2GoalLabelSide(320)).toBe("left");
   });
 });

@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
-import { V2Header } from "@/components/v2/V2Header/V2Header";
-import { V2Workspace } from "@/components/v2/V2Workspace/V2Workspace";
+import { V2AnalysisShell } from "@/components/v2/V2AnalysisShell/V2AnalysisShell";
 import { fetchDemoAnalysis, fetchDemoCatalogue } from "@/lib/api/client";
 import { NotFoundError } from "@/lib/api/errors";
 import styles from "./page.module.css";
@@ -23,10 +22,10 @@ interface V2ScenarioPageProps {
  * decisions).
  */
 export default async function V2ScenarioPage({ params }: V2ScenarioPageProps) {
-  const { scenario } = await params;
+  const { scenario: scenarioId } = await params;
 
   const [analysis, catalogue] = await Promise.all([
-    fetchDemoAnalysis(scenario).catch((error: unknown) => {
+    fetchDemoAnalysis(scenarioId).catch((error: unknown) => {
       if (error instanceof NotFoundError) {
         notFound();
       }
@@ -37,14 +36,13 @@ export default async function V2ScenarioPage({ params }: V2ScenarioPageProps) {
 
   return (
     <main id="main-content" className={styles.page}>
-      <V2Header
+      <V2AnalysisShell
         current="analysis"
+        analysis={analysis}
         scenarios={catalogue.scenarios}
-        activeId={scenario}
-        meta={analysis.meta}
+        activeId={scenarioId}
         scenario={analysis.scenario}
       />
-      <V2Workspace analysis={analysis} />
     </main>
   );
 }

@@ -41,6 +41,15 @@ out/
 .tools/
 
 # ---------------------------------------------------------------------------
+# Local design research
+# ---------------------------------------------------------------------------
+# Working design input: screenshots of third-party products captured for reference, and
+# raw design-system exports. Third-party interface imagery is not this project's to
+# redistribute, and the repository is public. The durable, publishable design record lives
+# in docs/design/ and docs/product/ instead.
+Webpage/
+
+# ---------------------------------------------------------------------------
 # Environment, editors and local agent tooling
 # ---------------------------------------------------------------------------
 .env

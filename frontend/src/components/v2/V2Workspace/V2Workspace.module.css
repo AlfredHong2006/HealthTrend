@@ -1,69 +1,124 @@
-/* One DOM order, two layouts.
-   Phone (the default, no media query): summary, chart, inspection -- the mobile order the
-   design direction specifies, and exactly the reading order.
-   Desktop: named grid areas fold that same order into a canvas column and an analysis rail,
-   without rendering anything twice. */
+/* One centred editorial composition, top to bottom.
+
+   The frozen 1B layout put a 400px analysis rail beside the canvas
+   (docs/design/09_1B_Implementation_Spec §3, "Layout table"). On a full-width desktop that
+   reserved column pushed the hero and the chart well left of the viewport's centre, which is
+   the opposite of what a rail is for: the canvas is the page's subject and it should sit in the
+   middle of it. The rail's content is not lost -- it is recomposed under the chart as a
+   two-column section of the same centred stack (`V2Summary`), in the document flow.
+
+   `--v2-frame-analysis` is narrower than the outer `--v2-frame` the masthead uses. With no rail
+   to occupy the remaining width, a canvas run out to the full frame reads as edge-to-edge; at
+   1120px the margins are visible at 1440 and generous at 1600, and the plot stays close to the
+   width it had beside the rail.
+
+   The deep Inspect panel (`V2InspectPanel`) is still a sibling of this stack rather than a child
+   of it, and takes the same width. */
 .workspace {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--v2-space-5);
-  min-width: 0;
-}
-
-.summaryArea,
-.canvasArea,
-.inspectArea {
-  min-width: 0;
-}
-
-.summaryArea {
   display: flex;
   flex-direction: column;
-  gap: var(--v2-space-4);
+  min-width: 0;
 }
 
-@media (min-width: 960px) {
-  .workspace {
-    /* 1.62 : 1 is 61.8% canvas to 38.2% rail -- inside the 60-65 / 35-40 split the design
-       direction asks for, and the canvas keeps the larger share at every width. */
-    grid-template-columns: minmax(0, 1.62fr) minmax(0, 1fr);
-    grid-template-rows: auto 1fr;
-    grid-template-areas:
-      "canvas summary"
-      "canvas inspect";
-    gap: var(--v2-space-6) var(--v2-space-8);
-    align-items: start;
+.main {
+  width: 100%;
+  max-width: var(--v2-frame-analysis);
+  margin: 0 auto;
+  min-width: 0;
+  padding: 64px var(--v2-gutter-wide) 88px;
+}
+
+.mainStack {
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+}
+
+/* ---- No-span state ---- */
+.noSpan {
+  display: flex;
+  flex-direction: column;
+  gap: 64px;
+}
+
+.noSpanIntro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-5);
+  max-width: 34em;
+}
+
+.noSpanEyebrow {
+  font: 600 var(--v2-size-eyebrow) var(--v2-font-numeric);
+  letter-spacing: var(--v2-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--v2-ink-4);
+}
+
+.noSpanTitle {
+  font: 400 var(--v2-size-title) var(--v2-font-prose);
+  color: var(--v2-ink-1);
+}
+
+.noSpanBody {
+  font-size: var(--v2-size-body-sm);
+  line-height: 1.62;
+  color: var(--v2-ink-2);
+}
+
+.noSpanBodyQuiet {
+  font-size: var(--v2-size-body-sm);
+  line-height: 1.62;
+  color: var(--v2-ink-4);
+}
+
+.noSpanReadings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-5);
+  padding-top: var(--v2-space-9);
+  border-top: 1px solid var(--v2-rule-1);
+  max-width: 520px;
+}
+
+.noSpanList {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+}
+
+.noSpanRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--v2-space-6);
+  padding: var(--v2-space-4) 0;
+  border-bottom: 1px solid var(--v2-rule-1);
+  font-size: var(--v2-size-body-sm);
+  color: var(--v2-ink-1);
+}
+
+.noSpanReading {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+@media (max-width: 959px) {
+  .main {
+    padding: 40px 32px 64px;
   }
 
-  .summaryArea {
-    grid-area: summary;
-  }
-
-  .canvasArea {
-    grid-area: canvas;
-    /* The canvas persists while the rail is read: it is the surface every detail tier refers
-       back to, so it should still be on screen when a reader reaches Statistics. */
-    position: sticky;
-    top: var(--v2-space-5);
-  }
-
-  .inspectArea {
-    grid-area: inspect;
+  .mainStack {
+    gap: 56px;
   }
 }
 
-@media (min-width: 1280px) {
-  .workspace {
-    gap: var(--v2-space-6) var(--v2-space-10);
-  }
-}
-
-@media (max-width: 559px) {
-  .workspace {
-    gap: var(--v2-space-4);
+@media (max-width: 359px) {
+  .main {
+    padding: 32px 24px 48px;
   }
 
-  .summaryArea {
-    gap: var(--v2-space-3);
+  .mainStack {
+    gap: 48px;
   }
 }

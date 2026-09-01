@@ -1,44 +1,25 @@
-.header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--v2-space-3) var(--v2-space-6);
-  padding-bottom: var(--v2-space-4);
-  border-bottom: 1px solid var(--v2-rule);
-}
+/* The frozen masthead: a serif wordmark, a serif nav, a hairline beneath both -- restyled from
+   the earlier V2 prototype's sans-serif, uppercase header to match 1B Editorial's typography
+   (docs/design/09_1B_Implementation_Spec §2, §3).
 
-.identity {
+   `min-height` rather than the frozen fixed height: with four destinations plus the scenario
+   badge the nav can wrap just above the narrow breakpoint, and a fixed height would clip the
+   wrapped row rather than show it. The symmetric padding keeps the bar at exactly 72px for a
+   single row, so nothing moves in the common case. */
+.header {
+  min-height: 72px;
   display: flex;
-  flex-direction: column;
-  gap: var(--v2-space-1);
-  min-width: 0;
+  align-items: center;
+  gap: var(--v2-space-9);
+  padding: var(--v2-space-4) var(--v2-gutter-wide);
+  border-bottom: 1px solid var(--v2-rule-1);
 }
 
 .wordmark {
-  display: flex;
-  align-items: baseline;
-  gap: var(--v2-space-2);
-  font-size: var(--v2-size-body);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.stage {
-  font-size: var(--v2-size-micro);
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  color: var(--v2-ink-faint);
-  padding: 2px var(--v2-space-2);
-  border: 1px solid var(--v2-rule-strong);
-  border-radius: var(--v2-radius);
-  text-transform: uppercase;
-}
-
-.provenance {
-  font-size: var(--v2-size-small);
-  color: var(--v2-ink-muted);
+  font: 400 23px var(--v2-font-prose);
+  letter-spacing: -0.022em;
+  color: var(--v2-ink-1);
+  white-space: nowrap;
 }
 
 .nav {
@@ -48,48 +29,219 @@
 .navList {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--v2-space-1) var(--v2-space-4);
+  gap: var(--v2-space-8);
   list-style: none;
 }
 
 .navLink {
-  display: inline-block;
-  padding: var(--v2-space-1) 0;
-  font-size: var(--v2-size-small);
-  color: var(--v2-ink-muted);
-  border-bottom: 1px solid transparent;
-  transition: color 140ms ease, border-color 140ms ease;
+  font: 400 17px var(--v2-font-prose);
+  color: var(--v2-ink-4);
+  border-bottom: none;
+  transition: color 140ms ease;
 }
 
 .navLink:hover,
 .navLink:focus-visible {
-  color: var(--v2-ink);
+  color: var(--v2-ink-1);
 }
 
 .navLinkActive {
-  color: var(--v2-ink);
-  border-bottom-color: var(--v2-ink);
+  color: var(--v2-ink-1);
 }
 
-@media (max-width: 559px) {
+.trailing {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--v2-space-6);
+}
+
+.unitToggle {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--v2-rule-2);
+  border-radius: 999px;
+}
+
+.unitOption {
+  padding: 3px var(--v2-space-6);
+  font: 500 var(--v2-size-ui-sm) var(--v2-font-numeric);
+  font-variant-numeric: tabular-nums;
+  color: var(--v2-ink-3);
+  background: none;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.unitOption:hover {
+  color: var(--v2-ink-1);
+}
+
+.unitOptionOn {
+  color: var(--v2-ink-1);
+  background: var(--v2-paper-3);
+}
+
+.badge {
+  padding: 4px var(--v2-space-6);
+  font: 500 var(--v2-size-ui-sm) var(--v2-font-numeric);
+  color: var(--v2-ink-3);
+  border: 1px solid var(--v2-rule-2);
+  border-radius: var(--v2-radius);
+  white-space: nowrap;
+}
+
+/* The scenario switcher: a native disclosure tied to the provenance badge, so it reads as one
+   quiet secondary control rather than a second row of primary navigation. No JS is needed for
+   this interaction, so it costs nothing to keep `V2Header` free of "use client". */
+.scenarioMenu {
+  position: relative;
+}
+
+.scenarioMenu > summary.badge {
+  cursor: pointer;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--v2-space-2);
+}
+
+.scenarioMenu > summary.badge::-webkit-details-marker {
+  display: none;
+}
+
+.scenarioMenu > summary.badge::after {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-right: 1.25px solid var(--v2-ink-4);
+  border-bottom: 1.25px solid var(--v2-ink-4);
+  transform: rotate(45deg);
+  translate: 0 -2px;
+}
+
+.scenarioMenu[open] > summary.badge::after {
+  transform: rotate(-135deg);
+  translate: 0 2px;
+}
+
+.scenarioMenu:hover > summary.badge,
+.scenarioMenu[open] > summary.badge {
+  color: var(--v2-ink-1);
+  border-color: var(--v2-rule-3);
+}
+
+.scenarioList {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  padding: var(--v2-space-3);
+  list-style: none;
+  background: var(--v2-paper-1);
+  border: 1px solid var(--v2-rule-2);
+  border-radius: var(--v2-radius);
+  box-shadow: 0 4px 16px -6px rgba(14, 20, 28, 0.16);
+}
+
+.scenarioLink {
+  display: block;
+  padding: var(--v2-space-3) var(--v2-space-4);
+  font: 400 15px var(--v2-font-prose);
+  color: var(--v2-ink-3);
+  border-radius: var(--v2-radius);
+  border-bottom: none;
+  white-space: nowrap;
+}
+
+.scenarioLink:hover,
+.scenarioLink:focus-visible {
+  color: var(--v2-ink-1);
+  background: var(--v2-paper-3);
+}
+
+.scenarioLinkActive {
+  color: var(--v2-ink-1);
+  font-weight: 500;
+}
+
+@media (max-width: 959px) {
+  .scenarioList {
+    left: 0;
+    right: auto;
+  }
+}
+
+/* Between the narrow breakpoint and a comfortable desktop the bar is at its tightest: the full
+   nav, the unit toggle and the scenario badge all on one row. Closing the gaps here keeps it on
+   one row without shortening any label. */
+@media (min-width: 960px) and (max-width: 1199px) {
   .header {
-    gap: var(--v2-space-3);
+    gap: var(--v2-space-7);
+    padding-left: var(--v2-space-8);
+    padding-right: var(--v2-space-8);
   }
 
   .navList {
-    gap: var(--v2-space-1) var(--v2-space-3);
+    gap: var(--v2-space-7);
+  }
+
+  .navLink {
+    font-size: 16px;
+  }
+
+  .trailing {
+    gap: var(--v2-space-5);
   }
 }
 
-/* A hairline before the destination link, so the scenario switcher and the two V2
-   destinations read as two different kinds of navigation rather than one long list. */
-.navDivider {
-  padding-left: var(--v2-space-4);
-  border-left: 1px solid var(--v2-rule);
+@media (max-width: 959px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--v2-space-5);
+    padding: var(--v2-space-6) var(--v2-gutter-compact);
+  }
+
+  .navList {
+    gap: var(--v2-space-5);
+  }
+
+  .navLink {
+    font-size: 16px;
+  }
+
+  .wordmark {
+    font-size: 20px;
+  }
+
+  /* Below the desktop breakpoint the trailing controls are their own row, so they may wrap
+     within it. At 320 the unit toggle and the scenario badge together are wider than the
+     content box, and the badge is deliberately `white-space: nowrap`; without this they
+     overflowed and were silently clipped by the global `overflow-x: hidden`. Wrapping costs
+     nothing at any width that already fits -- `flex-wrap` only acts once a line overflows. */
+  .trailing {
+    margin-left: 0;
+    flex-wrap: wrap;
+    gap: var(--v2-space-5) var(--v2-space-6);
+  }
 }
 
-@media (max-width: 559px) {
-  .navDivider {
-    padding-left: var(--v2-space-3);
+@media (max-width: 359px) {
+  .header {
+    padding: var(--v2-space-5) var(--v2-gutter-narrow);
+  }
+
+  .navList {
+    gap: var(--v2-space-4);
+  }
+
+  .navLink {
+    font-size: 15px;
   }
 }

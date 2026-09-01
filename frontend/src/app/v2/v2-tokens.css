@@ -1,89 +1,185 @@
 /**
- * V2 prototype design tokens.
+ * 1B Editorial design tokens -- transcribed from the frozen design system
+ * (docs/design/09_1B_Implementation_Spec/_ds/.../tokens/*.css), which the implementation spec
+ * names as the source of truth wherever it disagrees with an earlier V2 prototype choice.
  *
- * Scoped to `.htV2` rather than `:root` on purpose: the locked prototype decisions in
- * docs/design/V2_DESIGN.md say the prototype brings its own layout and shell and must not
- * alter V1's global tokens or its 760px shell to prototype V2. Nothing here escapes the V2
- * route, and V1 continues to read `src/app/tokens.css` exactly as before.
+ * Scoped to `.htV2` rather than `:root`, as before: the locked prototype decisions in
+ * docs/design/V2_DESIGN.md say the prototype brings its own layout and shell and must not alter
+ * V1's global tokens. Nothing here escapes the V2 route.
  *
- * The palette is deliberately a *sibling* of V1's, not a replacement: the same warm paper and
- * ink, the same green estimate and amber forecast, tightened slightly for an instrument. As
- * in V1 there are no judgement colours -- colour identifies what a mark **is** (a reading, an
- * estimate, a forecast, a goal reference), never whether the news is good. A maintenance
- * user's flat rate is a success, not a warning.
+ * One change from the earlier V2 palette: the frozen design system states plainly that 1B
+ * Editorial is "Light mode only -- there is no dark theme" (tokens/colors.css). The previous
+ * prototype tokens carried a `prefers-color-scheme: dark` palette; that override is removed
+ * here to match the frozen system rather than reinterpret it.
  */
 
+@import url("https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&family=IBM+Plex+Sans:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
 .htV2 {
-  --v2-bg: #fbfaf8;
-  --v2-raised: #ffffff;
-  --v2-ink: #1a1917;
-  --v2-ink-muted: #67615a;
-  --v2-ink-faint: #979088;
-  --v2-rule: #e7e3dd;
-  --v2-rule-strong: #d5cfc5;
+  /* ── Ink: near-black with a cool cast ─────────────────────────────── */
+  --v2-ink-1: #0e141c; /* headings, hero numerals */
+  --v2-ink-2: #2b3542; /* prose */
+  --v2-ink-3: #5b6878; /* secondary / supporting metrics */
+  --v2-ink-4: #8794a3; /* qualifiers, axis labels, raw readings */
+  --v2-ink-5: #b3bdc9; /* disabled, gridline emphasis */
 
-  /* Series identity. */
-  --v2-trend: #2f5d50;
-  --v2-trend-band: rgba(47, 93, 80, 0.13);
-  --v2-forecast: #8a6a3f;
-  --v2-forecast-band: rgba(138, 106, 63, 0.12);
-  --v2-observation: #bbb3a5;
-  --v2-goal: #5a6478;
+  /* ── Paper: three surfaces, no more ───────────────────────────────── */
+  --v2-paper-1: #ffffff; /* the page */
+  --v2-paper-2: #f7f8fa; /* recessed figure well */
+  --v2-paper-3: #eef1f5; /* hover / selected row */
 
-  /* Instrument furniture: the crosshair, the divider, the value flag. */
-  --v2-crosshair: #8b8479;
+  /* ── Rules: hairlines do the work cards would otherwise do ────────── */
+  --v2-rule-1: #e5e9ee; /* default hairline */
+  --v2-rule-2: #d3d9e1; /* structural divider */
+  --v2-rule-3: #b9c2cd; /* axis line */
+
+  /* ── Accent: one hue, azure ────────────────────────────────────────── */
+  --v2-azure-100: #eaf2fd;
+  --v2-azure-200: #d3e4fa;
+  --v2-azure-300: #9cc4f2;
+  --v2-azure-500: #1668c9;
+  --v2-azure-600: #1156a8;
+  --v2-azure-700: #0d4283;
+
+  --v2-amber-500: #b07407; /* staleness / data gap only -- never a body judgement */
+  --v2-amber-100: #fbf1de;
+
+  /* ── Data role colour: what a mark IS, never whether it is good news ─ */
+  --v2-data-trend: var(--v2-azure-500);
+  --v2-data-trend-deep: var(--v2-azure-700);
+  --v2-data-band-68: rgba(22, 104, 201, 0.17);
+  --v2-data-band-95: rgba(22, 104, 201, 0.085);
+  --v2-data-raw: #9aa6b4;
+  --v2-data-raw-fill: rgba(154, 166, 180, 0.55);
+  --v2-data-projection: var(--v2-azure-500);
+  --v2-data-projection-band: rgba(22, 104, 201, 0.1);
+  --v2-data-reference: var(--v2-ink-4);
+  --v2-data-grid: #eceff3;
+  --v2-data-crosshair: var(--v2-ink-4);
+
+  /* ── Semantic aliases kept from the earlier prototype tokens, so a
+     component written against the old names still resolves ────────── */
+  --v2-bg: var(--v2-paper-1);
+  --v2-raised: var(--v2-paper-1);
+  --v2-ink: var(--v2-ink-1);
+  --v2-ink-muted: var(--v2-ink-3);
+  --v2-ink-faint: var(--v2-ink-4);
+  --v2-rule: var(--v2-rule-1);
+  --v2-rule-strong: var(--v2-rule-2);
+  --v2-trend: var(--v2-data-trend);
+  --v2-trend-band: var(--v2-data-band-68);
+  --v2-forecast: var(--v2-azure-700);
+  --v2-forecast-band: var(--v2-data-projection-band);
+  --v2-observation: var(--v2-data-raw);
+  --v2-goal: var(--v2-data-reference);
+  --v2-crosshair: var(--v2-data-crosshair);
   --v2-flag-ink: #ffffff;
-  --v2-focus: #1a5fb4;
+  --v2-focus: var(--v2-azure-500);
 
-  --v2-font-sans:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --v2-font-serif: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
-  --v2-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  /* ── Type: three families, one job each ───────────────────────────── */
+  --v2-font-serif: "Source Serif 4", "Source Serif Pro", Georgia, "Times New Roman", serif;
+  --v2-font-sans: "IBM Plex Sans", "Helvetica Neue", Helvetica, sans-serif;
+  --v2-font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --v2-font-prose: var(--v2-font-serif);
+  --v2-font-numeric: var(--v2-font-sans);
+  --v2-font-notation: var(--v2-font-mono);
 
-  --v2-size-lead: clamp(2.375rem, 1.5rem + 2.8vw, 3.5rem);
-  --v2-size-metric: clamp(1.375rem, 1rem + 1.4vw, 1.75rem);
-  --v2-size-prose: 1.0625rem;
-  --v2-size-body: 0.9375rem;
-  --v2-size-small: 0.8125rem;
-  --v2-size-micro: 0.6875rem;
+  /* ── Metric hierarchy -- deliberately far apart ───────────────────── */
+  --v2-size-hero: 72px; /* T1 desktop: the estimated trend weight */
+  --v2-size-hero-sm: 46px; /* T1 narrow: one existing tier down, not a new intermediate size */
+  --v2-size-support: 46px; /* T2 desktop: the rate, beside the hero */
+  --v2-size-support-sm: 30px; /* T2 narrow */
+  --v2-size-raw: 15px; /* T3: raw measurements, never larger than body text */
+  --v2-size-readout: 19px; /* crosshair value, terminal flag */
+  --v2-size-qualifier: 12.5px; /* intervals, n, units */
 
-  --v2-space-1: 0.25rem;
-  --v2-space-2: 0.5rem;
-  --v2-space-3: 0.75rem;
-  --v2-space-4: 1rem;
-  --v2-space-5: 1.25rem;
-  --v2-space-6: 1.5rem;
-  --v2-space-8: 2rem;
-  --v2-space-10: 2.5rem;
+  --v2-size-display: 46px;
+  --v2-size-title: 33px;
+  --v2-size-subtitle: 24px;
+  --v2-size-lede: 21px;
+  --v2-size-body: 18px;
+  --v2-size-body-sm: 16px;
+  --v2-size-ui: 14px;
+  --v2-size-ui-sm: 13px;
+  --v2-size-eyebrow: 11px;
+  --v2-size-axis: 11.5px;
 
-  /* Restrained on purpose: the design direction rules out card grids and rounded-rectangle
-     dashboards, so a radius exists only for the few controls that need a hit target. */
+  --v2-tracking-hero: -0.035em;
+  --v2-tracking-display: -0.018em;
+  --v2-tracking-eyebrow: 0.09em;
+
+  /* Legacy size aliases, kept for any component CSS not fully retuned in this pass. */
+  --v2-size-micro: var(--v2-size-eyebrow);
+  --v2-size-small: var(--v2-size-ui-sm);
+  --v2-size-prose: var(--v2-size-body-sm);
+  --v2-size-metric: var(--v2-size-support-sm);
+  --v2-size-lead: var(--v2-size-hero-sm);
+
+  /* ── Space: coarse on purpose -- fewer, larger steps read as intent ─ */
+  --v2-space-1: 2px;
+  --v2-space-2: 4px;
+  --v2-space-3: 6px;
+  --v2-space-4: 8px;
+  --v2-space-5: 12px;
+  --v2-space-6: 16px;
+  --v2-space-7: 24px;
+  --v2-space-8: 32px;
+  --v2-space-9: 48px;
+  --v2-space-10: 64px;
+  --v2-space-11: 96px;
+
+  /* Desktop screen gutter (72px) is not on the coarse space scale; it is its own token,
+     matching the frozen layout table (docs/design/09_1B_Implementation_Spec §3). */
+  --v2-gutter-wide: 72px;
+  --v2-gutter-compact: var(--v2-space-8); /* 32px, 390 */
+  --v2-gutter-narrow: var(--v2-space-7); /* 24px, 320 */
+
+  /* -- Frame: one centred composition, shared by every V2 route -----------------------
+     Two widths, and only two. `--v2-frame` is the outer page frame: the masthead and the
+     analysis composition sit inside it on every route, so the wordmark never shifts
+     horizontally as you navigate. `--v2-frame-reading` is the narrower centred column the
+     reading pages use (Method, About, and the pre-result "Analyse your data" entry), sized so
+     the prose measure inside it *fills* the frame -- 680px of text plus the 72px gutter each
+     side.
+
+     That relationship is the point. A 38em measure inside a 1000px content column leaves
+     ~300px of dead margin to the right of every paragraph, which the eye reads as content
+     pushed left rather than as a centred article; matching the frame to the measure is what
+     makes the same left-aligned prose sit in the middle of the viewport. */
+  --v2-frame: 1320px;
+  --v2-measure: 680px;
+  --v2-frame-reading: calc(var(--v2-measure) + 2 * var(--v2-gutter-wide));
+
+  /* The Analysis composition is narrower than the outer frame. It has no rail to fill the
+     remaining width -- the canvas, the summary and the statistics band are one centred column --
+     and a chart run out to the full 1320px frame reads as edge-to-edge rather than as a page.
+     1120px leaves ~160px of margin at 1440 and ~240px at 1600 while keeping the plot close to
+     the width it had beside the rail. */
+  --v2-frame-analysis: 1120px;
+
   --v2-radius: 3px;
 
   color: var(--v2-ink);
   background: var(--v2-bg);
   font-variant-numeric: tabular-nums;
-}
+  font-feature-settings: "tnum" 1, "lnum" 1;
 
-@media (prefers-color-scheme: dark) {
-  .htV2 {
-    --v2-bg: #131211;
-    --v2-raised: #1c1b18;
-    --v2-ink: #f1eee8;
-    --v2-ink-muted: #aca396;
-    --v2-ink-faint: #7b746a;
-    --v2-rule: #2e2b26;
-    --v2-rule-strong: #423d36;
+  /* Two lines that make "light mode only" actually hold on a dark-OS browser.
 
-    --v2-trend: #78bda9;
-    --v2-trend-band: rgba(120, 189, 169, 0.15);
-    --v2-forecast: #d6ad70;
-    --v2-forecast-band: rgba(214, 173, 112, 0.14);
-    --v2-observation: #5f594f;
-    --v2-goal: #9aa6c0;
+     `globals.css` sets `html { color-scheme: light dark; }` and gives `body` a
+     `display: flex; flex-direction: column` shell painted with V1's dark-capable `--ht-bg`.
+     Neither is V2's to change -- V1 is genuinely dual-theme and the prototype must not alter
+     its globals (docs/design/V2_DESIGN.md, locked decisions) -- so both are answered here, at
+     the V2 scope, and nowhere else.
 
-    --v2-crosshair: #8d8578;
-    --v2-flag-ink: #131211;
-    --v2-focus: #6cb0ff;
-  }
+     `flex: 1 0 auto` makes this element take the leftover column height. Without it a short V2
+     page (About, or Analyse before a result) leaves a band of V1's dark body showing below the
+     white page.
+
+     `color-scheme: light` stops the UA rendering native controls -- the number inputs in the
+     goal control and the measurement form, scrollbars, focus rings -- in their dark variant on
+     top of a light page. It is scoped to this element, so V1's `light dark` on `html` is
+     untouched and its own routes still follow the reader's preference. */
+  flex: 1 0 auto;
+  color-scheme: light;
 }

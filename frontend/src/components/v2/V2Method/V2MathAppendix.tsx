@@ -15,9 +15,9 @@ type ModelParams = components["schemas"]["ModelParamsOut"];
  * understandable, and nothing there licenses weakening what is underneath.
  *
  * It is broken into seven labelled parts rather than run as one continuous wall, each equation
- * given its own ruled block and room to breathe, set in a serif at the width of the Method
- * page rather than the width of an analysis rail. That width is the point: an equation that
- * has to scroll sideways is a reference nobody checks.
+ * given its own ruled block and room to breathe, set in a serif at the full width of the Method
+ * page rather than squeezed into a panel beside something else. That width is the point: an
+ * equation that has to scroll sideways is a reference nobody checks.
  */
 export function V2MathAppendix({ params }: { params: ModelParams | null }) {
   return (

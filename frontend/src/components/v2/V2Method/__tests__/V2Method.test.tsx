@@ -4,11 +4,9 @@ import { axe } from "vitest-axe";
 import { demoAnalysisFixture } from "@/lib/api/__fixtures__/demoAnalysisFixture";
 import { V2Method } from "../V2Method";
 
-const params = demoAnalysisFixture.params;
-
 describe("V2Method", () => {
   it("ramps from plain language to the mathematics, in that order", () => {
-    render(<V2Method params={params} />);
+    render(<V2Method analysis={demoAnalysisFixture} />);
     const titles = screen
       .getAllByRole("heading", { level: 3 })
       .map((heading) => heading.textContent);
@@ -25,7 +23,7 @@ describe("V2Method", () => {
   });
 
   it("gives every section an anchor the contents list points at", () => {
-    const { container } = render(<V2Method params={params} />);
+    const { container } = render(<V2Method analysis={demoAnalysisFixture} />);
     const links = within(screen.getByRole("navigation", { name: "On this page" })).getAllByRole(
       "link",
     );
@@ -38,14 +36,14 @@ describe("V2Method", () => {
   });
 
   it("reads the model parameters from the service rather than hardcoding them", () => {
-    render(<V2Method params={params} />);
+    render(<V2Method analysis={demoAnalysisFixture} />);
     expect(screen.getByText("0.50 kg")).toBeInTheDocument();
     expect(screen.getByText("0.15 kg/week per week")).toBeInTheDocument();
     expect(screen.getByText("0.008099")).toBeInTheDocument();
   });
 
   it("stands without the parameter values when the service cannot be reached", () => {
-    render(<V2Method params={null} />);
+    render(<V2Method analysis={null} />);
 
     expect(screen.getByRole("heading", { name: /Model parameters/ })).toBeInTheDocument();
     expect(screen.queryByRole("columnheader", { name: "Value" })).toBeNull();
@@ -53,7 +51,7 @@ describe("V2Method", () => {
   });
 
   it("carries the full appendix, not a simplified version of it", () => {
-    render(<V2Method params={params} />);
+    render(<V2Method analysis={demoAnalysisFixture} />);
 
     for (const part of [
       "A1 · State and observation",
@@ -69,7 +67,7 @@ describe("V2Method", () => {
   });
 
   it("describes every equation in words for anyone who cannot read the typesetting", () => {
-    render(<V2Method params={params} />);
+    render(<V2Method analysis={demoAnalysisFixture} />);
     const equations = screen.getAllByRole("img");
 
     expect(equations.length).toBeGreaterThanOrEqual(10);
@@ -79,13 +77,13 @@ describe("V2Method", () => {
   });
 
   it("names the file and symbol implementing each equation", () => {
-    render(<V2Method params={params} />);
+    render(<V2Method analysis={demoAnalysisFixture} />);
     expect(screen.getByText("transition_matrix")).toBeInTheDocument();
     expect(screen.getByText("sigma_accel_from_weekly_rate_drift")).toBeInTheDocument();
   });
 
   it("has no accessibility violations", async () => {
-    const { container } = render(<V2Method params={params} />);
+    const { container } = render(<V2Method analysis={demoAnalysisFixture} />);
     expect(await axe(container)).toHaveNoViolations();
   });
 });

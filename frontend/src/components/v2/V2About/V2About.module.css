@@ -1,0 +1,143 @@
+/* A short reading page in the same register as Method: a masthead, hairline-separated sections,
+   no boxes. It takes the same centred reading frame (`--v2-frame-reading`), sized so the prose
+   measure fills it -- so the article sits in the middle of the viewport with even margins on
+   both sides, rather than left-aligned prose trailing dead space to its right. */
+.about {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-8);
+  min-width: 0;
+  width: 100%;
+  max-width: var(--v2-frame-reading);
+  margin: 0 auto;
+  padding: 0 var(--v2-gutter-wide);
+  box-sizing: border-box;
+}
+
+.masthead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-3);
+}
+
+.eyebrow {
+  font-size: var(--v2-size-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--v2-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--v2-ink-4);
+}
+
+.title {
+  font: 400 clamp(2rem, 1.4rem + 2vw, 2.75rem) / 1.1 var(--v2-font-prose);
+  letter-spacing: -0.022em;
+  color: var(--v2-ink-1);
+}
+
+.standfirst {
+  max-width: var(--v2-measure);
+  font: 400 var(--v2-size-lede) / 1.55 var(--v2-font-prose);
+  color: var(--v2-ink-2);
+  text-wrap: pretty;
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--v2-space-6) var(--v2-space-8);
+  padding-top: var(--v2-space-5);
+  border-top: 1px solid var(--v2-rule-1);
+}
+
+.metaItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metaLabel {
+  font-size: var(--v2-size-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--v2-ink-4);
+}
+
+.metaValue {
+  font-size: var(--v2-size-ui-sm);
+  color: var(--v2-ink-3);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-4);
+  padding-top: var(--v2-space-6);
+  border-top: 1px solid var(--v2-rule-1);
+}
+
+.sectionTitle {
+  font-size: var(--v2-size-body-sm);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--v2-ink-1);
+}
+
+.sectionBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-5);
+  max-width: var(--v2-measure);
+  min-width: 0;
+  font-size: var(--v2-size-body);
+  line-height: 1.65;
+  color: var(--v2-ink-2);
+  text-wrap: pretty;
+}
+
+.note {
+  font-size: var(--v2-size-body-sm);
+  color: var(--v2-ink-3);
+}
+
+.link {
+  color: var(--v2-trend);
+  border-bottom: 1px solid var(--v2-azure-300);
+}
+
+.link:hover,
+.link:focus-visible {
+  border-bottom-color: var(--v2-trend);
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--v2-space-5) var(--v2-space-8);
+  padding-top: var(--v2-space-6);
+  border-top: 1px solid var(--v2-rule-1);
+}
+
+.footerLink {
+  font: 400 var(--v2-size-body-sm) var(--v2-font-prose);
+  color: var(--v2-ink-3);
+  transition: color 140ms ease;
+}
+
+.footerLink:hover,
+.footerLink:focus-visible {
+  color: var(--v2-ink-1);
+}
+
+@media (max-width: 959px) {
+  .about {
+    padding: 0 var(--v2-gutter-compact);
+    gap: var(--v2-space-7);
+  }
+}
+
+@media (max-width: 359px) {
+  .about {
+    padding: 0 var(--v2-gutter-narrow);
+  }
+}

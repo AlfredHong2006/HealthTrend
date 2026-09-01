@@ -6,6 +6,7 @@
   flex-direction: column;
   gap: var(--v2-space-3);
   min-width: 0;
+  max-width: 44em;
   font-family: var(--v2-font-serif);
   font-size: 1rem;
   line-height: 1.7;

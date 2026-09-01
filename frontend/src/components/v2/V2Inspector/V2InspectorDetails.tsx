@@ -2,16 +2,23 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { formatFullDate, formatWeeklyRateKg, formatWeightKg, formatWeightRangeKg } from "@/lib/chart/format";
+import { formatFullDate } from "@/lib/chart/format";
+import { formatDayCount, formatKgPrecise, formatTimeOfDay } from "@/lib/v2/format";
+import { daysWithoutReading, readingsPerWeek } from "@/lib/v2/evidence";
+import { measurementScatterKg } from "@/lib/v2/scatter";
 import {
-  formatDayCount,
-  formatKgPrecise,
-  formatRateMagnitude,
-  formatSignedKg,
-  formatTimeOfDay,
-} from "@/lib/v2/format";
+  formatHalfWidthUnit,
+  formatMagnitudeUnit,
+  formatRateRangeUnit,
+  formatSignedWeightUnit,
+  formatWeeklyRateUnit,
+  formatWeightRangeUnit,
+  formatWeightUnit,
+} from "@/lib/v2/units";
+import type { DisplayUnit } from "@/lib/v2/units";
+import { weeklyRateInterval } from "@/lib/v2/velocity";
 import { latestObservation } from "@/lib/v2/latest";
-import type { DemoAnalysis } from "@/lib/api/types";
+import type { AnalysisResponse } from "@/lib/api/types";
 import styles from "./V2Inspector.module.css";
 
 /** How many recent readings the on-demand list shows before the canvas takes over again. */
@@ -19,26 +26,32 @@ const RECENT_ROWS = 8;
 
 /**
  * A lead of less than a day does not move a 7-, 30- or 90-day projection by anything the
- * display would show, so the sentence explaining it is not worth a reader's attention. This is
- * a threshold on whether to *say* something, not on anything computed.
+ * display would show, so the sentence explaining it is not worth a reader's attention.
  */
 const MATERIAL_LEAD_DAYS = 1;
 
+interface TierProps {
+  analysis: AnalysisResponse;
+  unit: DisplayUnit;
+}
+
 /**
- * Why this estimate differs from the number on the scale.
+ * Why this estimate differs from the number on the scale, and what the rate is estimated to be.
  *
  * Everything here is specific to *this* analysis: the reading, the estimate for the same
- * instant, the difference between them, and the published assumption that explains why the
- * two are allowed to differ. What is deliberately absent is any account of *why the model
- * moved as much as it did* -- that needs the per-observation innovation and Kalman gain the
- * core computes and discards at the wire boundary. Until those are published this tier stays
- * modest, which is preferable to filling it with model documentation that would read the same
- * on every series (docs/design/V2_DESIGN.md).
+ * instant, the difference between them, the published measurement-noise assumption, and the
+ * rate with the real interval its own posterior now carries (`lib/v2/velocity.ts`). What stays
+ * deliberately absent is any account of *why the model moved as much as it did* -- that needs
+ * the per-observation innovation and Kalman gain the core computes and discards at the wire
+ * boundary -- and any generic account of how a Kalman filter works in general, which reads
+ * identically on every series and belongs to Method instead (docs/design/V2_DESIGN.md: "Why
+ * means why this estimate, for this series").
  */
-export function WhyDetail({ analysis }: { analysis: DemoAnalysis }) {
+export function WhyDetail({ analysis, unit }: TierProps) {
   const { current, forecast, params } = analysis;
   const latest = latestObservation(analysis);
   const headline = forecast.horizons.find((horizon) => horizon.horizon_days === 30);
+  const interval = weeklyRateInterval(current);
 
   return (
     <div className={styles.prose}>
@@ -46,9 +59,9 @@ export function WhyDetail({ analysis }: { analysis: DemoAnalysis }) {
         <>
           <Figures
             items={[
-              { label: "Latest reading", value: formatWeightKg(latest.readingKg) },
-              { label: "Estimate, same instant", value: formatWeightKg(latest.estimateKg) },
-              { label: "Difference", value: formatSignedKg(latest.differenceKg) },
+              { label: "Latest reading", value: formatWeightUnit(latest.readingKg, unit) },
+              { label: "Estimate, same instant", value: formatWeightUnit(latest.estimateKg, unit) },
+              { label: "Difference", value: formatSignedWeightUnit(latest.differenceKg, unit) },
             ]}
           />
           <p>
@@ -60,20 +73,20 @@ export function WhyDetail({ analysis }: { analysis: DemoAnalysis }) {
         </>
       )}
 
-      <h4 className={styles.subhead}>Where that estimate is heading</h4>
+      <h3 className={styles.subhead}>Where that estimate is heading</h3>
       <Rows
         items={[
-          { label: "Current weekly rate", value: formatWeeklyRateKg(current.weekly_rate_kg) },
+          { label: "Current weekly rate", value: formatWeeklyRateUnit(current.weekly_rate_kg, unit) },
           {
-            label: "Rate standard deviation",
-            value: formatRateMagnitude(current.weekly_rate_sd_kg),
+            label: "Rate, 95% interval",
+            value: formatRateRangeUnit(interval.lowerKgPerWeek, interval.upperKgPerWeek, unit),
           },
           ...(headline
             ? [
-                { label: "30 days ahead", value: formatWeightKg(headline.w_kg) },
+                { label: "30 days ahead", value: formatWeightUnit(headline.w_kg, unit) },
                 {
                   label: "95% interval",
-                  value: formatWeightRangeKg(headline.w_lower95, headline.w_upper95),
+                  value: formatWeightRangeUnit(headline.w_lower95, headline.w_upper95, unit),
                 },
               ]
             : []),
@@ -92,7 +105,10 @@ export function WhyDetail({ analysis }: { analysis: DemoAnalysis }) {
         </p>
       ) : null}
 
-      <MethodLink />
+      <p className={styles.quiet}>
+        Parameters are fixed and documented rather than fitted to this history — nothing here is
+        estimated per person. <MethodLink label="Read the Method" />.
+      </p>
     </div>
   );
 }
@@ -100,40 +116,51 @@ export function WhyDetail({ analysis }: { analysis: DemoAnalysis }) {
 /**
  * What the estimate rests on: the observation nearest to it, and the extent of the series
  * behind it.
- *
- * The generator's own arguments -- seed, velocity schedule, noise parameters -- are not here.
- * They are test-and-provenance metadata rather than evidence for a conclusion, and the header
- * already labels the whole page as synthetic, which is the claim that actually matters.
  */
-export function EvidenceDetail({ analysis }: { analysis: DemoAnalysis }) {
+export function EvidenceDetail({ analysis, unit }: TierProps) {
   const [showRecent, setShowRecent] = useState(false);
   const latest = latestObservation(analysis);
   const first = analysis.observations.at(0);
+  const gapDays = daysWithoutReading(analysis.observations);
 
   return (
     <div className={styles.prose}>
+      <Figures
+        items={[
+          {
+            label: "Readings used",
+            value: `${analysis.n_obs} of ${formatDayCount(analysis.span_days)}`,
+          },
+          { label: "Days without a reading", value: String(gapDays) },
+          {
+            label: "Readings per week",
+            value: readingsPerWeek(analysis.n_obs, analysis.span_days).toFixed(1),
+          },
+        ]}
+      />
+
       {latest === null ? null : (
         <>
-          <h4 className={styles.subhead}>Latest observation</h4>
+          <h3 className={styles.subhead}>Latest observation</h3>
           <Rows
             items={[
               {
                 label: "Recorded",
                 value: `${formatFullDate(latest.date)}, ${formatTimeOfDay(latest.date)}`,
               },
-              { label: "Scale reading", value: formatWeightKg(latest.readingKg) },
-              { label: "Estimated trend weight", value: formatWeightKg(latest.estimateKg) },
-              { label: "Difference", value: formatSignedKg(latest.differenceKg) },
+              { label: "Scale reading", value: formatWeightUnit(latest.readingKg, unit) },
+              { label: "Estimated trend weight", value: formatWeightUnit(latest.estimateKg, unit) },
+              { label: "Difference from estimate", value: formatSignedWeightUnit(latest.differenceKg, unit) },
               {
                 label: "95% interval on the estimate",
-                value: formatWeightRangeKg(latest.lowerKg, latest.upperKg),
+                value: formatWeightRangeUnit(latest.lowerKg, latest.upperKg, unit),
               },
             ]}
           />
         </>
       )}
 
-      <h4 className={styles.subhead}>Series</h4>
+      <h3 className={styles.subhead}>Series</h3>
       <Rows
         items={[
           { label: "Readings", value: String(analysis.n_obs) },
@@ -145,34 +172,41 @@ export function EvidenceDetail({ analysis }: { analysis: DemoAnalysis }) {
         ]}
       />
 
-      <RecentReadings analysis={analysis} open={showRecent} onToggle={() => setShowRecent((v) => !v)} />
+      <RecentReadings analysis={analysis} unit={unit} open={showRecent} onToggle={() => setShowRecent((v) => !v)} />
     </div>
   );
 }
 
 /**
  * The tail of the series, on request. Every reading is already drawn on the canvas, so a table
- * of them is a secondary way to read the same evidence -- not something that should occupy the
- * rail by default.
+ * of them is a secondary way to read the same evidence.
+ *
+ * Named "difference from estimate", not "residual": an arbitrary measurement-minus-estimate gap
+ * is not the filter's own innovation, and the two must not be conflated
+ * (docs/design/IMPLEMENTATION_NOTES.md, "2. Residual terminology").
  */
 function RecentReadings({
   analysis,
+  unit,
   open,
   onToggle,
 }: {
-  analysis: DemoAnalysis;
+  analysis: AnalysisResponse;
+  unit: DisplayUnit;
   open: boolean;
   onToggle: () => void;
 }) {
-  // The trajectory carries one point per observation, at the same instant (ADR-0005). If that
-  // ever stopped holding, the estimate column is dropped rather than paired with the wrong row.
   const aligned = analysis.trajectory.length === analysis.observations.length;
   const rows = analysis.observations
-    .map((observation, index) => ({
-      date: new Date(observation.timestamp),
-      readingKg: observation.weight_kg,
-      estimateKg: aligned ? (analysis.trajectory[index]?.w_kg ?? null) : null,
-    }))
+    .map((observation, index) => {
+      const estimateKg = aligned ? (analysis.trajectory[index]?.w_kg ?? null) : null;
+      return {
+        date: new Date(observation.timestamp),
+        readingKg: observation.weight_kg,
+        estimateKg,
+        differenceKg: estimateKg === null ? null : observation.weight_kg - estimateKg,
+      };
+    })
     .slice(-RECENT_ROWS)
     .reverse();
 
@@ -189,17 +223,23 @@ function RecentReadings({
               <tr>
                 <th scope="col">Date</th>
                 <th scope="col">Reading</th>
-                {aligned ? <th scope="col">Estimate</th> : null}
+                {aligned ? <th scope="col" className={styles.hideNarrow}>Estimate</th> : null}
+                {aligned ? <th scope="col">Difference</th> : null}
               </tr>
             </thead>
             <tbody>
               {rows.map((row) => (
                 <tr key={row.date.toISOString()}>
                   <td>{formatFullDate(row.date)}</td>
-                  <td className={styles.numeric}>{formatWeightKg(row.readingKg)}</td>
+                  <td className={styles.numeric}>{formatWeightUnit(row.readingKg, unit)}</td>
+                  {aligned ? (
+                    <td className={`${styles.numeric} ${styles.hideNarrow}`}>
+                      {row.estimateKg === null ? "—" : formatWeightUnit(row.estimateKg, unit)}
+                    </td>
+                  ) : null}
                   {aligned ? (
                     <td className={styles.numeric}>
-                      {row.estimateKg === null ? "—" : formatWeightKg(row.estimateKg)}
+                      {row.differenceKg === null ? "—" : formatSignedWeightUnit(row.differenceKg, unit)}
                     </td>
                   ) : null}
                 </tr>
@@ -213,40 +253,55 @@ function RecentReadings({
 }
 
 /**
- * The published quantities, at the precision a reader can use.
- *
- * Not a raw API inspector: the forecast origin, the lead, the process-noise conversion and the
- * internal parameter names are model mechanics rather than results, and they are on the Method
- * page. Weights are shown to one decimal because that is the precision the product claims
- * everywhere else; standard deviations get two, because a spread of 0.2 kg and one of 0.18 kg
- * are different statements.
+ * The published quantities, at the precision a reader can use, plus the measurement scatter
+ * `docs/design/IMPLEMENTATION_NOTES.md` permits: an RMS of readings around the trajectory's own
+ * estimate, described as scatter -- never as innovation variance, which is a different quantity.
  */
-export function StatisticsDetail({ analysis }: { analysis: DemoAnalysis }) {
+export function StatisticsDetail({ analysis, unit }: TierProps) {
   const { current, forecast } = analysis;
+  const interval = weeklyRateInterval(current);
+  const scatterKg = measurementScatterKg(analysis.observations, analysis.trajectory);
 
   return (
     <div className={styles.prose}>
-      <h4 className={styles.subhead}>Current estimate</h4>
+      <h3 className={styles.subhead}>Current estimate</h3>
       <Rows
         items={[
-          { label: "Trend weight", value: formatWeightKg(current.w_kg) },
-          { label: "Standard deviation", value: formatKgPrecise(current.w_sd, 2) },
+          { label: "Trend weight", value: formatWeightUnit(current.w_kg, unit) },
+          { label: "68% interval", value: formatHalfWidthUnit(current.w_sd, unit) },
           {
             label: "95% interval",
-            value: formatWeightRangeKg(current.w_lower95, current.w_upper95),
+            value: formatWeightRangeUnit(current.w_lower95, current.w_upper95, unit),
           },
         ]}
       />
 
-      <h4 className={styles.subhead}>Current rate</h4>
+      <h3 className={styles.subhead}>Current rate</h3>
       <Rows
         items={[
-          { label: "Weekly rate", value: formatWeeklyRateKg(current.weekly_rate_kg) },
-          { label: "Standard deviation", value: formatRateMagnitude(current.weekly_rate_sd_kg) },
+          { label: "Weekly rate", value: formatWeeklyRateUnit(current.weekly_rate_kg, unit) },
+          {
+            label: "95% interval",
+            value: formatRateRangeUnit(interval.lowerKgPerWeek, interval.upperKgPerWeek, unit),
+          },
         ]}
       />
 
-      <h4 className={styles.subhead}>Forecast</h4>
+      {scatterKg === null ? null : (
+        <>
+          <h3 className={styles.subhead}>Measurement scatter</h3>
+          <Rows
+            items={[
+              {
+                label: "Readings around the estimated trajectory",
+                value: formatMagnitudeUnit(scatterKg, unit),
+              },
+            ]}
+          />
+        </>
+      )}
+
+      <h3 className={styles.subhead}>Forecast</h3>
       <div className={styles.tableWrap}>
         <table className={styles.table}>
           <thead>
@@ -262,9 +317,9 @@ export function StatisticsDetail({ analysis }: { analysis: DemoAnalysis }) {
                 <th scope="row" className={styles.numeric}>
                   {formatDayCount(horizon.horizon_days)}
                 </th>
-                <td className={styles.numeric}>{formatWeightKg(horizon.w_kg)}</td>
+                <td className={styles.numeric}>{formatWeightUnit(horizon.w_kg, unit)}</td>
                 <td className={styles.numeric}>
-                  {formatWeightRangeKg(horizon.w_lower95, horizon.w_upper95)}
+                  {formatWeightRangeUnit(horizon.w_lower95, horizon.w_upper95, unit)}
                 </td>
               </tr>
             ))}
@@ -272,7 +327,9 @@ export function StatisticsDetail({ analysis }: { analysis: DemoAnalysis }) {
         </table>
       </div>
 
-      <MethodLink label="Model parameters and the equations behind these numbers" />
+      <p className={styles.quiet}>
+        <MethodLink label="Model parameters and the equations behind these numbers" />
+      </p>
     </div>
   );
 }
