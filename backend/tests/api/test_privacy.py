@@ -27,12 +27,19 @@ from tests.api.conftest import (
     RecordingMailer,
     build_app,
     make_test_settings,
+    sign_in_as,
 )
 
 SENTINEL_WEIGHT = 77.7777
 SENTINEL_WEIGHT_TEXT = "77.7777"
 SENTINEL_TIMESTAMP = "2029-03-03T03:33:33"
 SENTINEL_TIMESTAMP_FRAGMENTS = ("2029-03-03", "03:33:33", "2029")
+
+SENTINEL_PAST_TIMESTAMP = "2020-07-07T07:07:07+00:00"
+"""A sentinel dated before FROZEN_NOW, for account routes where a future-dated one would
+raise ``observation_in_the_future`` before the log line under test is even reachable."""
+SENTINEL_PAST_TIMESTAMP_FRAGMENTS = ("2020-07-07", "07:07:07", "2020")
+
 
 JSON_HEADERS = {"content-type": "application/json"}
 
@@ -424,6 +431,85 @@ def test_a_mail_delivery_failure_leaks_neither_the_address_nor_the_code(
     text = captured_log_text(caplog)
     assert "unhandled RuntimeError" in text
     assert_no_email(text, context="the log")
+
+
+# --- account routes: a stored measurement value must never reach the log ------------------
+
+
+def test_a_stored_measurement_value_never_reaches_the_access_log(caplog: pytest.LogCaptureFixture):
+    """A weight and its timestamp travel through create, list, analysis and export -- all
+    legitimately present in each 200 response body, none of them ever in a log line."""
+    mailer = RecordingMailer()
+    client = TestClient(build_app(mailer=mailer), raise_server_exceptions=False)
+    with caplog.at_level(logging.DEBUG):
+        sign_in_as(client, mailer)
+        client.post(
+            "/api/me/measurements",
+            json={"timestamp": SENTINEL_PAST_TIMESTAMP, "weight": SENTINEL_WEIGHT, "unit": "kg"},
+        )
+        client.get("/api/me/measurements")
+        client.get("/api/me/analysis")
+        client.get("/api/me/export")
+        client.get("/api/me/export/measurements.csv")
+
+    text = captured_log_text(caplog)
+    assert_no_sentinels(text, context="the log")
+    for fragment in SENTINEL_PAST_TIMESTAMP_FRAGMENTS:
+        assert fragment not in text, f"the stored timestamp leaked into the log: {fragment}"
+
+
+def test_a_future_dated_stored_measurement_does_not_leak_through_the_new_error_path(
+    caplog: pytest.LogCaptureFixture,
+):
+    """Storing a future timestamp is accepted; analysing it then raises
+    ``observation_in_the_future`` -- a rejection reachable only through stored history. Same
+    rule as the stateless path: neither the body nor the log may carry the value."""
+    mailer = RecordingMailer()
+    client = TestClient(build_app(mailer=mailer), raise_server_exceptions=False)
+    with caplog.at_level(logging.DEBUG):
+        sign_in_as(client, mailer)
+        client.post(
+            "/api/me/measurements",
+            json={"timestamp": SENTINEL_TIMESTAMP + "+00:00", "weight": SENTINEL_WEIGHT},
+        )
+        response = client.get("/api/me/analysis")
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "observation_in_the_future"
+    assert_no_sentinels(response.text, context="the account-analysis error response body")
+    assert_no_sentinels(captured_log_text(caplog), context="the log")
+
+
+def test_an_invalid_batch_import_does_not_echo_the_offending_value(
+    caplog: pytest.LogCaptureFixture,
+):
+    mailer = RecordingMailer()
+    client = TestClient(build_app(mailer=mailer), raise_server_exceptions=False)
+    with caplog.at_level(logging.DEBUG):
+        sign_in_as(client, mailer)
+        response = client.post(
+            "/api/me/measurements/batch",
+            json={
+                "observations": [
+                    {"timestamp": SENTINEL_TIMESTAMP + "+00:00", "weight": -SENTINEL_WEIGHT}
+                ]
+            },
+        )
+    assert response.status_code == 422
+    assert_no_sentinels(response.text, context="the batch-import validation response body")
+    assert_no_sentinels(captured_log_text(caplog), context="the log")
+
+
+def test_a_measurement_not_found_response_names_no_id(caplog: pytest.LogCaptureFixture):
+    mailer = RecordingMailer()
+    client = TestClient(build_app(mailer=mailer), raise_server_exceptions=False)
+    sentinel_id = "sentinel-id-9f9f9f9f-does-not-exist"
+    with caplog.at_level(logging.DEBUG):
+        sign_in_as(client, mailer)
+        response = client.delete(f"/api/me/measurements/{sentinel_id}")
+    assert response.status_code == 404
+    assert sentinel_id not in response.text
+    assert sentinel_id not in captured_log_text(caplog)
 
 
 def test_settings_never_reveal_their_credentials():

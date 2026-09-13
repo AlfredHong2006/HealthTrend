@@ -89,7 +89,7 @@ def get_current_user(
     token = request.cookies.get(SESSION_COOKIE_NAME)
     if not token:
         raise UnauthenticatedError("no session cookie")
-    resolved = resolve_session(token, now=clock.now(), store=store)
+    resolved = resolve_session(token, now=clock.now(), store=store, settings=settings)
     if resolved.refreshed:
         set_session_cookie(response, token, secure=settings.cookie_secure)
     return resolved.user

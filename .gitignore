@@ -13,6 +13,12 @@ export*.zip
 *.csv
 !sample_data/**/*.csv
 
+# A local account database (Milestone 8) holds whatever was entered into it.
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
 # ---------------------------------------------------------------------------
 # Python
 # ---------------------------------------------------------------------------

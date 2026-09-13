@@ -286,6 +286,24 @@ class LoginCodeRepo:
             )
         )
 
+    def delete_by_id(self, code_id: str) -> None:
+        """Delete one issued code by its own id.
+
+        Used when a code could not be delivered: the row must not remain usable, and must
+        not go on counting towards the request rate limit, so it is removed outright rather
+        than merely marked consumed.
+        """
+        self._session.execute(delete(LoginCodeRow).where(LoginCodeRow.id == code_id))
+
+    def delete_for_email(self, email: str) -> None:
+        """Delete every code ever issued for ``email``.
+
+        ``login_codes`` has no foreign key to ``users`` -- a code can exist before an
+        account does -- so deleting a user does not cascade here. Account deletion calls
+        this explicitly instead.
+        """
+        self._session.execute(delete(LoginCodeRow).where(LoginCodeRow.email == email))
+
 
 class SessionRepo:
     """Signed-in sessions."""

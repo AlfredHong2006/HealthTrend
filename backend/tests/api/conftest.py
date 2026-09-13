@@ -147,3 +147,29 @@ def client(app: FastAPI) -> TestClient:
 def strict_client(app: FastAPI) -> TestClient:
     """A client that re-raises server errors, so an unexpected 500 surfaces as a traceback."""
     return TestClient(app)
+
+
+DEFAULT_TEST_EMAIL = "user@example.com"
+"""The address :func:`sign_in_as` and :func:`signed_in_user` use by default."""
+
+
+def sign_in_as(
+    client: TestClient, mailer: RecordingMailer, email: str = DEFAULT_TEST_EMAIL
+) -> dict[str, Any]:
+    """Sign ``client`` in as ``email`` through the recording mailer's code.
+
+    Returns the ``MeOut`` body from the verify response; the session cookie is left set on
+    ``client`` for subsequent requests.
+    """
+    requested = client.post("/api/auth/code/request", json={"email": email})
+    assert requested.status_code == 202, requested.text
+    verified = client.post("/api/auth/code/verify", json={"email": email, "code": mailer.last_code})
+    assert verified.status_code == 200, verified.text
+    body: dict[str, Any] = verified.json()
+    return body
+
+
+@pytest.fixture
+def signed_in_user(client: TestClient, mailer: RecordingMailer) -> dict[str, Any]:
+    """``client`` signed in as one default test account; returns its ``MeOut`` body."""
+    return sign_in_as(client, mailer)

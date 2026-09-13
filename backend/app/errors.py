@@ -110,3 +110,19 @@ class CodeExpiredError(AuthError):
 
 class TooManyCodeRequestsError(AuthError):
     """Too many sign-in codes have been requested for one email within the rate-limit window."""
+
+
+class MeasurementNotFoundError(HealthTrendError):
+    """No stored measurement exists under that id for the requesting user.
+
+    Deliberately the same error whether the id belongs to another user or does not exist at
+    all: a route never distinguishes the two (``docs/architecture.md``, ownership scoping).
+    """
+
+
+class MeasurementLimitExceededError(HealthTrendError):
+    """Storing this measurement, or this batch, would exceed the per-account cap."""
+
+
+class ConfirmationMismatchError(HealthTrendError):
+    """The email typed to confirm account deletion does not match the signed-in account."""

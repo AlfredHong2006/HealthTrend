@@ -35,6 +35,21 @@ export function datetimeLocalToUtcIso(value: string): string | null {
 }
 
 /**
+ * The inverse of {@link datetimeLocalToUtcIso}: format a UTC instant as the local wall-clock
+ * `YYYY-MM-DDTHH:mm` value a `datetime-local` input expects, so an existing stored reading (or
+ * the current instant, for a fresh entry) can populate one. `Date`'s own local getters, not a
+ * re-derivation of timezone rules `Date` already applied when it parsed the instant.
+ */
+export function utcIsoToDatetimeLocal(iso: string): string {
+  const date = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}`
+  );
+}
+
+/**
  * The browser's own IANA timezone (e.g. "Europe/London"), used to pre-fill -- and only
  * pre-fill -- the timezone a CSV import assumes for timestamps with no UTC offset. Unlike
  * `datetimeLocalToUtcIso`, this is a starting point the user can review and change before

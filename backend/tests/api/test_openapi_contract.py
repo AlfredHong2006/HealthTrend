@@ -40,4 +40,12 @@ def test_the_committed_contract_covers_every_route():
         "/api/auth/code/verify",
         "/api/auth/logout",
         "/api/me",
+        "/api/me/measurements",
+        "/api/me/measurements/{measurement_id}",
+        "/api/me/measurements/batch",
+        "/api/me/analysis",
+        "/api/me/preferences",
+        "/api/me/goal",
+        "/api/me/export",
+        "/api/me/export/measurements.csv",
     }

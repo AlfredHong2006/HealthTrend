@@ -1,0 +1,76 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-7);
+  width: 100%;
+  max-width: var(--v2-frame-reading);
+  margin: 0 auto;
+  padding: var(--v2-space-8) var(--v2-gutter-compact) var(--v2-space-10);
+}
+
+.title {
+  margin: 0;
+  font: 400 var(--v2-size-subtitle) var(--v2-font-prose);
+  color: var(--v2-ink-1);
+}
+
+.intro {
+  margin: 0;
+  max-width: 60ch;
+  font: 400 var(--v2-size-body-sm) / 1.6 var(--v2-font-prose);
+  color: var(--v2-ink-3);
+}
+
+.outcome {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-5);
+  padding: var(--v2-space-6);
+  background: var(--v2-paper-2);
+  border-radius: var(--v2-radius);
+}
+
+.outcomeLine {
+  margin: 0;
+  font: 400 var(--v2-size-body-sm) var(--v2-font-prose);
+  color: var(--v2-ink-1);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--v2-space-5);
+}
+
+.primaryLink {
+  padding: var(--v2-space-4) var(--v2-space-6);
+  font: 500 var(--v2-size-ui) var(--v2-font-numeric);
+  color: var(--v2-paper-1);
+  background: var(--v2-azure-500);
+  border-radius: var(--v2-radius);
+}
+
+.primaryLink:hover {
+  background: var(--v2-azure-600);
+}
+
+.secondary {
+  padding: var(--v2-space-4) var(--v2-space-6);
+  font: 500 var(--v2-size-ui) var(--v2-font-numeric);
+  color: var(--v2-ink-3);
+  background: none;
+  border: 1px solid var(--v2-rule-2);
+  border-radius: var(--v2-radius);
+  cursor: pointer;
+}
+
+.secondary:hover {
+  color: var(--v2-ink-1);
+  border-color: var(--v2-rule-3);
+}
+
+@media (max-width: 359px) {
+  .page {
+    padding: var(--v2-space-6) var(--v2-gutter-narrow) var(--v2-space-8);
+  }
+}

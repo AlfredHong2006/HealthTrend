@@ -1,0 +1,156 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-6);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-3);
+}
+
+.fieldLabel {
+  font: 500 var(--v2-size-ui-sm) var(--v2-font-numeric);
+  color: var(--v2-ink-3);
+}
+
+.weightRow {
+  display: flex;
+  align-items: stretch;
+  gap: var(--v2-space-5);
+  flex-wrap: wrap;
+}
+
+/* Large and obvious: the one field this whole screen exists for. */
+.weightInput {
+  flex: 1 1 160px;
+  min-width: 0;
+  padding: var(--v2-space-5) var(--v2-space-6);
+  font: 500 40px var(--v2-font-numeric);
+  font-variant-numeric: tabular-nums;
+  color: var(--v2-ink-1);
+  background: var(--v2-paper-1);
+  border: 1px solid var(--v2-rule-2);
+  border-radius: var(--v2-radius);
+}
+
+.weightInput:focus-visible {
+  outline: 2px solid var(--v2-focus);
+  outline-offset: 1px;
+}
+
+.unitGroup {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--v2-rule-2);
+  border-radius: var(--v2-radius);
+  overflow: hidden;
+}
+
+.unitOption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  padding: 0 var(--v2-space-6);
+  font: 500 18px var(--v2-font-numeric);
+  color: var(--v2-ink-3);
+  cursor: pointer;
+}
+
+.unitOption:not(:last-child) {
+  border-right: 1px solid var(--v2-rule-2);
+}
+
+.unitOptionOn {
+  color: var(--v2-paper-1);
+  background: var(--v2-azure-500);
+}
+
+.unitRadio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.dateInput {
+  padding: var(--v2-space-4) var(--v2-space-5);
+  font: 400 16px var(--v2-font-numeric);
+  color: var(--v2-ink-1);
+  background: var(--v2-paper-1);
+  border: 1px solid var(--v2-rule-2);
+  border-radius: var(--v2-radius);
+}
+
+.dateInput:focus-visible {
+  outline: 2px solid var(--v2-focus);
+  outline-offset: 1px;
+}
+
+.actions {
+  display: flex;
+  gap: var(--v2-space-5);
+}
+
+.submit {
+  flex: 1 1 auto;
+  padding: var(--v2-space-5) var(--v2-space-6);
+  font: 500 var(--v2-size-ui) var(--v2-font-numeric);
+  color: var(--v2-paper-1);
+  background: var(--v2-azure-500);
+  border: none;
+  border-radius: var(--v2-radius);
+  cursor: pointer;
+}
+
+.submit:hover {
+  background: var(--v2-azure-600);
+}
+
+.submit:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.cancel {
+  padding: var(--v2-space-5) var(--v2-space-6);
+  font: 500 var(--v2-size-ui) var(--v2-font-numeric);
+  color: var(--v2-ink-3);
+  background: none;
+  border: 1px solid var(--v2-rule-2);
+  border-radius: var(--v2-radius);
+  cursor: pointer;
+}
+
+.cancel:hover {
+  color: var(--v2-ink-1);
+  border-color: var(--v2-rule-3);
+}
+
+.cancel:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.error {
+  margin: 0;
+  font: 400 var(--v2-size-ui-sm) var(--v2-font-numeric);
+  color: var(--v2-amber-500);
+}
+
+/* Stays usable at the narrowest supported width -- the weight input keeps most of the row,
+   the unit toggle shrinks to its content rather than being clipped. */
+@media (max-width: 359px) {
+  .weightInput {
+    font-size: 32px;
+  }
+
+  .unitOption {
+    min-width: 44px;
+    padding: 0 var(--v2-space-4);
+  }
+}

@@ -46,6 +46,7 @@ from app.api import APP_VERSION
 from app.api.errors import register_exception_handlers
 from app.api.logging import register_request_logging
 from app.api.routes import router
+from app.api.routes_account import router as account_router
 from app.api.routes_auth import router as auth_router
 from app.auth.mailer import ConsoleMailer, Mailer, SmtpMailer
 from app.config import ALLOWED_ORIGINS_ENV_VAR, Settings, allowed_origins, load_settings
@@ -140,6 +141,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.include_router(router)
     app.include_router(auth_router)
+    app.include_router(account_router)
     return app
 
 

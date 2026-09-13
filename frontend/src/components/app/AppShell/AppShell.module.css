@@ -1,0 +1,128 @@
+/* Mobile-first, matching the `.htV2` masthead's own density (`V2Header.module.css`). With six
+   destinations the nav no longer fits beside the wordmark on a phone, so below 600px it takes a
+   full-width row of its own as a three-column grid (two short rows of comfortable tap targets)
+   instead of wrapping unpredictably; the wordmark and sign-out share the row above it. Wider
+   viewports keep the single hairline row. */
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--v2-space-5) var(--v2-space-8);
+  padding: var(--v2-space-5) var(--v2-gutter-compact);
+  border-bottom: 1px solid var(--v2-rule-1);
+}
+
+.wordmark {
+  font: 400 20px var(--v2-font-prose);
+  letter-spacing: -0.022em;
+  color: var(--v2-ink-1);
+  white-space: nowrap;
+}
+
+.nav {
+  min-width: 0;
+}
+
+.navList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--v2-space-3) var(--v2-space-7);
+  list-style: none;
+}
+
+.navLink {
+  font: 400 16px var(--v2-font-prose);
+  color: var(--v2-ink-4);
+  border-bottom: none;
+  transition: color 140ms ease;
+}
+
+.navLink:hover,
+.navLink:focus-visible {
+  color: var(--v2-ink-1);
+}
+
+.navLinkActive {
+  color: var(--v2-ink-1);
+}
+
+.trailing {
+  display: flex;
+  align-items: center;
+  gap: var(--v2-space-6);
+  margin-left: auto;
+}
+
+.email {
+  font: 400 var(--v2-size-ui-sm) var(--v2-font-numeric);
+  color: var(--v2-ink-3);
+  white-space: nowrap;
+}
+
+.signOut {
+  padding: var(--v2-space-3) var(--v2-space-6);
+  font: 500 var(--v2-size-ui-sm) var(--v2-font-numeric);
+  color: var(--v2-ink-3);
+  background: none;
+  border: 1px solid var(--v2-rule-2);
+  border-radius: var(--v2-radius);
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.signOut:hover {
+  color: var(--v2-ink-1);
+  border-color: var(--v2-rule-3);
+}
+
+.signOut:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.signOutError {
+  margin: 0;
+  padding: var(--v2-space-4) var(--v2-gutter-compact) 0;
+  font: 400 var(--v2-size-ui-sm) var(--v2-font-numeric);
+  color: var(--v2-amber-500);
+}
+
+@media (max-width: 899px) {
+  .email {
+    display: none;
+  }
+}
+
+@media (max-width: 599px) {
+  .header {
+    padding: var(--v2-space-5) var(--v2-gutter-narrow) var(--v2-space-3);
+    row-gap: var(--v2-space-4);
+  }
+
+  /* Visual order only: the DOM keeps nav before sign-out, so keyboard order is unchanged. */
+  .trailing {
+    order: 2;
+  }
+
+  .nav {
+    order: 3;
+    flex-basis: 100%;
+  }
+
+  .navList {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+  }
+
+  .navLink {
+    display: block;
+    padding: var(--v2-space-4) 0;
+    font-size: 15px;
+  }
+
+  .navLinkActive {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+}

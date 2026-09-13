@@ -1,0 +1,5 @@
+.page {
+  width: 100%;
+  max-width: var(--v2-frame-analysis);
+  margin: 0 auto;
+}

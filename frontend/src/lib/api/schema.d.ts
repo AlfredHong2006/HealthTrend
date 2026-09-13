@@ -175,6 +175,198 @@ export interface paths {
         get: operations["me_api_me_get"];
         put?: never;
         post?: never;
+        /**
+         * Permanently delete the account and everything it owns
+         * @description Hard-delete the account and everything it owns.
+         *
+         *     Its sessions, measurements, preferences, goal and issued sign-in codes. Requires
+         *     retyping the account's own email address as confirmation.
+         */
+        delete: operations["delete_my_account_api_me_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/analysis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Analyse the account's own stored measurement history
+         * @description Analyse every measurement the account holds, forecasting from the current instant.
+         *
+         *     Calls the same :func:`app.services.analysis.analyse_submitted` a submitted series does;
+         *     ``meta.source`` reads ``"account"`` in place of ``"submitted"`` and nothing else differs.
+         */
+        get: operations["analyse_my_account_api_me_analysis_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export everything HealthTrend stores about this account, as JSON
+         * @description Return a complete, versioned snapshot of the account.
+         *
+         *     Metadata, preferences, the goal (or none), and every measurement -- everything
+         *     HealthTrend stores, and nothing it does not: not a copy of any hosting provider's
+         *     backups.
+         */
+        get: operations["export_my_account_api_me_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/export/measurements.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export stored measurements as re-importable CSV
+         * @description Return every stored measurement as CSV: ``timestamp,weight,unit``.
+         *
+         *     The exact shape :func:`app.ingestion.csv.parse_csv` already accepts, so the file can be
+         *     re-imported through ``POST /api/ingest/csv`` unchanged.
+         */
+        get: operations["export_my_measurements_csv_api_me_export_measurements_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/goal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Replace the account's goal
+         * @description Replace the account's goal. Never read by any analysis (goal neutrality).
+         */
+        put: operations["update_my_goal_api_me_goal_put"];
+        post?: never;
+        /**
+         * Remove the account's goal
+         * @description Remove the account's goal, if one is set. Not an error if none is.
+         */
+        delete: operations["delete_my_goal_api_me_goal_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/measurements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List every stored measurement
+         * @description Return every measurement the account holds, most recent first.
+         */
+        get: operations["list_my_measurements_api_me_measurements_get"];
+        put?: never;
+        /**
+         * Store one measurement
+         * @description Store one manually entered measurement.
+         */
+        post: operations["create_my_measurement_api_me_measurements_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/measurements/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Store several measurements at once, such as a CSV import's accepted rows
+         * @description Store a batch of measurements. Re-submitting the same batch inserts nothing new.
+         */
+        post: operations["batch_create_my_measurements_api_me_measurements_batch_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/measurements/{measurement_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Replace a stored measurement
+         * @description Replace a stored measurement's timestamp, weight and unit.
+         *
+         *     ``measurement_id`` belonging to another account is rejected identically to one that does
+         *     not exist: both raise ``measurement_not_found``.
+         */
+        put: operations["update_my_measurement_api_me_measurements__measurement_id__put"];
+        post?: never;
+        /**
+         * Delete a stored measurement
+         * @description Delete a stored measurement.
+         */
+        delete: operations["delete_my_measurement_api_me_measurements__measurement_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Replace the account's display preferences
+         * @description Replace the account's display preferences.
+         */
+        put: operations["update_my_preferences_api_me_preferences_put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -206,6 +398,34 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * AccountExportOut
+         * @description A complete, versioned snapshot of one account.
+         */
+        AccountExportOut: {
+            account: components["schemas"]["UserOut"];
+            /**
+             * Export Version
+             * @description The shape of this export. Currently always 1.
+             * @default 1
+             * @constant
+             */
+            export_version: 1;
+            /**
+             * Exported At
+             * Format: date-time
+             * @description When this export was generated (UTC).
+             */
+            exported_at: string;
+            /** @description The account's goal, or null if none is set. */
+            goal: components["schemas"]["GoalOut"] | null;
+            /**
+             * Measurements
+             * @description Every measurement the account holds.
+             */
+            measurements: components["schemas"]["MeasurementOut"][];
+            preferences: components["schemas"]["PreferencesOut"];
+        };
+        /**
          * AnalysisMetaOut
          * @description Statements about what the numbers mean, so that a client need not assume.
          */
@@ -228,7 +448,7 @@ export interface components {
              * @description Where the observations came from. demo: generated by this API, synthetic by construction. submitted: provided by the caller; the server cannot know their provenance and makes no claim about it.
              * @enum {string}
              */
-            source: "submitted" | "demo";
+            source: "submitted" | "demo" | "account";
         };
         /**
          * AnalysisRequest
@@ -401,6 +621,17 @@ export interface components {
             weekly_rate_sd_kg: number;
         };
         /**
+         * DeleteAccountIn
+         * @description Confirm irreversible account deletion by retyping the account's email address.
+         */
+        DeleteAccountIn: {
+            /**
+             * Confirm Email
+             * @description Must equal the signed-in account's email address, or the request is rejected.
+             */
+            confirm_email: string;
+        };
+        /**
          * DemoAnalysisResponse
          * @description An analysis of a generated scenario: the standard response plus its provenance.
          */
@@ -561,6 +792,25 @@ export interface components {
             w_upper95: number;
         };
         /**
+         * GoalIn
+         * @description Replace the account's goal.
+         *
+         *     A full replacement, not a merge: an omitted field is stored as ``null``, the same as an
+         *     explicit one. Never read by any analysis (goal neutrality).
+         */
+        GoalIn: {
+            /**
+             * Target Weekly Rate Kg
+             * @description Target rate of change per week in kilograms, or null for none.
+             */
+            target_weekly_rate_kg?: number | null;
+            /**
+             * Target Weight Kg
+             * @description Target weight in kilograms, or null for none.
+             */
+            target_weight_kg?: number | null;
+        };
+        /**
          * GoalOut
          * @description The user's goal, in kilograms.
          */
@@ -617,6 +867,102 @@ export interface components {
             user: components["schemas"]["UserOut"];
         };
         /**
+         * MeasurementBatchIn
+         * @description A batch of measurements to store at once, such as a CSV import's accepted rows.
+         */
+        MeasurementBatchIn: {
+            /**
+             * Observations
+             * @description Weigh-ins to store, in any order.
+             */
+            observations: components["schemas"]["ObservationIn"][];
+            /**
+             * Source
+             * @description Recorded against every measurement created by this batch.
+             * @default manual
+             * @enum {string}
+             */
+            source: "manual" | "csv";
+        };
+        /**
+         * MeasurementBatchOut
+         * @description The outcome of storing a batch.
+         *
+         *     Carries counts only, not the rows themselves: a caller that wants the resulting history
+         *     calls ``GET /api/me/measurements`` next, rather than this response duplicating it.
+         */
+        MeasurementBatchOut: {
+            /**
+             * Inserted Count
+             * @description Measurements newly stored by this batch.
+             */
+            inserted_count: number;
+            /**
+             * Skipped Existing Count
+             * @description Measurements in this batch that matched one already stored for this account (same instant, same weight once converted to kilograms) and were not duplicated. Re-submitting the same import is therefore idempotent.
+             */
+            skipped_existing_count: number;
+        };
+        /**
+         * MeasurementListOut
+         * @description Every measurement the account holds, most recent first.
+         */
+        MeasurementListOut: {
+            /**
+             * Count
+             * @description How many measurements are in this list.
+             */
+            count: number;
+            /** Measurements */
+            measurements: components["schemas"]["MeasurementOut"][];
+        };
+        /**
+         * MeasurementOut
+         * @description One stored weigh-in.
+         */
+        MeasurementOut: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description When this row was first stored (UTC).
+             */
+            created_at: string;
+            /**
+             * Id
+             * @description Stable identifier for this measurement.
+             */
+            id: string;
+            /**
+             * Source
+             * @description How this measurement was added.
+             * @enum {string}
+             */
+            source: "manual" | "csv";
+            /**
+             * Timestamp
+             * Format: date-time
+             * @description When the weigh-in happened, in UTC.
+             */
+            timestamp: string;
+            /**
+             * Unit
+             * @description The unit the weight was entered in.
+             * @enum {string}
+             */
+            unit: "kg" | "lb";
+            /**
+             * Updated At
+             * Format: date-time
+             * @description When this row was last changed (UTC).
+             */
+            updated_at: string;
+            /**
+             * Weight
+             * @description The weight as entered, in the unit field.
+             */
+            weight: number;
+        };
+        /**
          * ModelParamsOut
          * @description The model parameters used, echoed for transparency.
          *
@@ -671,6 +1017,18 @@ export interface components {
             timestamp: string;
             /** Weight Kg */
             weight_kg: number;
+        };
+        /**
+         * PreferencesIn
+         * @description Replace the account's display preferences.
+         */
+        PreferencesIn: {
+            /**
+             * Display Unit
+             * @description Unit weights should be displayed in.
+             * @enum {string}
+             */
+            display_unit: "kg" | "lb";
         };
         /**
          * PreferencesOut
@@ -1023,6 +1381,358 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    delete_my_account_api_me_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteAccountIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description confirm_email did not match the account. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    analyse_my_account_api_me_analysis_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalysisResponse"];
+                };
+            };
+            /** @description No measurements are stored, or one is invalid. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    export_my_account_api_me_export_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountExportOut"];
+                };
+            };
+        };
+    };
+    export_my_measurements_csv_api_me_export_measurements_csv_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    update_my_goal_api_me_goal_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_my_goal_api_me_goal_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_my_measurements_api_me_measurements_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeasurementListOut"];
+                };
+            };
+        };
+    };
+    create_my_measurement_api_me_measurements_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObservationIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeasurementOut"];
+                };
+            };
+            /** @description The account's measurement cap was reached. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    batch_create_my_measurements_api_me_measurements_batch_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MeasurementBatchIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeasurementBatchOut"];
+                };
+            };
+            /** @description The account's measurement cap was reached. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_my_measurement_api_me_measurements__measurement_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                measurement_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObservationIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeasurementOut"];
+                };
+            };
+            /** @description No measurement exists under that id. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_my_measurement_api_me_measurements__measurement_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                measurement_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No measurement exists under that id. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_my_preferences_api_me_preferences_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreferencesIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreferencesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

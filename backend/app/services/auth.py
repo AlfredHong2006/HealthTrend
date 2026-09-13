@@ -5,7 +5,7 @@ The flow::
     request_code(email)         allow-listed?  rate limit  →  store HMAC  →  email the code
     verify_code(email, code)    newest unused code  →  expiry  →  attempt count  →  compare
                                 →  consume  →  get or create the user  →  new session
-    resolve_session(token)      hash  →  session row  →  expiry  →  slide once a day
+    resolve_session(token)      hash  →  session row  →  expiry  →  allow-listed?  →  slide
     logout(token)               delete the session row
 
 Decisions that live here rather than in a route:
@@ -16,6 +16,14 @@ Decisions that live here rather than in a route:
   follows an exception would erase the attempt, and the five-attempt limit would never bind.
 * **Only the newest unused code for an address can succeed.** Requesting a new code quietly
   supersedes older ones.
+* **A code that could not be delivered is deleted, not merely left aside.** Otherwise a
+  transient mail failure would silently spend one of the address's three-per-window request
+  slots on a code its owner never received, and would leave a code sitting in the database
+  that nobody read out of an email but that would still verify if guessed.
+* **The allow-list is re-checked on every resolved session, not only at sign-in.** Removing
+  an address from ``HEALTHTREND_BETA_ALLOWED_EMAILS`` must end that person's access, not just
+  block a future sign-in -- so a session belonging to a now-disallowed address is deleted the
+  moment it is next presented, the same way an expired one is.
 * **Nothing here logs**, and no exception message carries an email, a code or a token.
 
 The clock is not read here; ``now`` arrives from the injected clock, as for every service.
@@ -97,16 +105,26 @@ def request_code(
         store.commit()
         raise TooManyCodeRequestsError("sign-in code rate limit reached")
     code = generate_code()
-    store.login_codes.add(
+    issued = store.login_codes.add(
         address,
         code_mac(settings.auth_secret_bytes, address, code),
         now=now,
         expires_at=now + CODE_TTL,
     )
-    # Committed before sending: a delivery failure still counts towards the rate limit, so a
-    # failing mail server cannot be used to retry sends without bound.
+    # Committed before sending, so the row and the rate-limit count it contributes to are
+    # real regardless of what the mailer does next.
     store.commit()
-    mailer.send_login_code(address, code)
+    try:
+        mailer.send_login_code(address, code)
+    except Exception:
+        # Delivery failed: the code was never seen by its owner, so it must not remain
+        # usable, and this attempt must not count against the rate limit that is meant to
+        # bound successful sends. Deleting the row undoes both at once. The original
+        # exception still propagates -- it reaches the API's catch-all, which logs only its
+        # class name (docs/privacy.md) -- so a real delivery failure is still visible.
+        store.login_codes.delete_by_id(issued.id)
+        store.commit()
+        raise
 
 
 def verify_code(
@@ -150,11 +168,14 @@ def verify_code(
     return SignedIn(user=user, session_token=token, expires_at=expires_at)
 
 
-def resolve_session(token: str, *, now: datetime, store: Store) -> ResolvedSession:
+def resolve_session(
+    token: str, *, now: datetime, store: Store, settings: Settings
+) -> ResolvedSession:
     """Return the user a session token belongs to, sliding its expiry once a day.
 
     Raises:
-        UnauthenticatedError: the token is unknown, or its session has expired.
+        UnauthenticatedError: the token is unknown, its session has expired, or the
+            account's email is no longer on the allow-list.
     """
     token_hash = hash_session_token(token)
     session = store.sessions.get(token_hash)
@@ -166,6 +187,12 @@ def resolve_session(token: str, *, now: datetime, store: Store) -> ResolvedSessi
         raise UnauthenticatedError("no valid session")
     user = store.users.get(session.user_id)
     if user is None:
+        raise UnauthenticatedError("no valid session")
+    if not is_allowed_to_sign_in(user.email, settings):
+        # A closed beta narrowed after this session began: access ends now, not merely at
+        # the next sign-in, and the session is removed so this is not re-checked forever.
+        store.sessions.delete(token_hash)
+        store.commit()
         raise UnauthenticatedError("no valid session")
     if not is_due_for_refresh(session.last_seen_at, now):
         return ResolvedSession(user=user, expires_at=session.expires_at, refreshed=False)

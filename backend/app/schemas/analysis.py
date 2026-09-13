@@ -67,12 +67,15 @@ Rejection happens in validation, where the caller learns which field was wrong.
 ForecastFrom = Literal["now", "last_observation"]
 """Which instant forecast horizons are measured from."""
 
-AnalysisSource = Literal["submitted", "demo"]
+AnalysisSource = Literal["submitted", "demo", "account"]
 """Where the analysed observations came from, as far as the server can know.
 
 ``demo`` means this API generated them: a synthetic scenario, never a measurement.
-``submitted`` means the caller provided them; the server cannot know their provenance, so
-this value deliberately claims nothing about whether they are real or synthetic.
+``submitted`` means the caller provided them in the request body; the server cannot know
+their provenance, so this value deliberately claims nothing about whether they are real or
+synthetic. ``account`` means they were loaded from the caller's own stored measurement
+history (``GET /api/me/analysis``) -- the same estimator call as ``submitted``, over rows the
+account previously saved rather than rows attached to this one request.
 """
 
 

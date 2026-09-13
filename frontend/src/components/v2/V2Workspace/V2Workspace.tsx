@@ -51,7 +51,28 @@ import styles from "./V2Workspace.module.css";
  * component-only state (docs/privacy.md); and the canvas keeps a single "Trajectory" range
  * control against a fixed 30-day projection.
  */
-export function V2Workspace({ analysis, unit }: { analysis: AnalysisResponse; unit: DisplayUnit }) {
+/**
+ * A goal stored on the signed-in account, already in kilograms. When passed, it replaces the
+ * ephemeral in-page draft entirely: the canvas and the summary show exactly this goal, and the
+ * goal control links to `manageHref` instead of offering its own fields. Presentation only --
+ * nothing here, stored or drafted, ever reaches `analysis`.
+ */
+export interface PersistedGoal {
+  targetKg: number | null;
+  targetRateKg: number | null;
+  manageHref: string;
+}
+
+export function V2Workspace({
+  analysis,
+  unit,
+  persistedGoal,
+}: {
+  analysis: AnalysisResponse;
+  unit: DisplayUnit;
+  /** Absent on every public V2 route, which keep their ephemeral goal exactly as before. */
+  persistedGoal?: PersistedGoal;
+}) {
   const [historyRangeId, setHistoryRangeId] = useState<HistoryRangeId>(DEFAULT_HISTORY_RANGE_ID);
   const [inspectIndex, setInspectIndex] = useState<number | null>(null);
   const [goalDraft, setGoalDraft] = useState("");
@@ -88,8 +109,12 @@ export function V2Workspace({ analysis, unit }: { analysis: AnalysisResponse; un
   // Both fields are typed in whichever unit is currently displayed; converting to kilograms
   // before handing off to `lib/v2/goal.ts` keeps that module's own bounds-checking as the one
   // place a draft is validated, rather than duplicating it per unit.
-  const goalKg = parseGoalWeightKg(convertDraftToKg(goalDraft, unit));
-  const targetRateKg = parseTargetWeeklyRateKg(convertDraftToKg(targetRateDraft, unit));
+  const goalKg = persistedGoal
+    ? persistedGoal.targetKg
+    : parseGoalWeightKg(convertDraftToKg(goalDraft, unit));
+  const targetRateKg = persistedGoal
+    ? persistedGoal.targetRateKg
+    : parseTargetWeeklyRateKg(convertDraftToKg(targetRateDraft, unit));
 
   function changeHistoryRange(id: string) {
     setHistoryRangeId(id as HistoryRangeId);
@@ -120,6 +145,7 @@ export function V2Workspace({ analysis, unit }: { analysis: AnalysisResponse; un
         setGoalDraft("");
         setTargetRateDraft("");
       }}
+      manageHref={persistedGoal?.manageHref}
     />
   );
 

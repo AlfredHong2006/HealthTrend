@@ -287,6 +287,74 @@ describe("V2Workspace goal", () => {
     expect(screen.queryByRole("region", { name: "Goal reference" })).toBeNull();
     expect(screen.getByRole("button", { name: "+ Add a goal" })).toBeInTheDocument();
   });
+
+  it("still labels the public, ephemeral goal as not saved", () => {
+    renderWorkspace();
+    fireEvent.click(screen.getByRole("button", { name: "+ Add a goal" }));
+    fireEvent.change(screen.getByLabelText("Target weight (kg)"), { target: { value: "78.5" } });
+
+    const goal = screen.getByRole("region", { name: "Goal reference" });
+    expect(within(goal).getByText("not saved")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Settings/ })).toBeNull();
+  });
+});
+
+/**
+ * The signed-in `/app` Trend passes a goal stored on the account. The control then only displays
+ * it -- the same two permitted comparisons -- and links to where it is edited; it offers no
+ * ephemeral fields and no longer claims the goal is unsaved.
+ */
+describe("V2Workspace stored goal", () => {
+  const STORED = { targetKg: 78.5, targetRateKg: -0.5, manageHref: "/app/settings" };
+
+  it("displays the stored goal and its comparisons without being asked", () => {
+    render(<V2Workspace analysis={demoAnalysisFixture} unit="kg" persistedGoal={STORED} />);
+
+    const goal = screen.getByRole("region", { name: "Goal reference" });
+    expect(within(goal).getByText("78.5 kg")).toBeInTheDocument();
+    expect(within(goal).getByText("3.2 kg below the current estimate")).toBeInTheDocument();
+    expect(within(goal).getByText(/target −0\.50 kg\/week/)).toBeInTheDocument();
+    expect(within(goal).getByText("saved")).toBeInTheDocument();
+    expect(within(goal).queryByText("not saved")).toBeNull();
+
+    const legend = screen.getByRole("figure").querySelector("figcaption")!;
+    expect(within(legend).getByText("Goal reference")).toBeInTheDocument();
+  });
+
+  it("links to Settings instead of offering its own goal fields", () => {
+    render(<V2Workspace analysis={demoAnalysisFixture} unit="kg" persistedGoal={STORED} />);
+
+    expect(screen.getByRole("link", { name: "Edit in Settings" })).toHaveAttribute(
+      "href",
+      "/app/settings",
+    );
+    expect(screen.queryByRole("button", { name: "Adjust" })).toBeNull();
+    expect(screen.queryByLabelText(/Target weight/)).toBeNull();
+  });
+
+  it("prints the stored kilogram goal in the display unit", () => {
+    render(<V2Workspace analysis={demoAnalysisFixture} unit="lb" persistedGoal={STORED} />);
+
+    const goal = screen.getByRole("region", { name: "Goal reference" });
+    expect(within(goal).getByText("173.1 lb")).toBeInTheDocument();
+  });
+
+  it("offers only a link to set one when the account has no goal", () => {
+    render(
+      <V2Workspace
+        analysis={demoAnalysisFixture}
+        unit="kg"
+        persistedGoal={{ targetKg: null, targetRateKg: null, manageHref: "/app/settings" }}
+      />,
+    );
+
+    expect(screen.queryByRole("region", { name: "Goal reference" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Set a goal in Settings" })).toHaveAttribute(
+      "href",
+      "/app/settings",
+    );
+    expect(screen.queryByRole("button", { name: "+ Add a goal" })).toBeNull();
+  });
 });
 
 describe("V2Workspace composition", () => {

@@ -17,6 +17,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
+from app.api.deps import get_mailer
 from app.auth.sessions import SESSION_TTL
 from app.errors import ConfigurationError
 from app.main import create_app
@@ -314,12 +315,17 @@ def test_a_code_is_bound_to_the_email_it_was_sent_to(
     assert response.status_code == 401
 
 
-def test_a_newer_code_supersedes_an_older_one(client: TestClient, monkeypatch: pytest.MonkeyPatch):
+def test_a_newer_code_supersedes_an_older_one(
+    timed_client: TestClient, clock: MutableClock, monkeypatch: pytest.MonkeyPatch
+):
+    """ "Newest" is ordered by ``created_at``, so the two requests need distinct instants --
+    a fixed clock would tie them and leave the ordering to an unrelated column."""
     fixed_codes(monkeypatch, "111111", "222222")
-    request_code(client)
-    request_code(client)
-    assert client.post(VERIFY, json={"email": EMAIL, "code": "111111"}).status_code == 401
-    assert client.post(VERIFY, json={"email": EMAIL, "code": "222222"}).status_code == 200
+    request_code(timed_client)
+    clock.instant += timedelta(minutes=1)
+    request_code(timed_client)
+    assert timed_client.post(VERIFY, json={"email": EMAIL, "code": "111111"}).status_code == 401
+    assert timed_client.post(VERIFY, json={"email": EMAIL, "code": "222222"}).status_code == 200
 
 
 def test_an_expired_code_is_rejected_as_expired(
@@ -442,6 +448,88 @@ def test_an_address_removed_from_the_allow_list_cannot_use_an_issued_code():
     response = client.post(VERIFY, json={"email": EMAIL, "code": mailer.last_code})
     assert response.status_code == 401
     assert response.json()["error"]["code"] == "invalid_code"
+
+
+def test_removing_an_email_from_the_allow_list_revokes_an_existing_session():
+    """Narrowing a closed beta must end access immediately, not just block a future sign-in."""
+    mailer = RecordingMailer()
+    app = build_app(mailer=mailer)
+    client = TestClient(app, raise_server_exceptions=False)
+    sign_in(client, mailer)
+    assert client.get(ME).status_code == 200
+
+    app.state.settings = make_test_settings(
+        beta_allowed_emails=frozenset({"someone-else@example.com"})
+    )
+
+    response = client.get(ME)
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "unauthenticated"
+
+    with app.state.database.engine.connect() as connection:
+        assert connection.scalars(select(SessionRow)).all() == [], (
+            "the revoked session row must be deleted, not merely rejected once"
+        )
+
+    # Restoring the allow-list does not resurrect a session that has already been deleted.
+    app.state.settings = make_test_settings()
+    assert client.get(ME).status_code == 401
+
+
+def test_an_allow_list_that_still_includes_the_email_does_not_disturb_the_session():
+    """A control for the test above: an unrelated allow-list change changes nothing."""
+    mailer = RecordingMailer()
+    app = build_app(mailer=mailer)
+    client = TestClient(app, raise_server_exceptions=False)
+    sign_in(client, mailer)
+    app.state.settings = make_test_settings(beta_allowed_emails=frozenset({EMAIL}))
+    assert client.get(ME).status_code == 200
+
+
+def test_a_mail_delivery_failure_leaves_no_usable_code(client: TestClient):
+    class ExplodingMailer:
+        def send_login_code(self, email: str, code: str) -> None:
+            raise RuntimeError("smtp exploded")
+
+    client.app.dependency_overrides[get_mailer] = ExplodingMailer  # type: ignore[attr-defined]
+    failed = client.post(REQUEST, json={"email": EMAIL})
+    assert failed.status_code == 500
+
+    with client.app.state.database.engine.connect() as connection:  # type: ignore[attr-defined]
+        assert connection.scalars(select(LoginCodeRow)).all() == [], (
+            "a code that failed to send must not remain in the database"
+        )
+
+
+def test_a_mail_delivery_failure_does_not_consume_a_rate_limit_slot(client: TestClient):
+    """MAX_CODES_PER_WINDOW successful sends must still be available after failed ones."""
+    call_count = 0
+
+    class FlakyMailer:
+        def send_login_code(self, email: str, code: str) -> None:
+            nonlocal call_count
+            call_count += 1
+            if call_count <= 2:
+                raise RuntimeError("smtp exploded")
+
+    client.app.dependency_overrides[get_mailer] = FlakyMailer  # type: ignore[attr-defined]
+    first = client.post(REQUEST, json={"email": EMAIL})
+    second = client.post(REQUEST, json={"email": EMAIL})
+    assert first.status_code == second.status_code == 500
+
+    recording = RecordingMailer()
+    client.app.dependency_overrides[get_mailer] = lambda: recording  # type: ignore[attr-defined]
+    for _ in range(3):
+        response = client.post(REQUEST, json={"email": EMAIL})
+        assert response.status_code == 202, "the two failed sends must not have used up the limit"
+    assert len(recording.sent) == 3
+
+    fourth = client.post(REQUEST, json={"email": EMAIL})
+    assert fourth.status_code == 429, "the three successful sends do still count"
+
+    with client.app.state.database.engine.connect() as connection:  # type: ignore[attr-defined]
+        stored = connection.scalars(select(LoginCodeRow).where(LoginCodeRow.email == EMAIL)).all()
+    assert len(stored) == 3, "only the successfully delivered codes are ever stored"
 
 
 # --- what is stored -------------------------------------------------------------------

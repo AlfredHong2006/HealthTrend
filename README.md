@@ -9,7 +9,8 @@ confident it is, and forecasts where that trajectory is heading.
 
 **Status:** V2 is deployed and is the public, recruiter-facing version of the product. The
 statistical core, the HTTP boundary, the V2 analysis experience and the own-data flow are shipped and
-in use. Development is ongoing.
+in use. A signed-in beta app with stored history (Milestone 8, [below](#the-signed-in-beta-milestone-8))
+is implemented and tested in this repository but **not yet deployed**.
 
 ![The HealthTrend V2 analysis screen: an estimated trend weight of 75.9 kg with a 68% interval, a current rate of -0.42 kg/week with its 95% interval, and a trajectory chart showing raw scale readings, the estimated trend, its 95% range and a 30-day projection](docs/v1_images/Main.png)
 
@@ -63,7 +64,7 @@ Real measurements render through **exactly the same V2 presentation** as the syn
 same hero, same canvas, same statistics band, same inspection tiers. There is no reduced "your data"
 mode.
 
-**Nothing is persisted.** No accounts, no database, no session, no browser storage, no telemetry.
+**Nothing is persisted on this route.** No account, no session, no browser storage, no telemetry.
 Measurements are sent to the analysis service to produce the result on screen and are not stored;
 a reload starts from an empty page. Editing an input or switching entry mode discards the result
 rather than leaving a stale analysis beside changed inputs.
@@ -101,7 +102,8 @@ anywhere in the interface.
 A target weight, and optionally a target weekly rate, can be added. The distance to the target and
 the comparison against the current estimated rate are transparent arithmetic over published numbers,
 so both are shown; an arrival date is not, because that would need a hitting-time distribution the
-backend does not compute. Goal state is held for the duration of the visit and written nowhere.
+backend does not compute. On the public routes goal state is held for the duration of the visit and
+written nowhere; the signed-in beta stores one goal per account, for display only.
 
 ---
 
@@ -217,6 +219,50 @@ The point of the section is the shape of the evidence, not its polish. The proje
 model works and where it loses rather than assuming that a more sophisticated method must be a better
 one.
 
+**A later study (Milestone 7A) kept two features out of the product.** An "on plan" probability
+passed its pre-registered research checks but is never sharp and is moved heavily by one bad reading;
+all nine departure-detection rules failed at least one pre-registered criterion. Neither is
+product-eligible, so no on-plan, departure, plateau or change-point output exists anywhere in the API
+or the interface. See [docs/evaluation/m7a_report.md](docs/evaluation/m7a_report.md).
+
+---
+
+## The signed-in beta (Milestone 8)
+
+**Implemented and tested here; not yet deployed.** A private beta for people who want to come back to
+their history instead of bringing it every visit. It lives under `/app`, beside the public V2 routes
+rather than on top of them: the public routes stay stateless, need no account, and are unchanged.
+
+What it does:
+
+- **Passwordless sign-in.** An emailed six-digit code, then a session in an `HttpOnly` cookie. No
+  passwords, and no token in browser storage.
+- **A stored history.** A fast one-reading log, a history list with edit and delete, and CSV import
+  into the history through the same parser the public route uses.
+- **The same estimate.** Trend is the unchanged V2 analysis. The account analysis is the exact service
+  call a submitted series makes; a test asserts the two responses are identical apart from a
+  `source` label. Nothing about the model changed.
+- **A remembered display unit and an optional goal.** The goal is display-only: the analysis never
+  receives it, and a test proves setting or removing one leaves the analysis byte-identical.
+- **Your data out, or gone.** A measurements CSV that re-imports, a versioned JSON export of the
+  account data HealthTrend stores, and permanent account deletion.
+- **Home-screen installable** metadata for `/app`. There is no service worker and no offline use.
+
+What it stores, and what deletion does and does not reach, is in
+[docs/privacy.md](docs/privacy.md). The decisions are in
+[ADR-0012](docs/decisions/ADR-0012-accounts-and-persistence.md).
+
+**Deployment architecture:** Next.js on Vercel, FastAPI on Render, Postgres on Neon, sign-in email
+over SMTP. The frontend and API must be served from the same site (for example `app.<domain>` and
+`api.<domain>`) or browsers will not send the session cookie. Deploying the M8 backend needs a
+migrated database, an auth secret and SMTP in place first, or it will not start — which would also
+take the public API down. [docs/deployment.md](docs/deployment.md) has the order.
+
+Not part of the beta, and not implied by it: native apps, offline logging, Apple Health, Health
+Connect or smart-scale import, social or multi-user features, coaching, payments, on-plan or
+departure output, plateau, change-point or outlier detection, a goal ETA, and medical
+recommendations.
+
 ---
 
 ## Engineering
@@ -242,8 +288,16 @@ resolution for naive timestamps with correct DST behaviour, explicit handling of
 non-existent local times, and a parsed preview with counts before anything is analysed. Manual entry
 uses the same validation path.
 
+**Accounts and storage (Milestone 8).** SQLAlchemy 2 with psycopg 3 and Alembic migrations, behind a
+persistence package that is the only code allowed to import them; sign-in logic in a framework-free
+package; every account query filtered by the session's user id. Sign-in codes are stored only as an
+HMAC keyed by a server secret, session tokens only as a hash. The server refuses to start with a
+missing database URL, auth secret or mailer configuration. The persistence tests and the migration
+cycle also run against a real Postgres in CI.
+
 **Privacy is a test, not a promise.** A static check fails the build if `localStorage`,
-`sessionStorage`, IndexedDB or `document.cookie` appears anywhere under `frontend/src`. Sentinel
+`sessionStorage`, IndexedDB, `document.cookie`, the Cache API or `navigator.storage` appears anywhere
+under `frontend/src`. Sentinel
 weight values are pushed through the failure paths and the suite fails if one ever surfaces in an
 error message or a log line. The access log carries counts and route templates only; error responses
 come from an explicit table rather than exception text. Only synthetic, explicitly-labelled data is
@@ -257,11 +311,12 @@ surface at every width without permanently consuming half a phone screen.
 
 | Check | Result |
 | --- | --- |
-| `npm run test` (Vitest, Testing Library, `axe`) | 290 passed, 38 files |
+| `npm run test` (Vitest, Testing Library, `axe`) | 467 passed, 55 files |
 | `npm run lint` | clean |
 | `npm run typecheck` | clean |
 | `npm run build` | clean |
-| `uv run pytest -q` | 840 passed |
+| `uv run pytest -q` | 1,282 passed |
+| Migrations and persistence tests on Postgres 16 | `upgrade` / `check` / `downgrade` / `upgrade` clean; 29 passed |
 
 CI runs the same commands in two independent workflows on every push, alongside `ruff`, `ruff format`
 and strict `mypy`.
@@ -303,18 +358,40 @@ uv run ruff check .            # lint
 uv run mypy                    # strict type checking
 ```
 
+The server reads its settings at startup and refuses to start without a database, an auth secret
+and a mailer, because the same process serves the account routes. Every setting is listed in
+[backend/.env.example](backend/.env.example). For local development a SQLite file and the console
+mailer, which prints sign-in codes to the terminal, need no services at all; production uses Postgres
+and SMTP ([docs/deployment.md](docs/deployment.md)).
+
 `HEALTHTREND_ALLOWED_ORIGINS` is the CORS allow-list for the browser-side routes. It is empty by
 default and fails closed, so nothing is permitted until you name the frontend's origin.
 `--no-access-log` disables uvicorn's access log as privacy hardening; the application writes its own
 metadata-only log instead.
 
 ```bash
-# bash / zsh
-HEALTHTREND_ALLOWED_ORIGINS=http://localhost:3000 uv run uvicorn app.main:app --no-access-log
-
-# PowerShell
-$env:HEALTHTREND_ALLOWED_ORIGINS = "http://localhost:3000"; uv run uvicorn app.main:app --no-access-log
+# bash / zsh -- local development only
+export HEALTHTREND_ALLOWED_ORIGINS=http://localhost:3000
+export HEALTHTREND_DATABASE_URL=sqlite:///healthtrend-local.db
+export HEALTHTREND_AUTH_SECRET=local-development-secret-not-for-production-use
+export HEALTHTREND_COOKIE_SECURE=false HEALTHTREND_MAILER=console
+uv run alembic upgrade head      # create the local schema
+uv run uvicorn app.main:app --no-access-log
 ```
+
+```powershell
+# PowerShell -- local development only
+$env:HEALTHTREND_ALLOWED_ORIGINS = "http://localhost:3000"
+$env:HEALTHTREND_DATABASE_URL = "sqlite:///healthtrend-local.db"
+$env:HEALTHTREND_AUTH_SECRET = "local-development-secret-not-for-production-use"
+$env:HEALTHTREND_COOKIE_SECURE = "false"; $env:HEALTHTREND_MAILER = "console"
+uv run alembic upgrade head
+uv run uvicorn app.main:app --no-access-log
+```
+
+`healthtrend-local.db` holds whatever you enter locally; delete it when you are done. Postgres
+migration checks: `HEALTHTREND_TEST_DATABASE_URL=postgresql+psycopg://… uv run pytest -q tests/persistence`
+against a disposable database, as CI does.
 
 **Frontend**, from `frontend/`, with the backend already running. Node version is pinned in
 [frontend/.nvmrc](frontend/.nvmrc):
@@ -332,6 +409,9 @@ read server-side by the scenario pages and never reaches the browser, while
 `NEXT_PUBLIC_HEALTHTREND_API_URL` is used by the own-data route, which calls the API directly from
 the browser and is why that origin must appear in `HEALTHTREND_ALLOWED_ORIGINS`.
 
+The signed-in beta is at `/app` (`/app/sign-in`, `/app/log`, `/app/measurements`, `/app/import`,
+`/app/settings`); with the console mailer, the sign-in code appears in the backend's terminal.
+
 The V2 routes are `/v2/{scenario}`, `/v2/analyse`, `/v2/method` and `/v2/about`; `/v2` alone lands on
 `gradual-loss`. Scenarios are `gradual-loss`, `plateau`, `reversal`, `noisy` and `irregular`, all
 synthetic and labelled as such. The earlier V1 presentation is still served at `/demo/{scenario}` and
@@ -346,7 +426,15 @@ synthetic and labelled as such. The earlier V1 presentation is still served at `
 | `POST /api/ingest/csv` | parse an uploaded CSV into observations for `/api/analyse` |
 | `GET /api/demo` | list the synthetic demo scenarios |
 | `GET /api/demo/{scenario}` | analyse one of them |
+| `POST /api/auth/code/request`, `POST /api/auth/code/verify`, `POST /api/auth/logout` | passwordless sign-in and sign-out |
+| `GET /api/me`, `DELETE /api/me` | describe the signed-in account; delete it |
+| `GET`/`POST /api/me/measurements`, `PUT`/`DELETE /api/me/measurements/{id}`, `POST /api/me/measurements/batch` | stored history |
+| `GET /api/me/analysis` | analyse the account's stored history |
+| `PUT /api/me/preferences`, `PUT`/`DELETE /api/me/goal` | display unit and goal |
+| `GET /api/me/export`, `GET /api/me/export/measurements.csv` | JSON account export and measurements CSV |
 | `GET /docs`, `GET /openapi.json` | interactive docs and the machine-readable contract |
+
+Every `/api/me` route requires the session cookie.
 
 ```bash
 curl localhost:8000/api/demo/gradual-loss
@@ -372,16 +460,20 @@ series-relative view.
 backend/   FastAPI + NumPy, uv-managed, Python 3.11
   app/core/       pure layer: units · time_axis · types · model · kalman · filter · forecast · analyse
   app/schemas/    Pydantic wire contract        app/demo/      synthetic scenarios
-  app/ingestion/  observations and CSV parsing  app/services/  clock, forecast-origin policy
-  app/api/        routes, error table, metadata-only access log
-  evaluation/     the M6 studies, importable by nothing in app/
-  tests/          core · api · layering · committed golden fixtures
+  app/ingestion/  observations and CSV parsing  app/services/  analysis, ingestion, account services
+  app/auth/       sign-in codes, sessions, mailer (M8)
+  app/persistence/  engine, models, repositories (M8)     alembic/  migrations
+  app/api/        routes, error table, metadata-only access log, session cookie
+  evaluation/     the M6 and M7A studies, importable by nothing in app/
+  tests/          core · api · persistence · layering · committed golden fixtures
   openapi.json    committed contract, generated from the app
 frontend/  Next.js 16 · React 19 · TypeScript · CSS Modules · visx · Vitest
   src/app/v2/         the shipped V2 routes: [scenario] · analyse · method · about
+  src/app/app/        the signed-in beta: sign-in · log · measurements · import · settings (M8)
   src/components/v2/  V2Hero · V2Canvas · V2Summary · V2StatsBand · V2Inspector · V2Method · V2About
-  src/lib/            api/ (schema.d.ts generated) · chart/ (pure shaping) · v2/ · privacy/
-docs/      mathematics · architecture · privacy · evaluation · decisions/ · product/ · design/
+  src/components/app/ account shell, sign-in, dashboard, quick log, history, import, settings (M8)
+  src/lib/            api/ (schema.d.ts generated) · chart/ (pure shaping) · v2/ · app/ · privacy/
+docs/      mathematics · architecture · privacy · deployment · evaluation · decisions/ · product/ · design/
 sample_data/  the only place a committed .csv is permitted
 ```
 
@@ -389,19 +481,23 @@ sample_data/  the only place a committed .csv is permitted
 | --- | --- |
 | [docs/mathematics.md](docs/mathematics.md) | Every equation, and the code symbol implementing it |
 | [docs/architecture.md](docs/architecture.md) | Layer boundaries and the dependency rules |
-| [docs/privacy.md](docs/privacy.md) | What must never be committed or logged |
+| [docs/privacy.md](docs/privacy.md) | What must never be committed or logged, and what the beta stores |
+| [docs/deployment.md](docs/deployment.md) | Beta deployment prerequisites, order and acceptance test (not yet deployed) |
 | [docs/evaluation/report.md](docs/evaluation/report.md) | What the estimator was measured to do, including where it loses |
 | [docs/evaluation/results.md](docs/evaluation/results.md) | The measurements themselves (generated) |
+| [docs/evaluation/m7a_report.md](docs/evaluation/m7a_report.md) | Why on-plan and departure output are not in the product |
 | [docs/product/V2_PRODUCT.md](docs/product/V2_PRODUCT.md) | What HealthTrend is for |
 | [docs/design/V2_DESIGN.md](docs/design/V2_DESIGN.md) | The V2 design direction and the honesty ledger |
-| [docs/decisions/](docs/decisions/) | Architecture decision records, ADR-0001 to ADR-0011 |
+| [docs/decisions/](docs/decisions/) | Architecture decision records, ADR-0001 to ADR-0012 |
 
 ## Not implemented
 
 Stated so the absences are not read as oversights: trend classification, plateau or change-point
-detection, goal hitting-time or ETA, robust outlier handling, RTS smoothing, per-user parameter
-fitting, accounts and persistent history, Apple Health or smart-scale integration, body-composition
-inference, and real-data evaluation.
+detection, on-plan or departure output, goal hitting-time or ETA, robust outlier handling, RTS
+smoothing, per-user parameter fitting, native apps, a service worker or offline logging, Apple
+Health, Health Connect or smart-scale integration, social or multi-user features, coaching, payments,
+body-composition inference, medical recommendations, and real-data evaluation. The signed-in beta
+with stored history is implemented but not yet deployed.
 
 ## Not a medical device
 

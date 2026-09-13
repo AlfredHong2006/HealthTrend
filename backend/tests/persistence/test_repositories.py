@@ -138,6 +138,30 @@ def test_a_code_can_be_consumed_only_once(store: Store):
     assert store.login_codes.newest_unconsumed("a@example.com") is None
 
 
+def test_delete_by_id_removes_only_that_code(store: Store):
+    kept = store.login_codes.add("a@example.com", "1" * 64, now=NOW, expires_at=LATER)
+    doomed = store.login_codes.add("a@example.com", "2" * 64, now=NOW, expires_at=LATER)
+    store.commit()
+    store.login_codes.delete_by_id(doomed.id)
+    store.commit()
+    assert store.login_codes.newest_unconsumed("a@example.com") == kept
+    assert store.login_codes.count_created_since("a@example.com", NOW) == 1
+
+
+def test_delete_for_email_removes_every_code_for_that_address_only(store: Store):
+    store.login_codes.add("a@example.com", "1" * 64, now=NOW, expires_at=LATER)
+    store.login_codes.add("a@example.com", "2" * 64, now=LATER, expires_at=LATER)
+    store.login_codes.add("b@example.com", "3" * 64, now=NOW, expires_at=LATER)
+    store.commit()
+
+    store.login_codes.delete_for_email("a@example.com")
+    store.commit()
+
+    assert store.login_codes.newest_unconsumed("a@example.com") is None
+    assert store.login_codes.count_created_since("a@example.com", NOW - timedelta(days=1)) == 0
+    assert store.login_codes.newest_unconsumed("b@example.com") is not None
+
+
 # --- sessions -------------------------------------------------------------------------------
 
 

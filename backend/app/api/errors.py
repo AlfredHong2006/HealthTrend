@@ -47,6 +47,7 @@ from app.core.types import (
 )
 from app.errors import (
     CodeExpiredError,
+    ConfirmationMismatchError,
     CsvAmbiguousTimestampColumnsError,
     CsvAmbiguousWeightColumnsError,
     CsvDuplicateHeaderColumnError,
@@ -62,6 +63,8 @@ from app.errors import (
     FutureObservationError,
     HealthTrendError,
     InvalidCodeError,
+    MeasurementLimitExceededError,
+    MeasurementNotFoundError,
     TooManyCodeRequestsError,
     UnauthenticatedError,
     UnknownScenarioError,
@@ -238,6 +241,31 @@ _DOMAIN_ERRORS: Final[tuple[tuple[type[Exception], ErrorSpec], ...]] = (
             429,
             "too_many_requests",
             "Too many sign-in codes have been requested. Wait a few minutes and try again.",
+        ),
+    ),
+    # Account failures.
+    (
+        MeasurementNotFoundError,
+        ErrorSpec(
+            404,
+            "measurement_not_found",
+            "No measurement was found under that id.",
+        ),
+    ),
+    (
+        MeasurementLimitExceededError,
+        ErrorSpec(
+            422,
+            "measurement_limit_exceeded",
+            f"This account already holds the maximum of {MAX_OBSERVATIONS} measurements.",
+        ),
+    ),
+    (
+        ConfirmationMismatchError,
+        ErrorSpec(
+            422,
+            "confirmation_mismatch",
+            "The email typed to confirm does not match the signed-in account.",
         ),
     ),
 )
