@@ -36,4 +36,8 @@ def test_the_committed_contract_covers_every_route():
         "/api/demo",
         "/api/demo/{scenario}",
         "/api/ingest/csv",
+        "/api/auth/code/request",
+        "/api/auth/code/verify",
+        "/api/auth/logout",
+        "/api/me",
     }

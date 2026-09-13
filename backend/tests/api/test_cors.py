@@ -1,7 +1,9 @@
-"""CORS: the browser access-control boundary the real-data manual-entry page needs.
+"""CORS: the browser access-control boundary the real-data and sign-in routes need.
 
-Two properties matter more than "it returns the header": the allow-list is fail-closed (an
-unconfigured or non-matching origin gets nothing, never a wildcard), and the header survives
+Three properties matter more than "it returns the header": the allow-list is fail-closed (an
+unconfigured or non-matching origin gets nothing, never a wildcard); credentials -- the session
+cookie -- are allowed only together with an exact configured origin, and a wildcard allow-list
+is refused outright; and the header survives
 every response shape this API can produce -- success, a validation 422, and the logging
 middleware's own fixed 500 for an unhandled exception. That last one is the regression this
 suite exists to prevent: CORSMiddleware is only useful if it wraps everything else, and it
@@ -16,6 +18,7 @@ from datetime import timedelta
 import pytest
 from fastapi.testclient import TestClient
 
+from app.errors import ConfigurationError
 from tests.api.conftest import FROZEN_NOW, build_app
 
 ALLOWED_ORIGIN = "http://localhost:3000"
@@ -60,10 +63,54 @@ def test_an_unconfigured_allow_list_permits_no_origin(monkeypatch: pytest.Monkey
     assert "access-control-allow-origin" not in response.headers
 
 
-def test_credentials_are_never_allowed(monkeypatch: pytest.MonkeyPatch):
+def test_credentials_are_allowed_for_the_configured_origin(monkeypatch: pytest.MonkeyPatch):
+    """The session cookie only reaches a browser page if credentials are allowed for it."""
     client = cors_client(ALLOWED_ORIGIN, monkeypatch)
     response = client.get("/health", headers={"Origin": ALLOWED_ORIGIN})
-    assert "access-control-allow-credentials" not in response.headers
+    assert response.headers["access-control-allow-origin"] == ALLOWED_ORIGIN
+    assert response.headers["access-control-allow-credentials"] == "true"
+
+
+def test_credentials_are_never_usable_by_a_disallowed_origin(monkeypatch: pytest.MonkeyPatch):
+    """A browser exposes a credentialed response only when the allow-origin header names the
+    requesting origin exactly. A disallowed origin never receives that header, so credentials
+    are unusable from it whatever else the response carries."""
+    client = cors_client(ALLOWED_ORIGIN, monkeypatch)
+    response = client.get(
+        "/api/me", headers={"Origin": DISALLOWED_ORIGIN, "Cookie": "ht_session=anything"}
+    )
+    assert "access-control-allow-origin" not in response.headers
+
+
+def test_credentials_are_never_combined_with_a_wildcard(monkeypatch: pytest.MonkeyPatch):
+    """With a cookie present, the exact origin is echoed, never '*'."""
+    client = cors_client(ALLOWED_ORIGIN, monkeypatch)
+    response = client.get(
+        "/health", headers={"Origin": ALLOWED_ORIGIN, "Cookie": "ht_session=anything"}
+    )
+    assert response.headers["access-control-allow-origin"] == ALLOWED_ORIGIN
+    assert response.headers["access-control-allow-credentials"] == "true"
+
+
+def test_a_wildcard_allow_list_is_refused_at_construction(monkeypatch: pytest.MonkeyPatch):
+    """Starlette would answer a credentialed request from *any* origin under a '*' allow-list,
+    which would let any website act as the signed-in user. So the configuration is refused."""
+    monkeypatch.setenv("HEALTHTREND_ALLOWED_ORIGINS", f"{ALLOWED_ORIGIN},*")
+    with pytest.raises(ConfigurationError):
+        build_app()
+
+
+def test_preflight_permits_the_methods_the_account_routes_use(monkeypatch: pytest.MonkeyPatch):
+    client = cors_client(ALLOWED_ORIGIN, monkeypatch)
+    response = client.options(
+        "/api/me",
+        headers={"Origin": ALLOWED_ORIGIN, "Access-Control-Request-Method": "GET"},
+    )
+    assert response.status_code == 200
+    allowed = response.headers["access-control-allow-methods"]
+    for method in ("GET", "POST", "PUT", "DELETE"):
+        assert method in allowed
+    assert response.headers["access-control-allow-credentials"] == "true"
 
 
 def test_no_wildcard_is_ever_echoed(monkeypatch: pytest.MonkeyPatch):

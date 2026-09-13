@@ -4,8 +4,11 @@ on:
   push:
   pull_request:
 
-# Every step is one of the four commands documented in the README, run in the same order.
-# No commit should be considered accepted if these fail.
+# Every step of `checks` is one of the four commands documented in the README, run in the same
+# order. `persistence-postgres` re-runs the storage layer against a real Postgres server, because
+# the main suite uses in-memory SQLite and the two differ in exactly the places storage bugs hide
+# (datetimes, column lengths, constraint errors). No commit should be considered accepted if
+# either job fails.
 jobs:
   checks:
     runs-on: ubuntu-latest
@@ -40,3 +43,49 @@ jobs:
 
       - name: Tests
         run: uv run pytest -q
+
+  persistence-postgres:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: healthtrend
+          POSTGRES_PASSWORD: healthtrend
+          POSTGRES_DB: healthtrend_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    # A disposable CI database with throwaway credentials; the tests drop every table in it.
+    env:
+      HEALTHTREND_DATABASE_URL: postgresql+psycopg://healthtrend:healthtrend@localhost:5432/healthtrend_test
+      HEALTHTREND_TEST_DATABASE_URL: postgresql+psycopg://healthtrend:healthtrend@localhost:5432/healthtrend_test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      # Upgrade an empty database, confirm the models need no further migration, and confirm
+      # the migration can be reversed.
+      - name: Migrations
+        run: |
+          uv run alembic upgrade head
+          uv run alembic check
+          uv run alembic downgrade base
+
+      - name: Persistence tests on Postgres
+        run: uv run pytest -q tests/persistence

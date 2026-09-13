@@ -78,3 +78,35 @@ class CsvMalformedStructureError(HealthTrendError):
 
 class CsvInvalidTimezoneError(HealthTrendError):
     """``assumed_timezone`` is not a timezone :mod:`zoneinfo` recognises."""
+
+
+class ConfigurationError(HealthTrendError):
+    """The server's configuration is missing or invalid.
+
+    Raised at startup, never per request. The message names the setting at fault and never
+    its value, because several settings are credentials.
+    """
+
+
+class AuthError(HealthTrendError):
+    """Base class for sign-in and session failures.
+
+    None of these carries an email address, a sign-in code or a session token in its
+    message, and none says whether an account exists.
+    """
+
+
+class UnauthenticatedError(AuthError):
+    """The request has no valid session: no cookie, an unknown token, or an expired session."""
+
+
+class InvalidCodeError(AuthError):
+    """The sign-in code is wrong, already used, exhausted, or was never issued for the email."""
+
+
+class CodeExpiredError(AuthError):
+    """The most recent sign-in code for the email has passed its expiry time."""
+
+
+class TooManyCodeRequestsError(AuthError):
+    """Too many sign-in codes have been requested for one email within the rate-limit window."""

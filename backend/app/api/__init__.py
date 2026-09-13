@@ -11,7 +11,7 @@ mathematics or what a trend means.
 
 from typing import Final
 
-APP_VERSION: Final = "0.1.0"
+APP_VERSION: Final = "0.2.0"
 """The published API version.
 
 Mirrors ``version`` in ``pyproject.toml``; ``tests/api/test_health.py`` asserts they agree,

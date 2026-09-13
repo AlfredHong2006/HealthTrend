@@ -184,6 +184,10 @@ def test_the_openapi_schema_builds(strict_client: TestClient):
         "/api/demo",
         "/api/demo/{scenario}",
         "/api/ingest/csv",
+        "/api/auth/code/request",
+        "/api/auth/code/verify",
+        "/api/auth/logout",
+        "/api/me",
     }
 
 

@@ -27,6 +27,71 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/code/request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Email a sign-in code
+         * @description Send a six-digit sign-in code to the address, if it may sign in.
+         *
+         *     The response is the same whether or not the address may sign in and whether or not an
+         *     account exists for it.
+         */
+        post: operations["request_sign_in_code_api_auth_code_request_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/code/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Exchange a sign-in code for a session
+         * @description Verify the code, start a session in an HttpOnly cookie, and describe the account.
+         *
+         *     The account is created on the first successful sign-in for an address.
+         */
+        post: operations["verify_sign_in_code_api_auth_code_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * End the current session
+         * @description End the session in the cookie, if any, and clear the cookie. Always succeeds.
+         */
+        post: operations["sign_out_api_auth_logout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/demo": {
         parameters: {
             query?: never;
@@ -90,6 +155,26 @@ export interface paths {
          *     nowhere else.
          */
         post: operations["ingest_csv_route_api_ingest_csv_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Describe the signed-in account
+         * @description Return the signed-in user, their preferences, their goal and their measurement count.
+         */
+        get: operations["me_api_me_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -180,6 +265,41 @@ export interface components {
             span_days: number;
             /** Trajectory */
             trajectory: components["schemas"]["TrajectoryPointOut"][];
+        };
+        /**
+         * CodeRequestAcceptedOut
+         * @description Acknowledgement that a code request was received.
+         *
+         *     Deliberately empty. The response is identical whether or not the address may sign in and
+         *     whether or not an account exists, so it tells the caller nothing about either.
+         */
+        CodeRequestAcceptedOut: Record<string, never>;
+        /**
+         * CodeRequestIn
+         * @description Ask for a sign-in code to be emailed.
+         */
+        CodeRequestIn: {
+            /**
+             * Email
+             * @description The address to send a sign-in code to.
+             */
+            email: string;
+        };
+        /**
+         * CodeVerifyIn
+         * @description Exchange an emailed sign-in code for a session.
+         */
+        CodeVerifyIn: {
+            /**
+             * Code
+             * @description The six-digit code from the email.
+             */
+            code: string;
+            /**
+             * Email
+             * @description The address the code was sent to.
+             */
+            email: string;
         };
         /**
          * CsvIngestResponse
@@ -440,6 +560,22 @@ export interface components {
             /** W Upper95 */
             w_upper95: number;
         };
+        /**
+         * GoalOut
+         * @description The user's goal, in kilograms.
+         */
+        GoalOut: {
+            /**
+             * Target Weekly Rate Kg
+             * @description Target rate of change per week, if set. Negative means losing.
+             */
+            target_weekly_rate_kg: number | null;
+            /**
+             * Target Weight Kg
+             * @description Target weight, if set.
+             */
+            target_weight_kg: number | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -464,6 +600,21 @@ export interface components {
              * @description The API version.
              */
             version: string;
+        };
+        /**
+         * MeOut
+         * @description Everything the app needs to know about the signed-in account on load.
+         */
+        MeOut: {
+            /** @description The user's goal, or null if none is set. */
+            goal: components["schemas"]["GoalOut"] | null;
+            /**
+             * Measurement Count
+             * @description How many measurements are stored.
+             */
+            measurement_count: number;
+            preferences: components["schemas"]["PreferencesOut"];
+            user: components["schemas"]["UserOut"];
         };
         /**
          * ModelParamsOut
@@ -522,6 +673,18 @@ export interface components {
             weight_kg: number;
         };
         /**
+         * PreferencesOut
+         * @description Display preferences.
+         */
+        PreferencesOut: {
+            /**
+             * Display Unit
+             * @description Unit weights are displayed in. kg until the user chooses otherwise.
+             * @enum {string}
+             */
+            display_unit: "kg" | "lb";
+        };
+        /**
          * TrajectoryPointOut
          * @description One point on the estimated latent-weight path.
          */
@@ -539,6 +702,28 @@ export interface components {
             w_sd: number;
             /** W Upper95 */
             w_upper95: number;
+        };
+        /**
+         * UserOut
+         * @description The signed-in user.
+         */
+        UserOut: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description When the account was created (UTC).
+             */
+            created_at: string;
+            /**
+             * Email
+             * @description The normalised email address used to sign in.
+             */
+            email: string;
+            /**
+             * Id
+             * @description Stable account identifier.
+             */
+            id: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -592,6 +777,108 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
+            };
+        };
+    };
+    request_sign_in_code_api_auth_code_request_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodeRequestIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodeRequestAcceptedOut"];
+                };
+            };
+            /** @description The request was rejected. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too many codes were requested recently. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    verify_sign_in_code_api_auth_code_verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodeVerifyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeOut"];
+                };
+            };
+            /** @description The code is invalid or has expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request was rejected. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    sign_out_api_auth_logout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -702,6 +989,35 @@ export interface operations {
             };
             /** @description The request was rejected. */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    me_api_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeOut"];
+                };
+            };
+            /** @description Not signed in. */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

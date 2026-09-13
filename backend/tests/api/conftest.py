@@ -3,23 +3,56 @@
 The clock is the important one. Production code has no settable clock -- shipping one
 invites it to be used -- so the test double lives here and arrives through FastAPI's
 dependency override mechanism. With it in place every response is reproducible: forecast
-origins, demo timestamps and the golden fixture all become functions of a fixed instant.
+origins, demo timestamps, code and session expiry, and the golden fixture all become
+functions of a fixed instant.
+
+The application is never configured from the environment here. Every app is built with
+:func:`make_test_settings`: an explicit, fixed test auth secret that is not used anywhere
+else, and a fresh in-memory SQLite database whose schema is created directly from the models.
+The mailer is replaced by :class:`RecordingMailer`, so a test can read the code a real user
+would have received by email.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
+from typing import Any
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.api.deps import get_clock
+from app.api.deps import get_clock, get_mailer
+from app.config import Settings
 from app.main import create_app
+from app.services.clock import Clock
 
 FROZEN_NOW = datetime(2026, 6, 12, 9, 0, tzinfo=UTC)
 """The instant every test pretends it is. Arbitrary, but fixed."""
+
+TEST_AUTH_SECRET = "healthtrend-test-auth-secret-0123456789-not-for-production"
+"""The deterministic auth secret every test app uses. Never valid anywhere else."""
+
+TEST_DATABASE_URL = "sqlite+pysqlite:///:memory:"
+"""A private in-memory database per application."""
+
+
+def make_test_settings(**overrides: Any) -> Settings:
+    """Return valid settings for a test app, with any field overridden."""
+    base = Settings(
+        database_url=TEST_DATABASE_URL,
+        auth_secret=TEST_AUTH_SECRET,
+        cookie_secure=False,
+        mailer="console",
+        smtp_host=None,
+        smtp_port=587,
+        smtp_user=None,
+        smtp_password=None,
+        smtp_from=None,
+        beta_allowed_emails=frozenset(),
+    )
+    return replace(base, **overrides)
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,17 +66,71 @@ class FixedClock:
         return self.instant
 
 
-def build_app(now: datetime = FROZEN_NOW) -> FastAPI:
-    """Return an application whose clock is frozen at ``now``."""
-    app = create_app()
-    app.dependency_overrides[get_clock] = lambda: FixedClock(now)
+@dataclass(frozen=True, slots=True)
+class SentCode:
+    """One sign-in email the recording mailer would have sent."""
+
+    email: str
+    code: str
+
+
+@dataclass(slots=True)
+class RecordingMailer:
+    """A mailer that records sign-in codes instead of sending them."""
+
+    sent: list[SentCode] = field(default_factory=list)
+
+    def send_login_code(self, email: str, code: str) -> None:
+        """Record the code."""
+        self.sent.append(SentCode(email=email, code=code))
+
+    @property
+    def last_code(self) -> str:
+        """The most recently sent code."""
+        return self.sent[-1].code
+
+
+@dataclass(slots=True)
+class MutableClock:
+    """A clock a test can move forward, for expiry and sliding-session tests."""
+
+    instant: datetime
+
+    def now(self) -> datetime:
+        """Return the current test instant."""
+        return self.instant
+
+
+def build_app(
+    now: datetime = FROZEN_NOW,
+    *,
+    settings: Settings | None = None,
+    mailer: RecordingMailer | None = None,
+    clock: Clock | None = None,
+) -> FastAPI:
+    """Return an application with a fresh empty database, its clock frozen at ``now``.
+
+    Pass ``clock`` instead (a :class:`MutableClock`) for a test that needs time to move.
+    """
+    app = create_app(settings or make_test_settings())
+    app.state.database.create_schema()
+    fixed_clock: Clock = clock if clock is not None else FixedClock(now)
+    recording = mailer if mailer is not None else RecordingMailer()
+    app.dependency_overrides[get_clock] = lambda: fixed_clock
+    app.dependency_overrides[get_mailer] = lambda: recording
     return app
 
 
 @pytest.fixture
-def app() -> FastAPI:
+def mailer() -> RecordingMailer:
+    """The mailer the :func:`app` fixture's application sends codes through."""
+    return RecordingMailer()
+
+
+@pytest.fixture
+def app(mailer: RecordingMailer) -> FastAPI:
     """An application with the clock frozen at :data:`FROZEN_NOW`."""
-    return build_app()
+    return build_app(mailer=mailer)
 
 
 @pytest.fixture
