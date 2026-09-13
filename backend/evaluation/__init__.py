@@ -29,6 +29,19 @@ Five experiments, in dependency order:
     eight regimes including curvature, a level jump and outlier contamination. Simple
     baselines are expected to win somewhere; that result is published, not suppressed.
 
+Milestone 7A adds two studies under the same rules, pre-registered in
+``docs/evaluation/m7a_preregistration.md`` and reported separately in
+``docs/evaluation/m7a_report.md`` so that the closed M6 documents stay untouched:
+
+``E6`` on-plan probability
+    Whether ``P(rate in plan band)`` from the shipped posterior velocity is calibrated,
+    sharp enough to be useful and robust to a single bad reading
+    (:mod:`evaluation.plan_alignment`, :mod:`evaluation.plan_scenarios`).
+
+``E7`` departure claims
+    Whether any plan-relative or innovation-based rule can claim a departure with a
+    controlled false-claim rate, useful power and no single-reading false alarms.
+
 Rules this package lives by, none of them optional:
 
 - **Synthetic data only.** Every series comes from :mod:`testing.synthetic`, whose

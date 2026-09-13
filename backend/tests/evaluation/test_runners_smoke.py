@@ -31,6 +31,8 @@ EXPECTED_KEYS = {
     "e2": {"configurations", "assessment", "investigate"},
     "e34": {"cells", "e3_identifiability", "e4_recovery", "sigma_v0_sensitivity"},
     "e5": {"regimes", "summary", "n_beating_shipped"},
+    "e6": {"configs", "sharpness", "bad_reading", "eligibility", "on_plan_probability_eligible"},
+    "e7": {"plan_rules", "innovation_rules", "eligibility", "eligible_rules", "n_eligible_rules"},
 }
 
 

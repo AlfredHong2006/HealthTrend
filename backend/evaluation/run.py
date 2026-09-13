@@ -5,7 +5,8 @@ Run from ``backend/``::
     uv run python -m evaluation.run e1              # full scale, writes results/e1.json
     uv run python -m evaluation.run all             # every experiment, full scale
     uv run python -m evaluation.run all --smoke     # fast, writes nothing
-    uv run python -m evaluation.run tables          # regenerate docs/evaluation/results.md
+    uv run python -m evaluation.run tables          # regenerate results.md and m7a_results.md
+    uv run python -m evaluation.run m7a             # Milestone 7A only: e6 and e7
 
 The experiments are deliberately not pytest tests. A full run takes tens of minutes,
 which does not belong on every push; what the test suite runs is the smoke scale, which
@@ -32,6 +33,8 @@ from evaluation.experiments import (
     e1_exact_likelihood,
     e2_calibration,
     e5_baselines,
+    e6_plan_alignment,
+    e7_departure,
     e34_estimation,
 )
 
@@ -43,14 +46,21 @@ EXPERIMENTS: Final[dict[str, Callable[[str], dict[str, Any]]]] = {
     "e2": e2_calibration.run,
     "e34": e34_estimation.run,
     "e5": e5_baselines.run,
+    "e6": e6_plan_alignment.run,
+    "e7": e7_departure.run,
 }
 """Experiment name to runner. The key is also the result filename stem."""
+
+M7A_EXPERIMENTS: Final = ("e6", "e7")
+"""Milestone 7A's two studies, runnable on their own without repeating the M6 runs."""
 
 RESULT_STEMS: Final[dict[str, str]] = {
     "e1": "e1_exact_likelihood",
     "e2": "e2_calibration",
     "e34": "e34_estimation",
     "e5": "e5_baselines",
+    "e6": "e6_plan_alignment",
+    "e7": "e7_departure",
 }
 """Experiment name to committed filename stem."""
 
@@ -83,11 +93,13 @@ def run_experiment(name: str, scale: str) -> dict[str, Any]:
 
 
 def render_tables() -> None:
-    """Regenerate ``docs/evaluation/results.md`` from the committed result files."""
-    from evaluation import tables
+    """Regenerate both generated results documents from the committed result files."""
+    from evaluation import m7a_tables, tables
 
-    path = tables.write_results_document()
-    print(f"[tables] wrote {path} ({path.stat().st_size} bytes)")
+    m6_path = tables.write_results_document()
+    m7a_path = m7a_tables.write_results_document()
+    for path in (m6_path, m7a_path):
+        print(f"[tables] wrote {path} ({path.stat().st_size} bytes)")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -98,7 +110,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "target",
-        choices=(*EXPERIMENTS, "all", "tables"),
+        choices=(*EXPERIMENTS, "all", "m7a", "tables"),
         help="experiment to run; 'all' runs each exactly once, 'tables' regenerates the report",
     )
     parser.add_argument(
@@ -121,7 +133,12 @@ def main(argv: list[str] | None = None) -> int:
         render_tables()
         return 0
 
-    names = tuple(EXPERIMENTS) if args.target == "all" else (args.target,)
+    if args.target == "all":
+        names: tuple[str, ...] = tuple(EXPERIMENTS)
+    elif args.target == "m7a":
+        names = M7A_EXPERIMENTS
+    else:
+        names = (args.target,)
     failures: list[str] = []
     for name in names:
         try:

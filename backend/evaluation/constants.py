@@ -180,3 +180,138 @@ def t_975(df: int) -> float:
     if df < 1:
         raise ValueError("a confidence interval needs at least two clusters")
     return student_t_ppf(0.975, df)
+
+
+# ---------------------------------------------------------------------------
+# Milestone 7A: the distributions the plan-alignment study needs
+# ---------------------------------------------------------------------------
+#
+# The same rule as above applies: computed, not transcribed. The normal CDF is a one-liner
+# on ``math.erfc``; its quantile is a bisection on that CDF, checked against ``Z_95`` and
+# ``Z_90`` by test ``EV14``. The chi-square CDF is the regularised lower incomplete gamma
+# function, checked against the two closed forms that exist (``k = 1`` through ``Z_95``, and
+# ``k = 2``, whose CDF is ``1 - exp(-x / 2)``).
+
+_GAMMA_MAX_ITERATIONS: Final = 500
+_GAMMA_EPSILON: Final = 3.0e-16
+_NORMAL_PPF_BRACKET: Final = 40.0
+_CHI2_PPF_ITERATIONS: Final = 200
+
+
+def normal_cdf(x: float) -> float:
+    """Return ``Phi(x)``, the standard-normal distribution function."""
+    return 0.5 * math.erfc(-float(x) / math.sqrt(2.0))
+
+
+def normal_pdf(x: float) -> float:
+    """Return ``phi(x)``, the standard-normal density."""
+    value = float(x)
+    return math.exp(-0.5 * value * value) / math.sqrt(2.0 * math.pi)
+
+
+def normal_ppf(p: float) -> float:
+    """Return the ``p``-quantile of the standard normal, by bisection on :func:`normal_cdf`."""
+    if not 0.0 < p < 1.0:
+        raise ValueError("p must lie strictly between 0 and 1")
+    low = -_NORMAL_PPF_BRACKET
+    high = _NORMAL_PPF_BRACKET
+    for _ in range(_PPF_ITERATIONS):
+        middle = 0.5 * (low + high)
+        if normal_cdf(middle) < p:
+            low = middle
+        else:
+            high = middle
+    return 0.5 * (low + high)
+
+
+def student_t_cdf(t: float, df: int) -> float:
+    """Return ``P(T <= t)`` for Student-t with ``df`` degrees of freedom.
+
+    Built from :func:`student_t_sf_two_sided` by symmetry, so it shares that function's
+    verification rather than introducing a second implementation to trust.
+    """
+    tail = 0.5 * student_t_sf_two_sided(t, df)
+    return 1.0 - tail if t >= 0.0 else tail
+
+
+def regularised_lower_gamma(a: float, x: float) -> float:
+    """Return ``P(a, x)``, the regularised lower incomplete gamma function.
+
+    The series for ``x < a + 1`` and the continued fraction (modified Lentz) otherwise,
+    which is where each converges quickly.
+    """
+    if a <= 0.0:
+        raise ValueError("the gamma shape parameter must be positive")
+    if x <= 0.0:
+        return 0.0
+    log_front = a * math.log(x) - x - math.lgamma(a)
+    if x < a + 1.0:
+        term = 1.0 / a
+        total = term
+        denominator = a
+        for _ in range(_GAMMA_MAX_ITERATIONS):
+            denominator += 1.0
+            term *= x / denominator
+            total += term
+            if abs(term) < abs(total) * _GAMMA_EPSILON:
+                return min(1.0, total * math.exp(log_front))
+        raise RuntimeError("the incomplete gamma series did not converge")
+    b = x + 1.0 - a
+    c = 1.0 / _BETACF_TINY
+    d = 1.0 / b
+    h = d
+    for i in range(1, _GAMMA_MAX_ITERATIONS + 1):
+        an = -i * (i - a)
+        b += 2.0
+        d = an * d + b
+        if abs(d) < _BETACF_TINY:
+            d = _BETACF_TINY
+        c = b + an / c
+        if abs(c) < _BETACF_TINY:
+            c = _BETACF_TINY
+        d = 1.0 / d
+        delta = d * c
+        h *= delta
+        if abs(delta - 1.0) < _GAMMA_EPSILON:
+            return max(0.0, 1.0 - math.exp(log_front) * h)
+    raise RuntimeError("the incomplete gamma continued fraction did not converge")
+
+
+def chi2_cdf(x: float, df: int) -> float:
+    """Return ``P(X <= x)`` for a chi-square with ``df`` degrees of freedom."""
+    if df < 1:
+        raise ValueError("degrees of freedom must be at least 1")
+    return regularised_lower_gamma(0.5 * df, 0.5 * float(x))
+
+
+def chi2_ppf(p: float, df: int) -> float:
+    """Return the ``p``-quantile of a chi-square with ``df`` degrees of freedom.
+
+    Bisection on :func:`chi2_cdf`. The upper bracket is grown until it holds the quantile,
+    so no degrees of freedom are out of range.
+    """
+    if not 0.0 < p < 1.0:
+        raise ValueError("p must lie strictly between 0 and 1")
+    low = 0.0
+    high = max(1.0, 2.0 * df)
+    while chi2_cdf(high, df) < p:
+        high *= 2.0
+    for _ in range(_CHI2_PPF_ITERATIONS):
+        middle = 0.5 * (low + high)
+        if chi2_cdf(middle, df) < p:
+            low = middle
+        else:
+            high = middle
+    return 0.5 * (low + high)
+
+
+def clipped_normal_second_moment(c: float) -> float:
+    """Return ``E[clip(Z, -c, c)**2]`` for ``Z`` standard normal.
+
+    ``E[Z**2; |Z| < c] + c**2 P(|Z| >= c)``, where the truncated second moment is
+    ``(2 Phi(c) - 1) - 2 c phi(c)``. Test ``EV14`` checks it against numerical integration.
+    """
+    if c <= 0.0:
+        raise ValueError("the clipping constant must be positive")
+    inside = (2.0 * normal_cdf(c) - 1.0) - 2.0 * c * normal_pdf(c)
+    return inside + 2.0 * c * c * (1.0 - normal_cdf(c))

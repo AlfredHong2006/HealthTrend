@@ -457,6 +457,69 @@ def jump_series(
     )
 
 
+def rate_change_series(
+    *,
+    start_kg: float = 80.0,
+    initial_rate_kg_per_week: float = -0.5,
+    final_rate_kg_per_week: float = 0.0,
+    change_start_day: float = 42.0,
+    ramp_days: float = 28.0,
+    n_obs: int = 85,
+    step_days: float = 1.0,
+    noise_sd_kg: float = 0.5,
+    seed: int = 0,
+    start: datetime = DEFAULT_START,
+) -> SyntheticSeries:
+    """Generate a rate that changes gradually: constant, then a linear ramp, then constant.
+
+    Added for Milestone 7A, whose departure-detection study needs a change that is neither
+    abrupt (:func:`plateau_series`) nor continuous from the start (:func:`curvature_series`).
+    The velocity is ``r0`` until ``change_start_day``, moves linearly to ``r1`` over
+    ``ramp_days``, and stays at ``r1``; the weight is its exact integral::
+
+        t < a:            w = w0 + r0 t
+        a <= t < a + R:   w = w0 + r0 t + (r1 - r0) (t - a)**2 / (2 R)
+        t >= a + R:       w = w0 + r0 t + (r1 - r0) (R / 2 + t - a - R)
+
+    A slow enough ramp sits inside the model's own process-noise budget, which is the
+    point of generating it: it is the kind of departure an innovation test is not built to
+    see.
+    """
+    if ramp_days <= 0.0:
+        raise ValueError("ramp_days must be positive; use plateau_series for a step")
+    r0 = initial_rate_kg_per_week / 7.0
+    r1 = final_rate_kg_per_week / 7.0
+    a = change_start_day
+    stamps, elapsed = _stamps_and_elapsed(regular_gaps(n_obs, step_days), start)
+
+    def weight(t: float) -> float:
+        if t < a:
+            return start_kg + r0 * t
+        if t < a + ramp_days:
+            return start_kg + r0 * t + (r1 - r0) * (t - a) ** 2 / (2.0 * ramp_days)
+        return start_kg + r0 * t + (r1 - r0) * (ramp_days / 2.0 + t - a - ramp_days)
+
+    def velocity(t: float) -> float:
+        if t < a:
+            return r0
+        if t < a + ramp_days:
+            return r0 + (r1 - r0) * (t - a) / ramp_days
+        return r1
+
+    return _observed_series(
+        label=(
+            f"synthetic gradual rate change, {initial_rate_kg_per_week:+.2f} to "
+            f"{final_rate_kg_per_week:+.2f} kg/week over days {a:g}-{a + ramp_days:g}"
+        ),
+        stamps=stamps,
+        elapsed=elapsed,
+        true_weight=tuple(weight(days) for days in elapsed),
+        true_velocity=tuple(velocity(days) for days in elapsed),
+        noise_sd_kg=noise_sd_kg,
+        seed=seed,
+    )
+
+
 def contaminate(
     series: SyntheticSeries,
     *,

@@ -243,3 +243,138 @@ def summarise_checks(checks: dict[str, tuple[ClusterSummary, float]]) -> dict[st
             name: summary.deviation_in_se(nominal) for name, (summary, nominal) in checks.items()
         },
     }
+
+
+# ---------------------------------------------------------------------------
+# Milestone 7A: rates, with the unit of inference stated
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class RateSummary:
+    """A proportion with a 95% interval and the counts behind it.
+
+    Attributes:
+        rate: the point estimate, ``successes / trials``.
+        ci_lo: lower end of the interval, never below zero.
+        ci_hi: upper end of the interval, never above one.
+        successes: numerator count.
+        trials: denominator count.
+        n_clusters: how many independent series the counts come from.
+        method: ``"wilson"`` for one Bernoulli per series, ``"cluster_ratio"`` for pooled
+            check-ins, ``"rule_of_three"`` when a pooled rate saw no events at all.
+    """
+
+    rate: float
+    ci_lo: float
+    ci_hi: float
+    successes: int
+    trials: int
+    n_clusters: int
+    method: str
+
+    def to_dict(self) -> dict[str, float | int | str]:
+        """Return a JSON-serialisable view."""
+        return {
+            "rate": self.rate,
+            "ci_lo": self.ci_lo,
+            "ci_hi": self.ci_hi,
+            "successes": self.successes,
+            "trials": self.trials,
+            "n_clusters": self.n_clusters,
+            "method": self.method,
+        }
+
+
+def wilson_interval(successes: int, trials: int) -> RateSummary:
+    """Return a Wilson 95% score interval for independent Bernoulli trials.
+
+    For a rate with one outcome per series -- "did this series ever produce a false claim"
+    -- the series are independent and the Wilson interval is the right one. Unlike the
+    Wald interval it does not collapse to zero width at zero events, which is exactly the
+    case a false-alarm study most needs to report honestly.
+
+    Raises:
+        ValueError: with no trials, where no rate exists to report.
+    """
+    if trials < 1:
+        raise ValueError("a rate needs at least one trial")
+    if not 0 <= successes <= trials:
+        raise ValueError("successes must lie between zero and the number of trials")
+    p = successes / trials
+    z2 = Z_95 * Z_95
+    denominator = 1.0 + z2 / trials
+    centre = (p + z2 / (2.0 * trials)) / denominator
+    half = Z_95 * math.sqrt(p * (1.0 - p) / trials + z2 / (4.0 * trials * trials)) / denominator
+    # At zero events the lower bound is exactly zero, and at all events the upper bound is
+    # exactly one; the closed form reaches both only up to round-off, so they are set.
+    return RateSummary(
+        rate=p,
+        ci_lo=0.0 if successes == 0 else max(0.0, centre - half),
+        ci_hi=1.0 if successes == trials else min(1.0, centre + half),
+        successes=successes,
+        trials=trials,
+        n_clusters=trials,
+        method="wilson",
+    )
+
+
+def clustered_rate(numerators: Sequence[int], denominators: Sequence[int]) -> RateSummary:
+    """Return a pooled rate over correlated events, with a cluster-robust interval.
+
+    Each series contributes ``a_i`` events out of ``n_i`` opportunities -- claims among its
+    check-ins, say -- and the check-ins within one series are not independent. The estimate
+    is the ratio ``sum a / sum n``; its standard error is the linearised ratio-estimator one,
+    ``sqrt(sum (a_i - r n_i)**2 / (G (G - 1))) / mean n``, over the ``G`` series that
+    contributed any opportunity. That is the clustered analogue of the interval
+    :func:`cluster_summary` gives a mean.
+
+    When no event occurred at all the linearised standard error is zero, which would claim
+    certainty the data cannot support. The upper bound is then the rule of three over the
+    contributing series, ``3 / G``, and the method field says so.
+
+    Raises:
+        ValueError: if the inputs disagree in length or no series has any opportunity.
+    """
+    if len(numerators) != len(denominators):
+        raise ValueError("numerators and denominators must pair up")
+    pairs = [(int(a), int(n)) for a, n in zip(numerators, denominators, strict=True) if n > 0]
+    if not pairs:
+        raise ValueError("no series contributed any opportunity; there is no rate")
+    total_a = sum(a for a, _ in pairs)
+    total_n = sum(n for _, n in pairs)
+    clusters = len(pairs)
+    rate = total_a / total_n
+    if total_a == 0:
+        return RateSummary(
+            rate=0.0,
+            ci_lo=0.0,
+            ci_hi=min(1.0, 3.0 / clusters),
+            successes=0,
+            trials=total_n,
+            n_clusters=clusters,
+            method="rule_of_three",
+        )
+    if clusters < 2:
+        return RateSummary(
+            rate=rate,
+            ci_lo=0.0,
+            ci_hi=1.0,
+            successes=total_a,
+            trials=total_n,
+            n_clusters=clusters,
+            method="cluster_ratio",
+        )
+    mean_n = total_n / clusters
+    residual = math.fsum((a - rate * n) ** 2 for a, n in pairs)
+    se = math.sqrt(residual / (clusters * (clusters - 1))) / mean_n
+    half = t_975(clusters - 1) * se
+    return RateSummary(
+        rate=rate,
+        ci_lo=max(0.0, rate - half),
+        ci_hi=min(1.0, rate + half),
+        successes=total_a,
+        trials=total_n,
+        n_clusters=clusters,
+        method="cluster_ratio",
+    )

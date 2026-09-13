@@ -269,3 +269,41 @@ def test_ev3_the_irregular_schedule_overshoots_and_says_so():
     tasks = forecast_origins(suite.series[0])
     assert any(task.horizon_days > 31.0 for task in tasks)
     assert max(IRREGULAR_GAPS_DAYS) == 21.0
+
+
+# --- EV3: the Milestone 7A gradual rate change -----------------------------------------
+
+
+def test_ev3_the_rate_change_truth_is_continuous_and_its_velocity_is_its_derivative():
+    from testing.synthetic import rate_change_series
+
+    series = rate_change_series(
+        start_kg=80.0,
+        initial_rate_kg_per_week=-0.5,
+        final_rate_kg_per_week=0.0,
+        change_start_day=42.0,
+        ramp_days=28.0,
+        n_obs=121,
+        noise_sd_kg=0.0,
+        seed=1,
+    )
+    r0 = -0.5 / 7.0
+    assert series.true_velocity_kg_per_day[41] == pytest.approx(r0)
+    assert series.true_velocity_kg_per_day[56] == pytest.approx(r0 / 2.0)
+    assert series.true_velocity_kg_per_day[70] == 0.0
+    assert series.true_velocity_kg_per_day[120] == 0.0
+    # The weight is the integral of the velocity: the ramp costs exactly r0 * R / 2 kg.
+    assert series.true_weight_kg[70] == pytest.approx(80.0 + r0 * 42.0 + r0 * 14.0)
+    assert series.true_weight_kg[120] == pytest.approx(series.true_weight_kg[70])
+    weights = np.array(series.true_weight_kg)
+    central = (weights[2:] - weights[:-2]) / 2.0
+    velocities = np.array(series.true_velocity_kg_per_day[1:-1])
+    assert np.max(np.abs(central - velocities)) < 1e-3
+    assert "synthetic" in series.label
+
+
+def test_ev3_a_rate_change_needs_a_ramp():
+    from testing.synthetic import rate_change_series
+
+    with pytest.raises(ValueError, match="ramp_days"):
+        rate_change_series(ramp_days=0.0)

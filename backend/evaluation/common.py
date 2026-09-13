@@ -101,6 +101,8 @@ SEED_BASES: Final[dict[str, SeedRange]] = {
     "e34_redraw": SeedRange(2_500_000, 200_000),
     "e5_train": SeedRange(3_000_000, 50_000),
     "e5_test": SeedRange(3_100_000, 50_000),
+    "e6": SeedRange(4_000_000, 100_000),
+    "e7": SeedRange(4_100_000, 100_000),
 }
 """Disjoint seed blocks, one per experiment or split.
 
@@ -112,6 +114,10 @@ plan requires before any code is suspected.
 to a non-positive weight, which :class:`~app.core.types.Observation` rightly refuses. The
 replacement is drawn from a block no other experiment touches so the substitution stays
 traceable and reproducible.
+
+``e6`` and ``e7`` are Milestone 7A's plan-alignment and departure-detection studies. Neither
+tunes anything, so neither needs a train/test split; each owns one block, sliced by
+configuration.
 """
 
 

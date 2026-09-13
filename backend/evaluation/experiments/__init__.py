@@ -1,4 +1,4 @@
-"""The five M6 experiments, one module each.
+"""The five M6 experiments and the two Milestone 7A studies, one module each.
 
 Every module exposes ``run(scale)`` returning ``{"_config": RunConfig, "results": {...}}``,
 where ``results`` is JSON-serialisable and unrounded. Nothing here writes a file:
