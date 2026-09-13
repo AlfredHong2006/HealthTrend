@@ -9,8 +9,10 @@
  * compute -- so nothing in this module returns a date, a duration or a probability, and
  * nothing classifies the comparison as good, bad, ahead or behind.
  *
- * Goal state itself is ephemeral: it lives in component state for the duration of the visit
- * and is written nowhere (docs/privacy.md, and the locked prototype decisions in V2_DESIGN).
+ * On the public V2 routes goal state is ephemeral: it lives in component state for the duration
+ * of the visit and is written nowhere (docs/privacy.md, and the locked prototype decisions in
+ * V2_DESIGN). The signed-in `/app` stores one goal per account through its Settings page, using
+ * the parsers below for validation; nothing in this module reads or writes that store.
  */
 
 /** Bounds for the target-weight field. Input validation, not a claim about anybody's weight. */

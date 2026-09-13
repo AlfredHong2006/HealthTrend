@@ -18,15 +18,35 @@ from datetime import timedelta
 import pytest
 from fastapi.testclient import TestClient
 
+from app.api.deps import get_mailer
 from app.schemas.analysis import MAX_OBSERVATIONS
-from tests.api.conftest import FROZEN_NOW
+from tests.api.conftest import (
+    FROZEN_NOW,
+    TEST_AUTH_SECRET,
+    MutableClock,
+    RecordingMailer,
+    build_app,
+    make_test_settings,
+    sign_in_as,
+)
 
 SENTINEL_WEIGHT = 77.7777
 SENTINEL_WEIGHT_TEXT = "77.7777"
 SENTINEL_TIMESTAMP = "2029-03-03T03:33:33"
 SENTINEL_TIMESTAMP_FRAGMENTS = ("2029-03-03", "03:33:33", "2029")
 
+SENTINEL_PAST_TIMESTAMP = "2020-07-07T07:07:07+00:00"
+"""A sentinel dated before FROZEN_NOW, for account routes where a future-dated one would
+raise ``observation_in_the_future`` before the log line under test is even reachable."""
+SENTINEL_PAST_TIMESTAMP_FRAGMENTS = ("2020-07-07", "07:07:07", "2020")
+
+
 JSON_HEADERS = {"content-type": "application/json"}
+
+REQUEST_CODE = "/api/auth/code/request"
+VERIFY_CODE = "/api/auth/code/verify"
+LOGOUT_ROUTE = "/api/auth/logout"
+ME_ROUTE = "/api/me"
 
 
 def assert_no_sentinels(text: str, *, context: str) -> None:
@@ -295,3 +315,212 @@ def test_no_filter_diagnostics_reach_the_response(client: TestClient):
     body = json.dumps(response.json())
     for internal in ("loglik", "innovation", "gain", '"P"', "v_kg_per_day", "v_sd"):
         assert internal not in body
+
+
+# --- sign-in: no email, code, token or user id in a body or a log ------------------------
+
+SENTINEL_EMAIL = "sentinel-7x7x7@example.invalid"
+SENTINEL_EMAIL_FRAGMENTS = ("sentinel-7x7x7", "7x7x7", "example.invalid")
+
+
+def assert_no_email(text: str, *, context: str) -> None:
+    """Fail if the sentinel address, or a recognisable fragment of it, appears in ``text``."""
+    for fragment in SENTINEL_EMAIL_FRAGMENTS:
+        assert fragment not in text, f"the email address leaked into {context}: {fragment}"
+
+
+def test_every_sign_in_failure_keeps_the_email_out_of_bodies_and_logs(
+    caplog: pytest.LogCaptureFixture,
+):
+    clock = MutableClock(FROZEN_NOW)
+    mailer = RecordingMailer()
+    client = TestClient(build_app(clock=clock, mailer=mailer), raise_server_exceptions=False)
+    responses = []
+    with caplog.at_level(logging.DEBUG):
+        # validation failures carrying the address
+        responses.append(client.post(REQUEST_CODE, json={"email": SENTINEL_EMAIL * 20}))
+        responses.append(
+            client.post(REQUEST_CODE, json={"email": SENTINEL_EMAIL, SENTINEL_EMAIL: 1})
+        )
+        responses.append(client.post(VERIFY_CODE, json={"email": SENTINEL_EMAIL, "code": "12x456"}))
+        responses.append(
+            client.post(
+                VERIFY_CODE,
+                content=f'{{"email": "{SENTINEL_EMAIL}", "code": '.encode(),
+                headers=JSON_HEADERS,
+            )
+        )
+        # a verify before any code exists
+        responses.append(client.post(VERIFY_CODE, json={"email": SENTINEL_EMAIL, "code": "000000"}))
+        # issue codes up to the rate limit, then one more
+        for _ in range(4):
+            responses.append(client.post(REQUEST_CODE, json={"email": SENTINEL_EMAIL}))
+        code = mailer.last_code
+        wrong = f"{(int(code) + 1) % 1_000_000:06d}"
+        # wrong codes up to and past the attempt limit
+        for _ in range(6):
+            responses.append(
+                client.post(VERIFY_CODE, json={"email": SENTINEL_EMAIL, "code": wrong})
+            )
+        # an expired code
+        clock.instant = FROZEN_NOW + timedelta(minutes=16)
+        responses.append(client.post(REQUEST_CODE, json={"email": SENTINEL_EMAIL}))
+        clock.instant = FROZEN_NOW + timedelta(minutes=30)
+        responses.append(
+            client.post(VERIFY_CODE, json={"email": SENTINEL_EMAIL, "code": mailer.last_code})
+        )
+        # a session cookie carrying the address
+        client.cookies.set("ht_session", SENTINEL_EMAIL)
+        responses.append(client.get(ME_ROUTE))
+
+    codes = {response.status_code for response in responses}
+    assert {202, 401, 422, 429} <= codes, codes
+    for response in responses:
+        assert_no_email(response.text, context=f"a {response.status_code} response body")
+        assert code not in response.text
+    text = captured_log_text(caplog)
+    assert "request rejected (invalid_code)" in text
+    assert "request rejected (code_expired)" in text
+    assert "request rejected (too_many_requests)" in text
+    assert "request rejected (unauthenticated)" in text
+    assert_no_email(text, context="the log")
+    for sent in mailer.sent:
+        assert sent.code not in text
+
+
+def test_a_successful_sign_in_logs_no_email_code_token_or_user_id(
+    caplog: pytest.LogCaptureFixture,
+):
+    mailer = RecordingMailer()
+    client = TestClient(build_app(mailer=mailer), raise_server_exceptions=False)
+    with caplog.at_level(logging.DEBUG):
+        client.post(REQUEST_CODE, json={"email": SENTINEL_EMAIL})
+        verified = client.post(
+            VERIFY_CODE, json={"email": SENTINEL_EMAIL, "code": mailer.last_code}
+        )
+        me = client.get(ME_ROUTE)
+        client.post(LOGOUT_ROUTE)
+    assert verified.status_code == me.status_code == 200
+    token = verified.cookies["ht_session"]
+    user_id = verified.json()["user"]["id"]
+
+    text = captured_log_text(caplog)
+    assert "/api/auth/code/verify" in text, "the access line should still identify the route"
+    assert_no_email(text, context="the log")
+    for secret in (mailer.last_code, token, user_id):
+        assert secret not in text
+
+
+def test_a_mail_delivery_failure_leaks_neither_the_address_nor_the_code(
+    caplog: pytest.LogCaptureFixture,
+):
+    """An SMTP error message can quote the recipient. Only the class name may be logged."""
+
+    class ExplodingMailer:
+        def send_login_code(self, email: str, code: str) -> None:
+            raise RuntimeError(f"could not deliver {code} to {email}")
+
+    app = build_app()
+    app.dependency_overrides[get_mailer] = ExplodingMailer
+    client = TestClient(app, raise_server_exceptions=False)
+    with caplog.at_level(logging.DEBUG):
+        response = client.post(REQUEST_CODE, json={"email": SENTINEL_EMAIL})
+    assert response.status_code == 500
+    assert response.json()["error"]["code"] == "internal_error"
+    assert_no_email(response.text, context="the 500 response body")
+    text = captured_log_text(caplog)
+    assert "unhandled RuntimeError" in text
+    assert_no_email(text, context="the log")
+
+
+# --- account routes: a stored measurement value must never reach the log ------------------
+
+
+def test_a_stored_measurement_value_never_reaches_the_access_log(caplog: pytest.LogCaptureFixture):
+    """A weight and its timestamp travel through create, list, analysis and export -- all
+    legitimately present in each 200 response body, none of them ever in a log line."""
+    mailer = RecordingMailer()
+    client = TestClient(build_app(mailer=mailer), raise_server_exceptions=False)
+    with caplog.at_level(logging.DEBUG):
+        sign_in_as(client, mailer)
+        client.post(
+            "/api/me/measurements",
+            json={"timestamp": SENTINEL_PAST_TIMESTAMP, "weight": SENTINEL_WEIGHT, "unit": "kg"},
+        )
+        client.get("/api/me/measurements")
+        client.get("/api/me/analysis")
+        client.get("/api/me/export")
+        client.get("/api/me/export/measurements.csv")
+
+    text = captured_log_text(caplog)
+    assert_no_sentinels(text, context="the log")
+    for fragment in SENTINEL_PAST_TIMESTAMP_FRAGMENTS:
+        assert fragment not in text, f"the stored timestamp leaked into the log: {fragment}"
+
+
+def test_a_future_dated_stored_measurement_does_not_leak_through_the_new_error_path(
+    caplog: pytest.LogCaptureFixture,
+):
+    """Storing a future timestamp is accepted; analysing it then raises
+    ``observation_in_the_future`` -- a rejection reachable only through stored history. Same
+    rule as the stateless path: neither the body nor the log may carry the value."""
+    mailer = RecordingMailer()
+    client = TestClient(build_app(mailer=mailer), raise_server_exceptions=False)
+    with caplog.at_level(logging.DEBUG):
+        sign_in_as(client, mailer)
+        client.post(
+            "/api/me/measurements",
+            json={"timestamp": SENTINEL_TIMESTAMP + "+00:00", "weight": SENTINEL_WEIGHT},
+        )
+        response = client.get("/api/me/analysis")
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "observation_in_the_future"
+    assert_no_sentinels(response.text, context="the account-analysis error response body")
+    assert_no_sentinels(captured_log_text(caplog), context="the log")
+
+
+def test_an_invalid_batch_import_does_not_echo_the_offending_value(
+    caplog: pytest.LogCaptureFixture,
+):
+    mailer = RecordingMailer()
+    client = TestClient(build_app(mailer=mailer), raise_server_exceptions=False)
+    with caplog.at_level(logging.DEBUG):
+        sign_in_as(client, mailer)
+        response = client.post(
+            "/api/me/measurements/batch",
+            json={
+                "observations": [
+                    {"timestamp": SENTINEL_TIMESTAMP + "+00:00", "weight": -SENTINEL_WEIGHT}
+                ]
+            },
+        )
+    assert response.status_code == 422
+    assert_no_sentinels(response.text, context="the batch-import validation response body")
+    assert_no_sentinels(captured_log_text(caplog), context="the log")
+
+
+def test_a_measurement_not_found_response_names_no_id(caplog: pytest.LogCaptureFixture):
+    mailer = RecordingMailer()
+    client = TestClient(build_app(mailer=mailer), raise_server_exceptions=False)
+    sentinel_id = "sentinel-id-9f9f9f9f-does-not-exist"
+    with caplog.at_level(logging.DEBUG):
+        sign_in_as(client, mailer)
+        response = client.delete(f"/api/me/measurements/{sentinel_id}")
+    assert response.status_code == 404
+    assert sentinel_id not in response.text
+    assert sentinel_id not in captured_log_text(caplog)
+
+
+def test_settings_never_reveal_their_credentials():
+    settings = make_test_settings(
+        mailer="smtp",
+        smtp_host="smtp.invalid",
+        smtp_from="sender@example.invalid",
+        smtp_password="sentinel-smtp-password",
+        database_url="postgresql+psycopg://user:sentinel-db-password@db.invalid/ht",
+    )
+    rendered = repr(settings)
+    assert TEST_AUTH_SECRET not in rendered
+    assert "sentinel-smtp-password" not in rendered
+    assert "sentinel-db-password" not in rendered

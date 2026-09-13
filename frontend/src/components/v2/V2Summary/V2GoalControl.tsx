@@ -1,9 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { useId, useState } from "react";
 import { formatWeeklyRateUnit, formatWeightMagnitudeUnit, formatWeightUnit } from "@/lib/v2/units";
 import type { DisplayUnit } from "@/lib/v2/units";
-import { compareWeeklyRate, goalDistance } from "@/lib/v2/goal";
+import {
+  compareWeeklyRate,
+  goalDistance,
+  type GoalDistance,
+  type RateComparison,
+} from "@/lib/v2/goal";
 import styles from "./V2Summary.module.css";
 
 interface V2GoalControlProps {
@@ -26,6 +32,14 @@ interface V2GoalControlProps {
   targetKg: number | null;
   targetRateKg: number | null;
   onClear: () => void;
+  /**
+   * Present only where the goal is a stored account setting (`/app`) rather than this page's
+   * ephemeral draft. The control then becomes a read-only readout of `targetKg`/`targetRateKg`
+   * whose only affordance is this link to where the goal is edited, and it stops saying the goal
+   * is "not saved" -- which would no longer be true. Absent everywhere in public V2, whose
+   * behaviour is unchanged.
+   */
+  manageHref?: string;
 }
 
 /**
@@ -67,6 +81,7 @@ export function V2GoalControl({
   targetKg,
   targetRateKg,
   onClear,
+  manageHref,
 }: V2GoalControlProps) {
   const [editing, setEditing] = useState(false);
   const panelId = useId();
@@ -78,6 +93,34 @@ export function V2GoalControl({
     !hasSpan || targetRateKg === null
       ? null
       : compareWeeklyRate(currentWeeklyRateKg, targetRateKg);
+
+  if (manageHref !== undefined) {
+    if (targetKg === null && targetRateKg === null) {
+      return (
+        <div className={styles.goalIdle}>
+          <span className={styles.eyebrow}>Goal</span>
+          <Link href={manageHref} className={styles.goalAdd}>
+            Set a goal in Settings
+          </Link>
+        </div>
+      );
+    }
+    return (
+      <section className={styles.goal} aria-label="Goal reference">
+        <div className={styles.goalHead}>
+          <h3 className={styles.goalTitle}>
+            Goal reference
+            <span className={styles.goalTag}>saved</span>
+          </h3>
+          <Link href={manageHref} className={styles.goalToggle}>
+            Edit in Settings
+          </Link>
+        </div>
+        <GoalReadouts distance={distance} rate={rate} unit={unit} />
+      </section>
+    );
+  }
+
   const untouched = distance === null && !editing && targetDraft.trim() === "";
 
   // The idle state is one hairline row, label left and affordance right -- the same shape
@@ -118,30 +161,7 @@ export function V2GoalControl({
         </button>
       </div>
 
-      {distance === null ? null : (
-        <p className={styles.goalReadout}>
-          <span className={styles.goalValue}>{formatWeightUnit(distance.targetKg, unit)}</span>
-          <span className={styles.goalMeta}>
-            {distance.direction === "level"
-              ? "level with the current estimate"
-              : `${formatWeightMagnitudeUnit(distance.distanceKg, unit)} ${distance.direction} the current estimate`}
-          </span>
-        </p>
-      )}
-
-      {rate === null ? null : (
-        <p className={styles.goalRate}>
-          <span className={styles.goalRateItem}>
-            target {formatWeeklyRateUnit(rate.targetKgPerWeek, unit)}
-          </span>
-          <span className={styles.goalRateItem}>
-            current {formatWeeklyRateUnit(rate.currentKgPerWeek, unit)}
-          </span>
-          <span className={styles.goalRateItem}>
-            difference {formatWeeklyRateUnit(rate.differenceKgPerWeek, unit)}
-          </span>
-        </p>
-      )}
+      <GoalReadouts distance={distance} rate={rate} unit={unit} />
 
       {editing ? (
         <div className={styles.goalForm} id={panelId}>
@@ -196,5 +216,46 @@ export function V2GoalControl({
         </div>
       ) : null}
     </section>
+  );
+}
+
+/** The two permitted comparisons, shared by the ephemeral and the stored-goal presentations so
+ * both print exactly the same arithmetic. */
+function GoalReadouts({
+  distance,
+  rate,
+  unit,
+}: {
+  distance: GoalDistance | null;
+  rate: RateComparison | null;
+  unit: DisplayUnit;
+}) {
+  return (
+    <>
+      {distance === null ? null : (
+        <p className={styles.goalReadout}>
+          <span className={styles.goalValue}>{formatWeightUnit(distance.targetKg, unit)}</span>
+          <span className={styles.goalMeta}>
+            {distance.direction === "level"
+              ? "level with the current estimate"
+              : `${formatWeightMagnitudeUnit(distance.distanceKg, unit)} ${distance.direction} the current estimate`}
+          </span>
+        </p>
+      )}
+
+      {rate === null ? null : (
+        <p className={styles.goalRate}>
+          <span className={styles.goalRateItem}>
+            target {formatWeeklyRateUnit(rate.targetKgPerWeek, unit)}
+          </span>
+          <span className={styles.goalRateItem}>
+            current {formatWeeklyRateUnit(rate.currentKgPerWeek, unit)}
+          </span>
+          <span className={styles.goalRateItem}>
+            difference {formatWeeklyRateUnit(rate.differenceKgPerWeek, unit)}
+          </span>
+        </p>
+      )}
+    </>
   );
 }

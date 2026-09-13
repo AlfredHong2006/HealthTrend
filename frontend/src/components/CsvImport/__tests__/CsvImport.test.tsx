@@ -234,3 +234,50 @@ describe("CsvImport", () => {
     expect(screen.getByRole("button", { name: "Analysing…" })).toBeDisabled();
   });
 });
+
+/**
+ * The signed-in import (`/app/import`) passes its own submit wording, because there the accepted
+ * rows are stored rather than analysed. Only the label changes: the read, the review and the rows
+ * handed to `onSubmit` are the same code path the defaults above already cover.
+ */
+describe("CsvImport optional submit labels", () => {
+  it("uses the caller's labels while still handing over the same accepted observations", async () => {
+    ingestCsv.mockResolvedValue(SUCCESS_RESULT);
+    const onSubmit = vi.fn();
+    render(
+      <CsvImport
+        onSubmit={onSubmit}
+        submitting={false}
+        submitError={null}
+        onInputsChanged={vi.fn()}
+        submitLabel={(count) => `Add ${count} to history`}
+        submittingLabel="Adding…"
+      />,
+    );
+    selectFile();
+    readFile();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Add 2 to history" }));
+
+    expect(onSubmit).toHaveBeenCalledWith(SUCCESS_RESULT.accepted);
+    expect(screen.queryByRole("button", { name: /Analyse/ })).not.toBeInTheDocument();
+  });
+
+  it("uses the caller's in-flight label", async () => {
+    ingestCsv.mockResolvedValue(SUCCESS_RESULT);
+    render(
+      <CsvImport
+        onSubmit={vi.fn()}
+        submitting
+        submitError={null}
+        onInputsChanged={vi.fn()}
+        submitLabel={(count) => `Add ${count} to history`}
+        submittingLabel="Adding…"
+      />,
+    );
+    selectFile();
+    readFile();
+
+    expect(await screen.findByRole("button", { name: "Adding…" })).toBeDisabled();
+  });
+});

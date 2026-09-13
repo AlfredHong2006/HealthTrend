@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { canonicalizeTimeZone, datetimeLocalToUtcIso, detectLocalTimeZone } from "../time";
+import {
+  canonicalizeTimeZone,
+  datetimeLocalToUtcIso,
+  detectLocalTimeZone,
+  utcIsoToDatetimeLocal,
+} from "../time";
 
 /**
  * Expected values are computed with the local-component `Date` constructor
@@ -37,6 +42,20 @@ describe("datetimeLocalToUtcIso", () => {
 
   it("rejects trailing garbage after an otherwise valid value", () => {
     expect(datetimeLocalToUtcIso("2026-08-21T14:30 ")).toBeNull();
+  });
+});
+
+describe("utcIsoToDatetimeLocal", () => {
+  it("is the inverse of datetimeLocalToUtcIso for a value with no seconds", () => {
+    const original = "2026-08-21T14:30";
+    const utc = datetimeLocalToUtcIso(original);
+    expect(utc).not.toBeNull();
+    expect(utcIsoToDatetimeLocal(utc!)).toBe(original);
+  });
+
+  it("formats an arbitrary UTC instant as local wall-clock time, zero-padded", () => {
+    const iso = new Date(2026, 0, 5, 9, 5, 0).toISOString(); // 5 Jan, 09:05 local
+    expect(utcIsoToDatetimeLocal(iso)).toBe("2026-01-05T09:05");
   });
 });
 

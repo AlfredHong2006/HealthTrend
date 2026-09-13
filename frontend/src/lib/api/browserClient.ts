@@ -16,14 +16,18 @@
 import { ApiError, NetworkError } from "./errors";
 import type { AnalysisRequest, AnalysisResponse, CsvIngestResponse, ErrorBody } from "./types";
 
-function publicApiBaseUrl(): string {
+/** Exported for `accountClient.ts`, the other browser-side caller: both run in the same
+ * environment and read the same public env var, unlike the split with `client.ts` the module
+ * docstring above explains, so there is no reason for that one to duplicate this. */
+export function publicApiBaseUrl(): string {
   const url = process.env.NEXT_PUBLIC_HEALTHTREND_API_URL ?? "http://localhost:8000";
   return url.replace(/\/+$/, "");
 }
 
-/** Mirrors `src/lib/api/client.ts`'s `parseErrorBody`, duplicated rather than shared: see the
- * module docstring for why this file does not import from that one. */
-async function parseErrorBody(response: Response): Promise<ErrorBody | undefined> {
+/** Mirrors `src/lib/api/client.ts`'s `parseErrorBody`, duplicated rather than shared with that
+ * one for the reason the module docstring gives -- but exported for `accountClient.ts`, which
+ * runs in this same browser environment and shares this base-URL resolver too. */
+export async function parseErrorBody(response: Response): Promise<ErrorBody | undefined> {
   try {
     const payload: unknown = await response.json();
     if (

@@ -35,6 +35,11 @@ It is an estimation product, not a weight logger. Canonical product definition:
 - **Milestone 6 evaluation is complete and committed** — `docs/evaluation/` (report and generated
   results), with the studies themselves in `backend/evaluation/`, which the application cannot
   import. Its findings bound what the product may claim.
+- **Milestone 8, the signed-in beta at `/app`, is implemented but not deployed** — passwordless
+  accounts, stored history, import, preferences, goal, export and deletion, beside the unchanged
+  public routes. Architecture: [ADR-0012](docs/decisions/ADR-0012-accounts-and-persistence.md).
+  Deploying it has prerequisites that protect the live public API:
+  [docs/deployment.md](docs/deployment.md).
 - **Nothing here is globally finished.** V2 is accepted and shipped; the project continues.
 - **The current priority is CV and applications, not further V2 polish.** Treat the shipped V2 as
   accepted work. Do not open speculative redesign, refactoring or polish tasks against it.
@@ -45,7 +50,9 @@ It is an estimation product, not a weight logger. Canonical product definition:
 backend/   FastAPI + NumPy, uv-managed, Python 3.11
   app/core/      pure layer: units · time_axis · types · model · kalman · filter · forecast · analyse
   app/schemas/   Pydantic wire contract       app/demo/      synthetic scenarios
-  app/ingestion/ observations + CSV parsing   app/services/  clock, forecast-origin policy
+  app/ingestion/ observations + CSV parsing   app/services/  clock, analysis, account services
+  app/auth/      sign-in codes, sessions, mailer (framework-free)
+  app/persistence/ SQLAlchemy engine, models, repositories   alembic/  migrations
   app/api/       routes, error table, metadata-only access log      app/main.py  create_app()
   testing/       deterministic generators, test-support only (never imported by app/)
   evaluation/    the M6 studies; importable by tests only, never by app/
@@ -53,6 +60,9 @@ backend/   FastAPI + NumPy, uv-managed, Python 3.11
   openapi.json   COMMITTED contract, generated from the app
 frontend/  Next.js 16 (App Router) · React 19 · TypeScript · CSS Modules · visx · Vitest
   src/app/v2/      SHIPPED V2: [scenario] · analyse · method · about · v2-tokens.css (own shell)
+  src/app/app/     M8 signed-in beta: sign-in · log · measurements · import · settings · manifest
+  src/components/app/  AccountProvider · AppAuthGate · AppShell · AppDashboard · QuickLog ·
+                   MeasurementList · AccountImport · Settings
   src/app/         V1, still served: /demo/[scenario] (server components) · /analyse · tokens.css
   src/components/v2/  V2Header · V2Hero · V2Canvas · V2Summary · V2StatsBand · V2Inspector ·
                    V2Workspace · V2AnalyseWorkspace · V2AnalysisShell · V2Method · V2About
@@ -61,7 +71,7 @@ frontend/  Next.js 16 (App Router) · React 19 · TypeScript · CSS Modules · v
   src/lib/         api/ (schema.d.ts GENERATED · client server-side · browserClient) ·
                    chart/ (pure shaping, no React or HTTP) · v2/ (pure V2 shaping and copy) ·
                    privacy/ (no-persistence guard)
-docs/      architecture.md · mathematics.md · privacy.md · decisions/ADR-0001..0011 ·
+docs/      architecture.md · mathematics.md · privacy.md · deployment.md · decisions/ADR-0001..0012 ·
            evaluation/ (report.md · results.md) · product/V2_PRODUCT.md ·
            design/V2_DESIGN.md · design/IMPLEMENTATION_NOTES.md
 sample_data/  the only place a committed .csv is permitted
@@ -107,9 +117,13 @@ attachment points for later work — computed today, published nowhere.
 
 Full rules in [docs/privacy.md](docs/privacy.md). The operative constraints:
 
-- **Nothing is persisted.** No accounts, database, session, cache or telemetry. A static test fails
-  the build if `localStorage`, `sessionStorage`, IndexedDB or `document.cookie` appears anywhere
-  under `frontend/src`.
+- **The public routes persist nothing; only the signed-in `/app` beta stores data.** `/v2/*`, V1 and
+  their API routes (`/api/analyse`, `/api/ingest/csv`, `/api/demo`) keep nothing and read no session.
+  The `/app` beta (Milestone 8, ADR-0012) stores an account's email, sign-in records, measurements,
+  display unit and goal in Postgres, server-side only. No cache or telemetry anywhere. A static test
+  fails the build if `localStorage`, `sessionStorage`, IndexedDB, `document.cookie`, the Cache API or
+  `navigator.storage` appears anywhere under `frontend/src`; the session is an HttpOnly cookie the
+  frontend never touches.
 - **No measurement may reach a log.** The access log carries counts and route *templates* only. Error
   responses come from an explicit table, never exception text; unexpected exceptions log a class name
   and nothing else.
@@ -146,6 +160,8 @@ uv run ruff format --check .     # format check
 uv run mypy                      # strict type check (app, testing, evaluation)
 uv run pytest -q                 # tests
 uv run python -m tests.api.regenerate_openapi        # after any schema/route change
+# the server also needs database, auth-secret and mailer settings to start: README "Running it
+# locally" (SQLite + console mailer for local dev), backend/.env.example, docs/deployment.md
 HEALTHTREND_ALLOWED_ORIGINS=http://localhost:3000 uv run uvicorn app.main:app --no-access-log
 ```
 

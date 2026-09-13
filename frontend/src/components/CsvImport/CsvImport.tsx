@@ -28,6 +28,18 @@ interface CsvImportProps {
    * only knows that its own inputs, and therefore its own report, are now stale.
    */
   onInputsChanged: () => void;
+  /**
+   * The submit button's label for a read that accepted `count` rows, and its in-flight label.
+   * Both default to the analysis wording V1 and `/v2/analyse` use; the signed-in import at
+   * `/app/import` passes its own, because there `onSubmit` stores the rows rather than analysing
+   * them. Nothing else about the read, the review or the accepted rows differs.
+   */
+  submitLabel?: (count: number) => string;
+  submittingLabel?: string;
+}
+
+function defaultSubmitLabel(count: number): string {
+  return `Analyse ${count} measurement${count === 1 ? "" : "s"}`;
 }
 
 /**
@@ -42,7 +54,14 @@ interface CsvImportProps {
  * since changed, and neither must any analysis result already produced from the old read
  * (via `onInputsChanged`).
  */
-export function CsvImport({ onSubmit, submitting, submitError, onInputsChanged }: CsvImportProps) {
+export function CsvImport({
+  onSubmit,
+  submitting,
+  submitError,
+  onInputsChanged,
+  submitLabel = defaultSubmitLabel,
+  submittingLabel = "Analysing…",
+}: CsvImportProps) {
   const [file, setFile] = useState<File | null>(null);
   const [assumedTimezone, setAssumedTimezone] = useState(() => detectLocalTimeZone());
   const [defaultUnit, setDefaultUnit] = useState<"kg" | "lb">("kg");
@@ -247,9 +266,7 @@ export function CsvImport({ onSubmit, submitting, submitError, onInputsChanged }
             onClick={handleAnalyse}
             disabled={submitting || result.accepted_count === 0}
           >
-            {submitting
-              ? "Analysing…"
-              : `Analyse ${result.accepted_count} measurement${result.accepted_count === 1 ? "" : "s"}`}
+            {submitting ? submittingLabel : submitLabel(result.accepted_count)}
           </button>
         </div>
       )}

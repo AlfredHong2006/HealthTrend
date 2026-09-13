@@ -26,6 +26,14 @@ export class NotFoundError extends ApiError {
   }
 }
 
+/** Not signed in, or the session has ended (HTTP 401). */
+export class UnauthorizedError extends ApiError {
+  constructor(body: ErrorBody | undefined) {
+    super(401, body);
+    this.name = "UnauthorizedError";
+  }
+}
+
 /** The request never reached the server, or the response could not be parsed at all. */
 export class NetworkError extends Error {
   constructor(cause: unknown) {

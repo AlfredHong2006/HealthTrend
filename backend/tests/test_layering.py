@@ -5,7 +5,7 @@ guards the layers added on top of it, by the same method and for the same reason
 dependency that points the wrong way is cheap to add and expensive to remove once anything
 relies on it.
 
-Five rules, each with a concrete cost if broken:
+Eight rules, each with a concrete cost if broken:
 
 1. **No production module imports ``testing`` or ``evaluation``.** Both are non-production
    packages, both are allowed randomness the application should not casually acquire, and
@@ -24,6 +24,15 @@ Five rules, each with a concrete cost if broken:
    the services or the API it could start measuring HTTP behaviour, request validation or
    the forecast-origin policy -- none of which is what the study claims to be about -- and
    an evaluation that quietly changes what it measures is worse than none. Test ``EV9``.
+6. **Only ``app.persistence`` imports the database toolkit.** SQLAlchemy and Alembic stay
+   behind the repositories, so no service or route can build a query, hold an ORM object or
+   bypass the ``user_id`` scoping every repository method applies.
+7. **Only the services, the API layer and ``app/main.py`` import ``app.persistence`` or
+   ``app.auth``.** The core, the schemas, ingestion and the demo package stay usable -- and
+   testable -- with no database, no secret and no mailer anywhere in reach.
+8. **``app.persistence`` and ``app.auth`` never look upward.** Storage may read the error
+   types and the name of its configuration variable; the sign-in primitives depend on nothing
+   of the application at all. Neither reaches the services, the schemas or the API.
 """
 
 from __future__ import annotations
@@ -41,6 +50,16 @@ APP_FILES = sorted(APP_DIR.rglob("*.py"))
 EVALUATION_FILES = sorted(EVALUATION_DIR.rglob("*.py"))
 
 WEB_FRAMEWORK_ROOTS = frozenset({"fastapi", "starlette", "uvicorn"})
+
+DATABASE_TOOLKIT_ROOTS = frozenset({"sqlalchemy", "alembic", "psycopg"})
+
+# The packages that may use storage and the sign-in primitives: the orchestration layer and
+# the HTTP boundary above it.
+ACCOUNT_CONSUMER_PACKAGES = frozenset({"services", "api"})
+
+# What each account package may import from the application.
+PERSISTENCE_ALLOWED_APP_IMPORTS = ("app.persistence", "app.errors", "app.config")
+AUTH_ALLOWED_APP_IMPORTS = ("app.auth",)
 
 NON_PRODUCTION_ROOTS = frozenset({"testing", "evaluation"})
 
@@ -70,7 +89,16 @@ def test_there_are_app_files_to_check():
     """Guard against the whole scan passing because it found nothing."""
     assert len(APP_FILES) >= 15
     packages = {path.parent.name for path in APP_FILES}
-    assert {"api", "core", "demo", "ingestion", "schemas", "services"} <= packages
+    assert {
+        "api",
+        "auth",
+        "core",
+        "demo",
+        "ingestion",
+        "persistence",
+        "schemas",
+        "services",
+    } <= packages
 
 
 @pytest.mark.parametrize("path", APP_FILES, ids=relative)
@@ -98,7 +126,16 @@ def test_only_the_api_layer_imports_a_web_framework(path: Path):
 @pytest.mark.parametrize("path", sorted((APP_DIR / "demo").rglob("*.py")), ids=relative)
 def test_the_demo_package_depends_only_on_the_core(path: Path):
     for module in imported_modules(path):
-        assert not module.startswith(("app.api", "app.schemas", "app.services", "app.ingestion")), (
+        assert not module.startswith(
+            (
+                "app.api",
+                "app.schemas",
+                "app.services",
+                "app.ingestion",
+                "app.persistence",
+                "app.auth",
+            )
+        ), (
             f"{relative(path)} imports {module}: a demo scenario is a list of core "
             f"observations and must not know about HTTP or the service layer."
         )
@@ -113,6 +150,64 @@ def test_nothing_below_the_api_layer_imports_the_api_layer(path: Path):
             f"{relative(path)} imports {module}: the dependency direction is "
             f"api -> services -> core."
         )
+
+
+# --- accounts: storage and sign-in --------------------------------------------------
+
+
+def app_package(path: Path) -> str:
+    """Return the first-level ``app`` package a file belongs to, or its module name."""
+    parts = path.relative_to(APP_DIR).parts
+    return parts[0] if len(parts) > 1 else path.stem
+
+
+@pytest.mark.parametrize("path", APP_FILES, ids=relative)
+def test_only_the_persistence_package_imports_the_database_toolkit(path: Path):
+    if app_package(path) == "persistence":
+        return
+    for module in imported_modules(path):
+        assert module.split(".")[0] not in DATABASE_TOOLKIT_ROOTS, (
+            f"{relative(path)} imports {module}: only app/persistence may use the database "
+            f"toolkit. Go through a repository on app.persistence.Store instead."
+        )
+
+
+@pytest.mark.parametrize("path", APP_FILES, ids=relative)
+def test_only_services_api_and_main_import_storage_or_sign_in(path: Path):
+    package = app_package(path)
+    if package in ACCOUNT_CONSUMER_PACKAGES or path.name == "main.py":
+        return
+    for module in imported_modules(path):
+        if module.startswith("app.persistence"):
+            assert package == "persistence", (
+                f"{relative(path)} imports {module}: only app/services, app/api and "
+                f"app/main.py may use account storage."
+            )
+        if module.startswith("app.auth"):
+            assert package == "auth", (
+                f"{relative(path)} imports {module}: only app/services, app/api and "
+                f"app/main.py may use the sign-in primitives."
+            )
+
+
+@pytest.mark.parametrize("path", sorted((APP_DIR / "persistence").rglob("*.py")), ids=relative)
+def test_the_persistence_package_never_looks_upward(path: Path):
+    for module in imported_modules(path):
+        if module.startswith("app."):
+            assert module.startswith(PERSISTENCE_ALLOWED_APP_IMPORTS), (
+                f"{relative(path)} imports {module}: account storage may depend only on "
+                f"itself, app.errors and app.config."
+            )
+
+
+@pytest.mark.parametrize("path", sorted((APP_DIR / "auth").rglob("*.py")), ids=relative)
+def test_the_auth_package_depends_on_nothing_else_in_the_application(path: Path):
+    for module in imported_modules(path):
+        if module.startswith("app."):
+            assert module.startswith(AUTH_ALLOWED_APP_IMPORTS), (
+                f"{relative(path)} imports {module}: the sign-in primitives are "
+                f"self-contained; policy belongs in app/services/auth.py."
+            )
 
 
 # --- EV9: the evaluation harness ------------------------------------------------

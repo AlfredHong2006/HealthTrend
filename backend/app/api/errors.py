@@ -46,6 +46,8 @@ from app.core.types import (
     UnsortedObservationsError,
 )
 from app.errors import (
+    CodeExpiredError,
+    ConfirmationMismatchError,
     CsvAmbiguousTimestampColumnsError,
     CsvAmbiguousWeightColumnsError,
     CsvDuplicateHeaderColumnError,
@@ -60,6 +62,11 @@ from app.errors import (
     CsvUnsupportedMediaTypeError,
     FutureObservationError,
     HealthTrendError,
+    InvalidCodeError,
+    MeasurementLimitExceededError,
+    MeasurementNotFoundError,
+    TooManyCodeRequestsError,
+    UnauthenticatedError,
     UnknownScenarioError,
 )
 from app.schemas.analysis import MAX_OBSERVATIONS
@@ -210,11 +217,67 @@ _DOMAIN_ERRORS: Final[tuple[tuple[type[Exception], ErrorSpec], ...]] = (
         CsvInvalidTimezoneError,
         ErrorSpec(422, "invalid_timezone", "assumed_timezone is not a recognised IANA timezone."),
     ),
+    # Sign-in failures. None of these messages names an address or says whether an account
+    # exists; an unknown address and a wrong code produce the same invalid_code body.
+    (
+        UnauthenticatedError,
+        ErrorSpec(401, "unauthenticated", "You are not signed in, or your session has ended."),
+    ),
+    (
+        InvalidCodeError,
+        ErrorSpec(
+            401,
+            "invalid_code",
+            "That sign-in code is not valid. Check it, or request a new code.",
+        ),
+    ),
+    (
+        CodeExpiredError,
+        ErrorSpec(401, "code_expired", "That sign-in code has expired. Request a new code."),
+    ),
+    (
+        TooManyCodeRequestsError,
+        ErrorSpec(
+            429,
+            "too_many_requests",
+            "Too many sign-in codes have been requested. Wait a few minutes and try again.",
+        ),
+    ),
+    # Account failures.
+    (
+        MeasurementNotFoundError,
+        ErrorSpec(
+            404,
+            "measurement_not_found",
+            "No measurement was found under that id.",
+        ),
+    ),
+    (
+        MeasurementLimitExceededError,
+        ErrorSpec(
+            422,
+            "measurement_limit_exceeded",
+            f"This account already holds the maximum of {MAX_OBSERVATIONS} measurements.",
+        ),
+    ),
+    (
+        ConfirmationMismatchError,
+        ErrorSpec(
+            422,
+            "confirmation_mismatch",
+            "The email typed to confirm does not match the signed-in account.",
+        ),
+    ),
 )
 
 _STATUS_ERRORS: Final[dict[int, ErrorSpec]] = {
+    401: ErrorSpec(401, "unauthenticated", "You are not signed in, or your session has ended."),
+    403: ErrorSpec(403, "forbidden", "This request is not permitted."),
     404: ErrorSpec(404, "not_found", "No such endpoint."),
     405: ErrorSpec(405, "method_not_allowed", "That method is not allowed on this endpoint."),
+    429: ErrorSpec(
+        429, "too_many_requests", "Too many requests. Wait a few minutes and try again."
+    ),
 }
 
 _VALIDATION_MESSAGES: Final[dict[str, str]] = {
@@ -231,6 +294,9 @@ _VALIDATION_MESSAGES: Final[dict[str, str]] = {
     "int_parsing": "Value must be a whole number.",
     "int_type": "Value must be a whole number.",
     "string_type": "Value must be a string.",
+    "string_too_short": "Value is too short.",
+    "string_too_long": "Value is too long.",
+    "string_pattern_mismatch": "Value is not in the expected format.",
     "bool_type": "Value must be true or false.",
     "list_type": "Value must be a list.",
     "model_attributes_type": "Value must be an object.",

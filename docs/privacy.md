@@ -1,7 +1,15 @@
 # Privacy
 
-HealthTrend handles body-weight measurements. Those are health data, and the default assumption is
-that they never leave the machine they were measured on and never enter this repository.
+HealthTrend handles body-weight measurements. Those are health data. Real measurements never enter
+this repository, and they reach a HealthTrend server only when a person sends them there.
+
+HealthTrend has two surfaces with different privacy shapes, and this document keeps them apart:
+
+- **The public analysis routes** (`/v2/*`, and V1 at `/demo/*` and `/analyse`) are stateless. A
+  measurement sent to them is analysed inside the request and not kept.
+- **The signed-in beta app** (`/app`) stores an account's measurements, display preference and goal
+  so the person can come back to them. What it stores, why, and how to get it out or delete it is
+  described under [The signed-in beta app](#the-signed-in-beta-app).
 
 This document is the operational form of the project's privacy and health-framing rules.
 
@@ -88,25 +96,125 @@ bug in a dozen lines of our own middleware code, which never handles measurement
 request lines — method, raw path, query string — never JSON bodies, and this API carries measurements
 only in bodies. But raw paths are caller-controlled strings, this application's own access log
 already records the safe equivalent, and a metadata log nobody reads is pure liability. Run with
-`--no-access-log`. This is deployment configuration, and therefore a weaker guarantee than the rest —
-revisit it when deployment is designed.
+`--no-access-log`. This is deployment configuration, and therefore a weaker guarantee than the rest;
+the documented start command in [deployment.md](deployment.md) includes it.
 
 All of this is enforced by [`backend/tests/api/test_privacy.py`](../backend/tests/api/test_privacy.py),
 which submits a sentinel weight *and* a sentinel timestamp — through the body, through a matched
 route parameter, and inside an injected exception message — and asserts that neither appears in a
 validation response, a domain-error response, a 500 body, or any application log record.
 
-## No storage, no accounts
+The same rules cover the account routes (`/api/auth/*`, `/api/me/*`). The sentinel tests extend to
+them: a stored measurement is walked through create, list, analyse and both exports, and a failing
+batch import, a future-dated stored reading and a 404 naming a measurement id are all checked. No
+weight, timestamp, email address, sign-in code, session token or account id appears in any response
+body it should not, or in any application log record. Every account and sign-in response carries
+`Cache-Control: no-store`.
 
-Nothing is stored. The analysis happens inside the request and the result is returned; there is no
-database, no session, no cache, no telemetry, and no retained upload. `create_app()` wires routes,
-error handlers, the access log and the CORS middleware described below — and nothing else. There is
-no storage layer to configure, and therefore none to forget to secure.
+## The public analysis routes store nothing
 
-Three frontend paths reach that one server: the built-in synthetic demo scenarios, manual
-measurement entry, and CSV import. They have different privacy shapes in the *browser*, described
-below. On the server they are indistinguishable — the same stateless request, whichever page issued
-it, and the same guarantee regardless.
+`POST /api/analyse`, `POST /api/ingest/csv` and the demo routes keep nothing. The analysis happens
+inside the request and the result is returned; nothing about it is written to the database, a
+session, a cache or a file, and there is no telemetry. The CSV upload is never retained (see
+[below](#csv-import-milestone-5)).
+
+Three frontend paths reach those routes: the built-in synthetic demo scenarios, manual measurement
+entry, and CSV import. They have different privacy shapes in the *browser*, described below. On the
+server they are indistinguishable — the same stateless request, whichever page issued it, and the
+same guarantee regardless. Using them needs no account, and they read no session cookie.
+
+The same server process also serves the signed-in beta app, so it now needs a database to start.
+That changes where the server's configuration comes from, not what the public routes keep: they
+still never read from or write to it.
+
+## The signed-in beta app
+
+`/app` is a separate, private-beta surface for people who want to come back to their history. It is
+not linked from the public routes, and signing in is passwordless: an emailed six-digit code, then a
+session. Everything below is implemented; nothing is a plan.
+
+### What is stored, and why
+
+| Stored | Why |
+| --- | --- |
+| The account's email address (lower-cased), when the account was created, and when it last signed in | it is the account's identity and where sign-in codes are sent |
+| Sign-in codes: the email address they were sent to, an HMAC of the code (never the code itself), when it was issued, when it expires, whether it was used, and failed attempts | to check a code once and enforce expiry, attempt and rate limits |
+| Sessions: a SHA-256 hash of the session token (never the token itself), and when the session was created, last used and expires | to recognise a signed-in browser |
+| Measurements: timestamp, weight, the unit it was entered in, whether it was entered by hand or imported from CSV, and when the row was created and last changed | they are the history the analysis is computed from |
+| The display unit (kg or lb) | so the choice is remembered |
+| The current goal, if one is set: a target weight and/or a target weekly rate | so it can be shown beside the estimate |
+
+Nothing else is stored for an account: no name, no password, no device identifier, no location, no
+analysis result (the analysis is recomputed from the stored measurements on every request), and no
+history of past goals.
+
+**A goal never reaches the estimate.** The account analysis reads stored measurements and the clock,
+and nothing else; setting, changing or removing a goal leaves the analysis byte-for-byte identical,
+and a regression test sweeps goal values to prove it
+([ADR-0012](decisions/ADR-0012-accounts-and-persistence.md)).
+
+A sign-in code expires after 10 minutes and allows five attempts; at most three are issued per
+address in 15 minutes. A session lasts about 90 days from when it was last used (the expiry moves
+forward at most once a day), so a person who keeps using the app stays signed in and one who stops is
+signed out after 90 days. Signing out deletes the session.
+
+**Old authentication rows are not yet swept on a schedule** — a beta limitation. An expired session
+stops working at expiry but its row is deleted only when that cookie is presented again, or with the
+account. Sign-in code rows older than the 15-minute window are deleted when the same address next
+requests a code, or with the account. So an address that requests a code and never signs in stays in
+the sign-in code table, with its expired code HMAC, until it requests another code; it creates no
+account.
+
+### The session cookie
+
+The browser holds one cookie, `ht_session`, set by the API when a code is verified. It is
+`HttpOnly`, so no script on any page can read it, including HealthTrend's own; `Secure` in every
+deployed configuration, so it is only sent over HTTPS; `SameSite=Lax`; and scoped to the API host.
+It carries a random token and nothing else. The frontend never reads, writes or stores a token of its
+own, and uses no `localStorage`, `sessionStorage`, IndexedDB, Cache API or `document.cookie` for
+account state — the same static guard described below enforces that for `/app` too. Signed-in data
+lives only in page memory while it is on screen, and is fetched again from the API on the next
+visit.
+
+### Getting data out
+
+Settings offers two separate downloads, and they are different on purpose:
+
+- **Measurements (CSV)** — `timestamp,weight,unit`, one row per stored measurement, in exactly the
+  shape HealthTrend's CSV import accepts, so it can be imported again. It contains measurements
+  only: no goal, preference or account details.
+- **Account data (JSON)** — a versioned file of the account data HealthTrend stores: the account's
+  id, email address and creation time, the display preference, the goal (or none), and every
+  measurement with its source and row timestamps. It contains only what HealthTrend itself holds.
+  It leaves out the authentication records — sign-in code HMACs, session hashes and the last
+  sign-in time — which are about signing in rather than the person's data.
+
+### Deleting an account
+
+Deleting an account from Settings, after retyping its email address, removes it immediately and
+permanently from HealthTrend's database: the account row, and with it every session, measurement,
+preference and goal. Sign-in codes are not linked to the account row, so they are purged separately
+by email address, including a code requested moments before deletion. The session cookie is
+cleared, and a copy of it taken earlier stops working. There is no soft delete, no undo and no
+retention period implemented by HealthTrend.
+
+What deletion does not reach, stated plainly:
+
+- **Provider backups.** The database runs on a managed Postgres provider, which keeps its own
+  backups and point-in-time recovery history on its own schedule. Deleted rows can persist there
+  until that history expires. HealthTrend does not control that retention and does not claim
+  deletion from it is immediate.
+- **Email already sent.** A sign-in code email, and the delivery records the email provider keeps
+  about it, are outside HealthTrend's database.
+- **Exports already downloaded.** A file saved to a device stays there.
+
+Otherwise, account data is kept until the account is deleted. There is no automatic expiry of
+measurements, and no inactivity deletion.
+
+### What is not claimed
+
+HealthTrend makes no legal or regulatory compliance claim for the beta, and holds no certification.
+This section describes what the software does; it is not a legal agreement.
 
 ## The frontend
 
@@ -114,11 +222,14 @@ The demo path — the five built-in synthetic scenarios — carries no real data
 control, no form, no file input, and nothing in `src/app/demo/**` writes to `localStorage`,
 `sessionStorage`, IndexedDB or a cookie.
 
-The `/analyse` page is the only place real health data can exist in the frontend — whether typed into
-the form or read from an imported CSV file — and it is held to the same "nothing needs it, which is
+The own-data pages (`/analyse`, `/v2/analyse`) and the signed-in `/app` are the only places real
+health data can exist in the frontend, and they are held to the same "nothing needs it, which is
 stronger than a policy forbidding it" standard, enforced directly by a static guard,
-`frontend/src/lib/privacy/__tests__/no-persistence.test.ts`, which fails the build if any of those
-same four mechanisms appears anywhere under `frontend/src`. Entered and imported measurements live
+`frontend/src/lib/privacy/__tests__/no-persistence.test.ts`, which fails the build if
+`localStorage`, `sessionStorage`, IndexedDB, `document.cookie`, the Cache API or
+`navigator.storage` appears anywhere under `frontend/src`. `/app` keeps its data on the server, not
+in the browser: a signed-in page holds what it fetched in component state while it is open. `/app`
+has no service worker and no offline storage. Entered and imported measurements live
 only in that page's component state for the duration of the visit; there is no draft-saving, no
 restore-on-reload, and reloading or navigating away leaves nothing behind.
 
@@ -132,9 +243,13 @@ for this analysis, and is not kept afterwards."* It does not claim the data stay
 it does not claim more security than is actually provided (HTTPS transport and no server-side
 retention; deployment-level hardening is a separate, later concern).
 
-- **No analytics, telemetry or third-party script**, on either path. Nothing in `frontend/` loads a
-  script, font, stylesheet or tracking pixel from any origin other than this app's own and the
-  configured backend.
+- **No analytics, telemetry, advertising or third-party script**, on any path. There is one
+  third-party request: the V2 routes and `/app` load their typefaces from Google Fonts
+  (`fonts.googleapis.com`, `fonts.gstatic.com`), imported by `src/app/v2/v2-tokens.css`. That
+  request carries the visitor's IP address and user agent to Google, as any font request does, and
+  no measurement or account data. The V1 routes load no third-party resource. Nothing else in
+  `frontend/` loads a script, font, stylesheet or tracking pixel from any origin other than this
+  app's own and the configured backend.
 - **The backend URL reaches the browser only for the manual-entry path, and only because it must.**
   The demo path is unchanged: every demo fetch happens in a Next.js server component
   (`src/app/demo/[scenario]/page.tsx`), `HEALTHTREND_API_URL` is read server-side only, and it is
@@ -191,6 +306,10 @@ follows the same rules above, plus its own:
 - **The frontend makes no new persistence surface.** `CsvImport` holds the selected `File` and the
   parse report only in React component state, the same as `MeasurementForm` holds typed rows; the
   existing `no-persistence.test.ts` static guard already covers it, unchanged.
+- **Importing into an account is a second, explicit step.** On `/app/import` the same parse runs
+  first, statelessly, and is shown for review. Only the accepted rows are then stored, by a separate
+  request (`POST /api/me/measurements/batch`), when the signed-in person confirms. A row matching a
+  measurement already stored for that account is skipped rather than stored twice.
 
 ## Not a medical device
 
@@ -214,6 +333,11 @@ Only claim what is implemented and measured. As of Milestone 6:
 - **Milestones 2 to 5 changed no mathematics**, and neither did Milestone 6. Each put the existing
   estimator behind something new — HTTP, a browser, manual entry, CSV import, then a measuring
   instrument. The golden fixture from Milestone 1 is still byte-identical, which is the evidence.
+- **Milestone 8 (the signed-in beta) changed no mathematics either.** An account's analysis is the
+  same service call a submitted series makes, and a test asserts the two responses are identical
+  apart from `meta.source`. None of Milestone 7A's research candidates — an on-plan probability,
+  departure detection — is product-eligible, and none reaches the API or either frontend
+  ([evaluation/m7a_report.md](evaluation/m7a_report.md)).
 - the frontend renders numbers the backend computed and interprets none of them; it does not label
   anything "high confidence", "plateau" or "likely to continue" unless that classification exists as
   a defined backend result, which it does not yet

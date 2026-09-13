@@ -10,8 +10,13 @@ recorded in [ADR-0009](decisions/ADR-0009-real-data-browser-boundary.md). Milest
 weight-history import) adds a second endpoint, `POST /api/ingest/csv`, exactly at the seam this
 document already reserved for it below — a parser in `app/ingestion/` producing `ObservationIn`,
 reusing `normalise_observations` — and nothing about `/api/analyse`, the core, or CORS changes to
-support it; see [ADR-0010](decisions/ADR-0010-csv-ingestion.md). This document records the
-boundaries, so later milestones add to the structure rather than negotiating it again.
+support it; see [ADR-0010](decisions/ADR-0010-csv-ingestion.md). Milestone 8 adds accounts and
+storage beside the stateless routes: passwordless sign-in (`app/auth/`), a Postgres persistence
+layer (`app/persistence/`), account services and routes, and a signed-in frontend under `/app`. The
+core is still untouched, and the account analysis is the same service call a submitted series makes;
+see [ADR-0012](decisions/ADR-0012-accounts-and-persistence.md) and
+[Two request flows](#two-request-flows). This document records the boundaries, so later milestones
+add to the structure rather than negotiating it again.
 
 ## The dependency rule
 
@@ -22,17 +27,20 @@ boundaries, so later milestones add to the structure rather than negotiating it 
   model  ->  kalman  ->  filter  ->  forecast  ->  analyse      app/core, the pure layer
         |
         v
-  errors  ·  schemas  ·  demo             leaves above the core; no web framework
+  errors  ·  config  ·  schemas  ·  demo  leaves above the core; no web framework
         |
+        v
+  auth  ·  persistence                    framework-free; auth imports nothing else in app,
+        |                                 persistence only app.errors and app.config
         v
   ingestion  ->  services  ->  api  ->  main                    the HTTP boundary (backend/)
 
   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  a network boundary, not a
                                                                  same-process dependency
-  schema.d.ts  ->  types  ->  client  ->  chart, analysis        frontend/, generated from
-        |                                                        the committed openapi.json
+  schema.d.ts  ->  types  ->  client, browserClient, accountClient   frontend/, generated from
+        |                                                            the committed openapi.json
         v
-  components  ->  app/ (routes)                                  Next.js, server-rendered
+  chart, v2 (pure shaping)  ->  components  ->  app/ (routes)        Next.js
 ```
 
 The frontend is a **separate application**, not another layer of the same dependency graph: it talks
@@ -47,7 +55,7 @@ Dependencies point downward only. `app.core` never imports anything above it, an
 above it is `api -> services -> core`, with services reaching sideways into `ingestion` for
 HTTP-supplied observations and `demo` for synthetic ones.
 
-Three rules hold across the whole tree, and
+These rules hold across the whole tree, and
 [`backend/tests/test_layering.py`](../backend/tests/test_layering.py) enforces each by AST scan
 rather than by review:
 
@@ -60,6 +68,19 @@ rather than by review:
    without HTTP in the way.
 3. **`app.demo` knows nothing about HTTP or the service layer.** A scenario is a list of core
    observations, so it can be generated and inspected on its own.
+4. **Nothing below the API layer imports the API layer.**
+5. **Only `app.persistence` imports the database toolkit** (SQLAlchemy, Alembic, psycopg), and
+   **only `app.services`, `app.api` and `app/main.py` import `app.persistence` or `app.auth`.** A
+   route never talks to a repository without a service in between, and the core, schemas and
+   ingestion cannot reach storage at all.
+6. **`app.persistence` and `app.auth` never look upward.** Persistence may import only itself,
+   `app.errors` and `app.config`; auth may import only itself. Both are framework-free, testable
+   with no FastAPI present.
+7. **`app.schemas` never looks upward.** The wire contract depends on the core, other schemas and
+   the demo package only — never on persistence. Converting a stored record into a response schema
+   happens in a service (`services/measurements.py::measurement_out`), the one place both are in
+   view.
+8. **Nothing in `app/` imports `evaluation`, and `evaluation` reaches only the core** (ADR-0011).
 
 ### What the core may not do
 
@@ -94,8 +115,11 @@ Three things follow from it, and all three are load-bearing:
 
 ```
 backend/
-  pyproject.toml          uv project; numpy, fastapi, pydantic, uvicorn
+  pyproject.toml          uv project; numpy, fastapi, pydantic, uvicorn, sqlalchemy, alembic, psycopg
+  alembic.ini  alembic/   migrations (versions/0001_initial.py); URL from HEALTHTREND_DATABASE_URL
+  .env.example            setting names and placeholders only
   app/
+    config.py             CORS allow-list; Settings: database, auth secret, cookie, mailer, beta list
     core/                 the pure layer
       units.py            kg/lb, kg/day <-> kg/week, prior interpretation
       time_axis.py        aware datetime <-> fractional days
@@ -111,6 +135,15 @@ backend/
       demo.py             catalogue and demo response
       errors.py           the one error envelope
       health.py           liveness
+      auth.py  account.py  measurements.py  export.py      M8: sign-in, account, history, export
+    auth/                 M8, framework-free
+      codes.py            six-digit codes, HMAC, expiry/attempt/rate constants
+      sessions.py         256-bit tokens, SHA-256 at rest, sliding 90-day expiry
+      mailer.py           Mailer protocol; SmtpMailer (TLS), ConsoleMailer (local only)
+    persistence/          M8; the only package that imports SQLAlchemy
+      engine.py           engine creation (no bound values in errors), Database handle
+      models.py           six tables; aware-UTC datetimes; cascades from users
+      repositories.py     per-table repositories, every account query filtered by user_id
     demo/
       scenarios.py        the five product scenarios and their registry
     ingestion/
@@ -121,12 +154,19 @@ backend/
       clock.py            Clock protocol + SystemClock
       analysis.py         forecast-origin policy; the two service calls
       ingestion.py        parses a CSV upload, counts duplicates, builds the report
+      auth.py             M8: request/verify codes, resolve and slide sessions, allow-list
+      account.py          M8: MeOut, preferences, goal, account analysis, deletion
+      measurements.py     M8: CRUD, batch import with stored-row skipping, record -> wire
+      export.py           M8: the JSON snapshot and the re-importable CSV
     api/
-      deps.py             the injected clock
+      deps.py             the injected clock, settings, store, mailer, CurrentUserDep
       errors.py           exception -> response, by explicit table
       logging.py          access log carrying counts only
       routes.py           /health, /api/analyse, /api/demo, /api/demo/{scenario}, /api/ingest/csv
-    main.py               create_app()
+      routes_auth.py      M8: /api/auth/code/request, /api/auth/code/verify, /api/auth/logout
+      routes_account.py   M8: /api/me, measurements, analysis, preferences, goal, export
+      session_cookie.py   M8: the one place the ht_session cookie's attributes are set
+    main.py               create_app(); settings read and resources attached at startup
   testing/
     synthetic.py          deterministic seeded generators, for tests and the evaluation harness
   evaluation/             Milestone 6: the evaluation harness. Not part of the application.
@@ -142,7 +182,8 @@ backend/
     results/              committed full-scale results, one JSON per experiment
   tests/
     core/                 one module per core concern, plus purity + golden
-    api/                  the HTTP boundary, plus the golden HTTP response
+    api/                  the HTTP boundary, plus the golden HTTP response; auth and account routes
+    persistence/          repositories and migrations; SQLite by default, Postgres in CI
     evaluation/           the harness, test IDs EV1-EV10
     test_layering.py      the dependency rules above
     fixtures/             committed golden output
@@ -180,6 +221,49 @@ for meeting it. Splitting those responsibilities explicitly:
 | turning exceptions into responses | `api/errors.py` | by explicit table, never from exception text (ADR-0006) |
 | logging | `api/logging.py` | counts and route templates only; the core cannot log at all |
 
+## Two request flows
+
+Milestone 8 added a second flow beside the first. They share the analysis service and the core, and
+nothing else is shared in the direction of the core.
+
+**Public, stateless** (`/v2/*`, `/demo/*`, `/analyse`):
+
+```
+browser or Next.js server component
+  -> POST /api/analyse | POST /api/ingest/csv | GET /api/demo/{scenario}     no session read
+  -> services/analysis.py | services/ingestion.py
+  -> app/core                                                                 unchanged
+  <- response; nothing written anywhere
+```
+
+**Signed-in, persistent** (`/app/*`):
+
+```
+browser /app  (credentials: "include"; HttpOnly ht_session cookie)
+  -> /api/auth/* | /api/me/*                        routes_auth.py, routes_account.py
+  -> api/deps.py: CurrentUserDep                    session hash -> user; allow-list re-checked
+  -> services/auth | account | measurements | export
+  -> persistence/repositories -> Postgres           every query filtered by the session's user id
+     (GET /api/me/analysis only:)
+  -> stored measurements -> AnalysisRequest -> services/analysis.analyse_submitted
+  -> app/core                                        unchanged; meta.source relabelled "account"
+```
+
+The account analysis is not a second implementation. It turns stored rows into the same
+`AnalysisRequest` a submitted series produces and calls the same function; a test asserts the two
+responses are identical apart from `meta.source`. A goal or display preference never enters that
+path — `analyse_account` takes a user id, the clock and the store, and reads measurements only.
+
+`create_app()` reads `Settings` at startup, not at import, so importing the app (for the OpenAPI
+regeneration script) needs no credential, and a server with a missing database URL, auth secret or
+mailer configuration refuses to start. Because both flows run in one process, that applies to the
+public routes too ([deployment.md](deployment.md)).
+
+The contract is generated in one direction: Pydantic schemas and routes produce the committed
+`backend/openapi.json` (`uv run python -m tests.api.regenerate_openapi`), and the frontend's
+`src/lib/api/schema.d.ts` is generated from that file (`npm run gen:api`). CI regenerates both and
+fails on any difference.
+
 ## Immutability and value objects
 
 Every type in `types.py` is a frozen dataclass. Covariance matrices are copied into read-only NumPy
@@ -199,7 +283,9 @@ silently producing nonsense.
 | Later feature | Attachment point | Present today |
 | --- | --- | --- |
 | Apple Health ingestion | a sibling parser in `app/ingestion/`, same shape as `csv.py`, reusing `normalise_observations` | CSV ingestion shipped in Milestone 5 at this exact seam ([ADR-0010](decisions/ADR-0010-csv-ingestion.md)) |
-| trend classification, plateau, goals | a new response block plus a service; the estimator stays goal-neutral | `AnalysisResponse` |
+| trend classification, plateau | a new response block plus a service; the estimator stays goal-neutral. No candidate is product-eligible today ([M7A](evaluation/m7a_report.md)) | `AnalysisResponse` |
+| goal-relative presentation | stored goals exist (M8) and are read only by `services/account.py` for display; anything computed from one attaches beside the analysis, never inside it | `goals` table, `MeOut.goal` |
+| another stored-history source (e.g. a health-platform export) | a parser in `app/ingestion/` producing `ObservationIn`, then `services/measurements.import_batch` | CSV import into accounts |
 | "30 days from now" for a stale series | `origin` parameter on `forecast_at` / `forecast_path` | tests `P5`, ADR-0005 |
 | Robust / adaptive `R` | `Observation.obs_variance` per-observation override | field, unused |
 | Model inspector (§51) | `FilterStep` records prior, posterior, innovation, `S`, normalised innovation, gain | recorded, not surfaced |
@@ -227,17 +313,27 @@ frontend/
         loading.tsx  error.tsx  not-found.tsx
       analyse/
         page.tsx        server component: static structure + privacy notice only
+      v2/               the shipped public V2 routes, own token scope (v2-tokens.css)
+      app/              M8 signed-in beta (ADR-0012)
+        layout.tsx      .htV2 scope, AccountProvider, manifest + home-screen metadata
+        page.tsx  sign-in/  log/  measurements/  import/  settings/
+        manifest.webmanifest/route.ts  manifest-icon/[variant]/route.tsx  apple-icon.tsx
     components/
       Headline/  RateReadout/  ForecastCallout/  SyntheticBadge/  ScenarioNav/
       TrendChart/            'use client': pointer-driven tooltips
       MeasurementForm/       'use client': add/remove rows, client-side validation
       CsvImport/             'use client': read a CSV, show the parse report (Milestone 5)
       AnalysisWorkspace/     'use client': owns entry-mode, the direct-to-backend calls, the result
+      v2/                    V2 presentation; V2Workspace renders both public and account analyses
+      app/                   M8: AccountProvider, AppAuthGate, AppShell, AppDashboard, SignInForm,
+                             QuickLog, MeasurementList, AccountImport, Settings, BrandMark
     lib/
       api/
         schema.d.ts          GENERATED from backend/openapi.json -- do not edit
         types.ts  client.ts  errors.ts   server-side: the demo path
         browserClient.ts     browser-side: manual entry (ADR-0009) and CSV import (ADR-0010)
+        accountClient.ts     browser-side, credentialed: sign-in and every /api/me call (ADR-0012)
+      app/manifest.ts        the /app web app manifest
       chart/
         series.ts            pure: an analysis response -> plottable arrays
         hover.ts  format.ts
@@ -271,9 +367,20 @@ producing the same `ObservationIn[]`; neither `AnalysisResult` nor `/api/analyse
 know which one a given submission came from. See
 [ADR-0010](decisions/ADR-0010-csv-ingestion.md).
 
-`TrendChart`, `MeasurementForm`, `CsvImport` and `AnalysisWorkspace` are the only components that
-need the browser and the only places `'use client'` appears outside the files Next.js itself
-requires it for (`error.tsx`).
+`TrendChart`, `MeasurementForm`, `CsvImport` and `AnalysisWorkspace` were the only V1 components
+that need the browser; V2 and `/app` add their own client components.
+
+The signed-in app (`/app`, Milestone 8) is a third fetching model, and entirely client-side. One
+`AccountProvider`, mounted by `src/app/app/layout.tsx`, makes the single `GET /api/me` check that
+both `/app/sign-in` (redirect away if signed in) and `AppAuthGate` (redirect to sign-in if not) read.
+There is no Next.js middleware and no server-side cookie inspection: only the API decides whether a
+session is valid. Every call goes through `lib/api/accountClient.ts` with `credentials: "include"`.
+Account state lives in React state only; after a measurement changes, `notifyMeasurementsChanged`
+re-reads the account and invalidates the Trend analysis, and after a preference or goal change
+`reloadAccount` re-reads it without refetching the analysis, which neither can affect. The account
+Trend renders the unchanged `V2Workspace`, passing the stored goal as display-only `persistedGoal`.
+CSV import into an account reuses `CsvImport` and `POST /api/ingest/csv` unchanged, then stores the
+accepted rows with `POST /api/me/measurements/batch`.
 
 `src/lib/api/schema.d.ts` is generated by `openapi-typescript` from the **committed**
 `backend/openapi.json` (`npm run gen:api`), not from a running server, so the frontend typechecks on
@@ -293,7 +400,9 @@ reason: lower-casing them would break the correspondence between `docs/mathemati
 which is the point of writing it this way.
 
 CI is [`.github/workflows/backend.yml`](../.github/workflows/backend.yml): the four commands from the
-README, in order, on every push and pull request. `uv sync --locked` is used rather than `uv sync`, so
+README, in order, on every push and pull request, plus a `persistence-postgres` job that runs
+`alembic upgrade head`, `alembic check` and `alembic downgrade base` and the persistence tests against
+a disposable Postgres 16 service container. `uv sync --locked` is used rather than `uv sync`, so
 a lockfile that has drifted from `pyproject.toml` fails the build instead of quietly resolving
 something other than what was tested locally.
 
