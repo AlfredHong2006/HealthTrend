@@ -75,7 +75,11 @@ describe("AppShell", () => {
       "href",
       "/v2/method",
     );
-    expect(within(nav).getAllByRole("link")).toHaveLength(6);
+    expect(within(nav).getByRole("link", { name: "Demo" })).toHaveAttribute(
+      "href",
+      "/v2/gradual-loss",
+    );
+    expect(within(nav).getAllByRole("link")).toHaveLength(7);
     for (const dead of ["Goals", "Coaching", "Devices"]) {
       expect(within(nav).queryByRole("link", { name: dead })).not.toBeInTheDocument();
     }
@@ -100,8 +104,40 @@ describe("AppShell", () => {
     const nav = screen.getByRole("navigation", { name: "HealthTrend" });
     for (const link of within(nav).getAllByRole("link")) {
       const href = link.getAttribute("href")!;
-      expect(existsSync(path.join(appDir, href, "page.tsx")), href).toBe(true);
+      // /v2/gradual-loss is served by the dynamic [scenario] route, not a literal directory.
+      const routePath = href.startsWith("/v2/gradual-loss")
+        ? "/v2/[scenario]"
+        : href;
+      expect(existsSync(path.join(appDir, routePath, "page.tsx")), href).toBe(true);
     }
+  });
+
+  it("the Demo link resolves to the canonical public synthetic Analysis route", async () => {
+    const { readFileSync } = await import("node:fs");
+    const path = await import("node:path");
+    vi.mocked(usePathname).mockReturnValue("/app");
+    vi.mocked(useRouter).mockReturnValue({ replace: vi.fn() } as unknown as ReturnType<
+      typeof useRouter
+    >);
+    mockUseAccount();
+
+    render(
+      <AppShell>
+        <p>Content</p>
+      </AppShell>,
+    );
+
+    const nav = screen.getByRole("navigation", { name: "HealthTrend" });
+    const demoHref = within(nav).getByRole("link", { name: "Demo" }).getAttribute("href")!;
+
+    // The canonical public entry point is documented in V2_PRODUCT.md as /v2/gradual-loss,
+    // and /v2 itself redirects there -- assert the Demo link matches that documented default,
+    // rather than duplicating any analysis rendering.
+    const v2IndexSource = readFileSync(
+      path.resolve(import.meta.dirname, "../../../../app/v2/page.tsx"),
+      "utf-8",
+    );
+    expect(v2IndexSource).toContain(demoHref);
   });
 
   it("marks the current destination with aria-current", () => {

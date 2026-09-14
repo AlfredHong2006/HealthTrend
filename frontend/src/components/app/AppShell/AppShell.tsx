@@ -13,6 +13,7 @@ const NAV = [
   { id: "import", label: "Import", href: "/app/import" },
   { id: "settings", label: "Settings", href: "/app/settings" },
   { id: "method", label: "Method", href: "/v2/method" },
+  { id: "demo", label: "Demo", href: "/v2/gradual-loss" },
 ] as const;
 
 /**
