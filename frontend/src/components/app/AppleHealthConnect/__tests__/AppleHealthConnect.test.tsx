@@ -1,11 +1,14 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
 import { createSyncConnection } from "@/lib/api/accountClient";
 import { ApiError, NetworkError } from "@/lib/api/errors";
 import type { SyncConnectionCreatedOut } from "@/lib/api/types";
-import { APPLE_HEALTH_SHORTCUT_URL } from "@/lib/sync/appleHealthShortcut";
+import {
+  APPLE_HEALTH_HISTORY_SHORTCUT_URL,
+  APPLE_HEALTH_SYNC_SHORTCUT_URL,
+} from "@/lib/sync/appleHealthShortcut";
 import { AppleHealthConnect } from "../AppleHealthConnect";
 
 vi.mock("@/lib/api/accountClient", () => ({
@@ -40,49 +43,66 @@ afterEach(() => {
 });
 
 describe("AppleHealthConnect steps", () => {
-  it("renders every setup step, in order", () => {
+  it("renders the three setup steps, in order", () => {
     setup();
 
     expect(screen.getByRole("heading", { level: 1, name: "Connect Apple Health" })).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual([
       "Step 1 — Create a connection",
-      "Step 2 — Install the Shortcut",
-      "Step 3 — Add the token",
-      "Step 4 — Create your automation",
-      "Step 5 — Run it once",
+      "Step 2 — Import existing history",
+      "Step 3 — Set up automatic sync",
       "How syncing works",
     ]);
   });
 
-  it("makes clear the Shortcut, not the website, is what reads Apple Health", () => {
+  it("makes clear the Shortcuts, not the website, are what read Apple Health", () => {
     setup();
 
-    expect(screen.getByText(/HealthTrend cannot read Apple Health directly/)).toBeInTheDocument();
-    expect(screen.getByText("reads Weight measurements only")).toBeInTheDocument();
-    expect(screen.getByText("reads them from Apple Health, on your iPhone")).toBeInTheDocument();
-    expect(screen.getByText("sends each weight and its timestamp to HealthTrend")).toBeInTheDocument();
-    expect(screen.getByText("does not write anything back to Apple Health")).toBeInTheDocument();
+    const intro = screen.getByText(/HealthTrend cannot read Apple Health directly/);
+    expect(intro).toHaveTextContent("Apple Shortcuts on your iPhone");
+    expect(intro).toHaveTextContent("They read Weight only");
+    expect(intro).toHaveTextContent("never write anything back to Apple Health");
   });
 
-  it("explains the personal automation and the locked-phone limitation without overpromising", () => {
+  it("walks through the history import, with the token pasted into the Shortcut by hand", () => {
     setup();
 
-    expect(screen.getByText(/A shared Shortcut does not include an automation/)).toBeInTheDocument();
-    expect(screen.getByText("Create a new Time of Day automation.")).toBeInTheDocument();
-    expect(screen.getByText("Select Run Immediately.")).toBeInTheDocument();
+    const step = screen.getByRole("heading", { name: "Step 2 — Import existing history" })
+      .parentElement!;
+    expect(within(step).getAllByRole("listitem").map((item) => item.textContent)).toEqual([
+      "Add the 3-year history Shortcut.",
+      "Open the Shortcut in the Shortcuts app.",
+      "At the very top, find the Text action containing PASTE_TOKEN_HERE.",
+      "Replace PASTE_TOKEN_HERE with your HealthTrend connection token.",
+      "Run the Shortcut once.",
+    ]);
+    expect(within(step).getByRole("link", { name: "History" })).toHaveAttribute(
+      "href",
+      "/app/measurements",
+    );
+  });
+
+  it("walks through automatic sync: same token, one test run, a daily automation", () => {
+    setup();
+
+    const step = screen.getByRole("heading", { name: "Step 3 — Set up automatic sync" })
+      .parentElement!;
+    expect(within(step).getAllByRole("listitem").map((item) => item.textContent)).toEqual([
+      "Add the 14-day sync Shortcut.",
+      "Open it and replace PASTE_TOKEN_HERE at the top with the same HealthTrend connection token.",
+      "Run it once to confirm it works.",
+      "In Shortcuts → Automation, create a daily Time of Day automation for this Shortcut and choose Run Immediately.",
+    ]);
     expect(
       screen.getByText(/Apple may restrict Health data access while your iPhone has been locked/),
     ).toHaveTextContent("the next successful run will catch up");
     expect(screen.queryByText(/data loss|lost/i)).toBeNull();
   });
 
-  it("links to History for the first-run check", () => {
-    setup();
+  it("never says a Shortcut will ask for the token", () => {
+    const { container } = setup();
 
-    expect(screen.getByRole("link", { name: "View History" })).toHaveAttribute(
-      "href",
-      "/app/measurements",
-    );
+    expect(container.textContent).not.toMatch(/when it asks|asks for (your|the)|prompt/i);
   });
 
   it("explains that sync only adds readings", () => {
@@ -93,21 +113,26 @@ describe("AppleHealthConnect steps", () => {
     expect(screen.getByText(/a later sync may add it again/)).toBeInTheDocument();
   });
 
-  it("links Get HealthTrend Shortcut to the published iCloud Shortcut, and nowhere else external", () => {
-    // Pins the production share link, so changing it is a deliberate edit in two places.
-    expect(APPLE_HEALTH_SHORTCUT_URL).toBe(
-      "https://www.icloud.com/shortcuts/4465aeec7f8143288db1cf6e5e249ecd",
+  it("links each step to its own published iCloud Shortcut, and nowhere else external", () => {
+    // Pins the production share links, so changing one is a deliberate edit in two places.
+    expect(APPLE_HEALTH_HISTORY_SHORTCUT_URL).toBe(
+      "https://www.icloud.com/shortcuts/72fa8474101b4691be9832211ec31a18",
+    );
+    expect(APPLE_HEALTH_SYNC_SHORTCUT_URL).toBe(
+      "https://www.icloud.com/shortcuts/af93d96b4062489897131e345594eb98",
     );
 
     setup();
 
-    const shortcut = screen.getByRole("link", { name: "Get HealthTrend Shortcut" });
-    expect(shortcut).toHaveAttribute("href", APPLE_HEALTH_SHORTCUT_URL);
-    expect(shortcut).toHaveAttribute("rel", "noopener noreferrer");
-    expect(screen.queryByRole("button", { name: "Get HealthTrend Shortcut" })).toBeNull();
-    expect(screen.queryByText("The Shortcut link is not available yet.")).toBeNull();
+    const history = screen.getByRole("link", { name: "Get the history import Shortcut" });
+    const sync = screen.getByRole("link", { name: "Get the automatic sync Shortcut" });
+    expect(history).toHaveAttribute("href", APPLE_HEALTH_HISTORY_SHORTCUT_URL);
+    expect(sync).toHaveAttribute("href", APPLE_HEALTH_SYNC_SHORTCUT_URL);
+    for (const shortcut of [history, sync]) {
+      expect(shortcut).toHaveAttribute("rel", "noopener noreferrer");
+    }
     for (const link of screen.getAllByRole("link")) {
-      if (link !== shortcut) {
+      if (link !== history && link !== sync) {
         expect(link.getAttribute("href")).toMatch(/^\/app\//);
       }
     }
@@ -140,7 +165,10 @@ describe("AppleHealthConnect token", () => {
     expect(createSyncConnection).toHaveBeenCalledTimes(1);
     expect(createSyncConnection).toHaveBeenCalledWith("Apple Health");
     expect(screen.getByText(/This token is shown only once/)).toHaveTextContent(
-      "You’ll add it to the HealthTrend Shortcut in the next step.",
+      "You’ll use the same token in both Shortcuts.",
+    );
+    expect(screen.getByText(/Keep this token private\./)).toHaveTextContent(
+      "Keep this token private. Anyone with it can sync weight readings to your HealthTrend account. You can revoke it at any time in Settings.",
     );
     // One connection per visit: the create button is gone once a token exists.
     expect(screen.queryByRole("button", { name: "Create connection" })).toBeNull();

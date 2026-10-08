@@ -6,7 +6,8 @@ import { createSyncConnection } from "@/lib/api/accountClient";
 import { ApiError, NetworkError } from "@/lib/api/errors";
 import {
   APPLE_HEALTH_CONNECTION_LABEL,
-  APPLE_HEALTH_SHORTCUT_URL,
+  APPLE_HEALTH_HISTORY_SHORTCUT_URL,
+  APPLE_HEALTH_SYNC_SHORTCUT_URL,
 } from "@/lib/sync/appleHealthShortcut";
 import styles from "./AppleHealthConnect.module.css";
 
@@ -71,9 +72,9 @@ export function AppleHealthConnect() {
     <div className={styles.page}>
       <h1 className={styles.title}>Connect Apple Health</h1>
       <p className={styles.intro}>
-        HealthTrend cannot read Apple Health directly. Instead, an Apple Shortcut on your iPhone
-        reads your Weight measurements from Apple Health and sends them securely to your
-        HealthTrend account. Setting it up takes a few minutes.
+        HealthTrend cannot read Apple Health directly. Instead, Apple Shortcuts on your iPhone
+        read your Weight measurements from Apple Health and send them securely to your HealthTrend
+        account. They read Weight only, and never write anything back to Apple Health.
       </p>
 
       <ol className={styles.steps}>
@@ -82,8 +83,8 @@ export function AppleHealthConnect() {
           {token === null ? (
             <>
               <p className={styles.text}>
-                A connection gives the Shortcut a private token, so it can add measurements to
-                your account and nothing else.
+                Create your HealthTrend connection and copy the token shown below. You&rsquo;ll
+                use the same token in both Shortcuts.
               </p>
               <button
                 type="button"
@@ -106,8 +107,8 @@ export function AppleHealthConnect() {
           ) : (
             <>
               <p className={styles.text}>
-                This token is shown only once. You&rsquo;ll add it to the HealthTrend Shortcut in
-                the next step. Copy it before leaving or reloading this page.
+                This token is shown only once. You&rsquo;ll use the same token in both
+                Shortcuts. Copy it before leaving or reloading this page.
               </p>
               <div className={styles.tokenField}>
                 <label htmlFor={tokenId} className={styles.fieldLabel}>
@@ -140,8 +141,8 @@ export function AppleHealthConnect() {
                 </p>
               ) : null}
               <p className={styles.aside}>
-                Treat the token like a password: anyone who has it can add measurements to your
-                account. If you lose it, create a new connection and revoke the old one in{" "}
+                Keep this token private. Anyone with it can sync weight readings to your
+                HealthTrend account. You can revoke it at any time in{" "}
                 <Link href="/app/settings">Settings</Link>.
               </p>
             </>
@@ -149,76 +150,60 @@ export function AppleHealthConnect() {
         </li>
 
         <li className={styles.step}>
-          <h2 className={styles.heading}>Step 2 — Install the Shortcut</h2>
-          <p className={styles.text}>On your iPhone, add the HealthTrend Shortcut. The Shortcut:</p>
-          <ul className={styles.bullets}>
-            <li>reads Weight measurements only</li>
-            <li>reads them from Apple Health, on your iPhone</li>
-            <li>sends each weight and its timestamp to HealthTrend</li>
-            <li>does not write anything back to Apple Health</li>
-          </ul>
-          {APPLE_HEALTH_SHORTCUT_URL ? (
-            <a
-              href={APPLE_HEALTH_SHORTCUT_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.primary}
-            >
-              Get HealthTrend Shortcut
-            </a>
-          ) : (
-            <>
-              <button type="button" className={styles.primary} disabled>
-                Get HealthTrend Shortcut
-              </button>
-              <p className={styles.aside}>The Shortcut link is not available yet.</p>
-            </>
-          )}
-        </li>
-
-        <li className={styles.step}>
-          <h2 className={styles.heading}>Step 3 — Add the token</h2>
-          <p className={styles.text}>
-            When you add the Shortcut, it asks for your connection token. Paste the token you
-            copied in Step 1, then finish adding the Shortcut. The first time it runs, iOS asks
-            whether the Shortcut may read Weight from Health and send it to HealthTrend — allow
-            both.
-          </p>
-        </li>
-
-        <li className={styles.step}>
-          <h2 className={styles.heading}>Step 4 — Create your automation</h2>
-          <p className={styles.text}>
-            A shared Shortcut does not include an automation, so it will not run by itself until
-            you create one:
-          </p>
+          <h2 className={styles.heading}>Step 2 — Import existing history</h2>
           <ol className={styles.numbered}>
-            <li>Open the Shortcuts app.</li>
-            <li>Go to Automation.</li>
-            <li>Create a new Time of Day automation.</li>
+            <li>Add the 3-year history Shortcut.</li>
+            <li>Open the Shortcut in the Shortcuts app.</li>
             <li>
-              Choose a time when you are normally using, or have recently unlocked, your iPhone.
+              At the very top, find the Text action containing <code>PASTE_TOKEN_HERE</code>.
             </li>
-            <li>Choose the HealthTrend sync Shortcut.</li>
-            <li>Select Run Immediately.</li>
-            <li>Turn off any confirmation prompts you don&rsquo;t need, if iOS offers that.</li>
+            <li>
+              Replace <code>PASTE_TOKEN_HERE</code> with your HealthTrend connection token.
+            </li>
+            <li>Run the Shortcut once.</li>
           </ol>
+          <a
+            href={APPLE_HEALTH_HISTORY_SHORTCUT_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.primary}
+          >
+            Get the history import Shortcut
+          </a>
+          <p className={styles.aside}>
+            The first time it runs, iOS asks whether the Shortcut may read Health data and contact
+            HealthTrend — allow both. Afterwards, your readings appear in{" "}
+            <Link href="/app/measurements">History</Link>, marked Apple Health.
+          </p>
+        </li>
+
+        <li className={styles.step}>
+          <h2 className={styles.heading}>Step 3 — Set up automatic sync</h2>
+          <ol className={styles.numbered}>
+            <li>Add the 14-day sync Shortcut.</li>
+            <li>
+              Open it and replace <code>PASTE_TOKEN_HERE</code> at the top with the same
+              HealthTrend connection token.
+            </li>
+            <li>Run it once to confirm it works.</li>
+            <li>
+              In Shortcuts → Automation, create a daily Time of Day automation for this Shortcut
+              and choose Run Immediately.
+            </li>
+          </ol>
+          <a
+            href={APPLE_HEALTH_SYNC_SHORTCUT_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.primary}
+          >
+            Get the automatic sync Shortcut
+          </a>
           <p className={styles.aside}>
             Apple may restrict Health data access while your iPhone has been locked for some
-            time. If a sync cannot read Health data, the next successful run will catch up using
-            the recent-history window.
+            time. If a sync cannot read Health data, the next successful run will catch up, since
+            each run covers the last 14 days.
           </p>
-        </li>
-
-        <li className={styles.step}>
-          <h2 className={styles.heading}>Step 5 — Run it once</h2>
-          <p className={styles.text}>
-            Run the Shortcut yourself once to check it works, then come back here and look at
-            History. Synced readings are marked Apple Health.
-          </p>
-          <Link href="/app/measurements" className={styles.secondary}>
-            View History
-          </Link>
         </li>
       </ol>
 
