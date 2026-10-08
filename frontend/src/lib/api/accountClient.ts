@@ -1,7 +1,8 @@
 /**
  * The browser-side account and passwordless-auth client against the cookie-authenticated
  * `/api/auth/*` and `/api/me*` routes: Stage 4's sign-in/session calls, Stage 5's measurement
- * CRUD, and Stage 6's batch import, preferences, goal, exports and account deletion.
+ * CRUD, Stage 6's batch import, preferences, goal, exports and account deletion, and the sync
+ * connection management the Apple Health setup uses.
  *
  * Runs from the browser for the same reason `browserClient.ts` does -- these are calls a
  * signed-in visitor's own browser makes directly, not a Next.js server component acting on
@@ -28,6 +29,8 @@ import type {
   ObservationIn,
   PreferencesIn,
   PreferencesOut,
+  SyncConnectionCreatedOut,
+  SyncConnectionListOut,
 } from "./types";
 
 /** The credentialed request and the error mapping every call here shares; returns only a
@@ -298,5 +301,50 @@ export async function deleteAccount(confirmEmail: string): Promise<void> {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ confirm_email: confirmEmail }),
+  });
+}
+
+/**
+ * List the account's sync connections, most recently created first. Metadata only: no response
+ * from this route ever carries a token or a token hash.
+ *
+ * @throws {UnauthorizedError} if there is no session (401).
+ * @throws {NetworkError} if the backend cannot be reached.
+ */
+export function getSyncConnections(): Promise<SyncConnectionListOut> {
+  return requestJson<SyncConnectionListOut>("/api/me/sync/connections", { method: "GET" });
+}
+
+/**
+ * Create an Apple Health sync connection. The response is the only time the connection's bearer
+ * token exists in plaintext: the backend keeps no recoverable copy and no later request returns
+ * it. Nothing here stores or logs it; the caller holds it in component state for as long as the
+ * reader needs to copy it, and no longer.
+ *
+ * @throws {ApiError} if the account's sync connection cap was reached (422).
+ * @throws {UnauthorizedError} if there is no session (401).
+ * @throws {NetworkError} if the backend cannot be reached.
+ */
+export function createSyncConnection(label: string): Promise<SyncConnectionCreatedOut> {
+  return requestJson<SyncConnectionCreatedOut>("/api/me/sync/connections", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ label }),
+  });
+}
+
+/**
+ * Revoke a sync connection: its token stops authenticating immediately. No measurement is
+ * touched. The backend scopes the id to the signed-in account, answering 404 for another
+ * account's connection exactly as for one that does not exist.
+ *
+ * @throws {ApiError} if no connection exists under that id (404) -- including one already
+ *   revoked by an earlier request.
+ * @throws {UnauthorizedError} if there is no session (401).
+ * @throws {NetworkError} if the backend cannot be reached.
+ */
+export async function revokeSyncConnection(id: string): Promise<void> {
+  await requestJson<undefined>(`/api/me/sync/connections/${encodeURIComponent(id)}`, {
+    method: "DELETE",
   });
 }

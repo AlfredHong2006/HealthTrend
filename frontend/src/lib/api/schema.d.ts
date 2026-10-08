@@ -373,6 +373,81 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/sync/apple_health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Add recent Apple Health weight observations to the account (insert-only)
+         * @description Store the observations the account does not already hold, as ``apple_health``.
+         *
+         *     Authenticated by ``Authorization: Bearer <sync token>``. An observation matching a stored
+         *     measurement (same instant, same weight in kilograms) is skipped, so re-running a sync
+         *     inserts nothing new. Nothing is ever updated or deleted: ``window_start`` and
+         *     ``window_end`` are validated and otherwise unused.
+         */
+        put: operations["sync_my_apple_health_api_me_sync_apple_health_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/sync/connections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the account's sync connections
+         * @description Return every sync connection the account holds. Never a token or a token hash.
+         */
+        get: operations["list_my_sync_connections_api_me_sync_connections_get"];
+        put?: never;
+        /**
+         * Create an Apple Health sync connection and return its token once
+         * @description Create an Apple Health sync connection.
+         *
+         *     The response carries the connection's bearer token. It is not stored in a recoverable
+         *     form and no later request can return it.
+         */
+        post: operations["create_my_sync_connection_api_me_sync_connections_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/sync/connections/{connection_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke a sync connection
+         * @description Revoke a sync connection. Its token stops authenticating immediately.
+         *
+         *     ``connection_id`` belonging to another account is rejected identically to one that does
+         *     not exist: both raise ``sync_connection_not_found``. No measurement is touched.
+         */
+        delete: operations["revoke_my_sync_connection_api_me_sync_connections__connection_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -485,6 +560,45 @@ export interface components {
             span_days: number;
             /** Trajectory */
             trajectory: components["schemas"]["TrajectoryPointOut"][];
+        };
+        /**
+         * AppleHealthSyncIn
+         * @description Recent Apple Health weight observations to add to the account's history.
+         */
+        AppleHealthSyncIn: {
+            /**
+             * Observations
+             * @description Weigh-ins read from Apple Health, in any order.
+             */
+            observations: components["schemas"]["ObservationIn"][];
+            /**
+             * Window End
+             * Format: date-time
+             * @description End of the span of Apple Health history the client read; not before window_start. Must carry a timezone offset. Recorded nowhere and never used to remove anything.
+             */
+            window_end: string;
+            /**
+             * Window Start
+             * Format: date-time
+             * @description Start of the span of Apple Health history the client read. Must carry a timezone offset. Recorded nowhere and never used to remove anything.
+             */
+            window_start: string;
+        };
+        /**
+         * AppleHealthSyncOut
+         * @description The outcome of one sync. Counts only; nothing is ever removed, so there is no third.
+         */
+        AppleHealthSyncOut: {
+            /**
+             * Inserted Count
+             * @description Measurements newly stored by this sync.
+             */
+            inserted_count: number;
+            /**
+             * Skipped Existing Count
+             * @description Observations in this sync that matched a measurement already stored for this account (same instant, same weight once converted to kilograms), or an earlier observation in the same request, and were not duplicated. Re-running the same sync is therefore idempotent.
+             */
+            skipped_existing_count: number;
         };
         /**
          * CodeRequestAcceptedOut
@@ -937,7 +1051,7 @@ export interface components {
              * @description How this measurement was added.
              * @enum {string}
              */
-            source: "manual" | "csv";
+            source: "manual" | "csv" | "apple_health";
             /**
              * Timestamp
              * Format: date-time
@@ -1041,6 +1155,80 @@ export interface components {
              * @enum {string}
              */
             display_unit: "kg" | "lb";
+        };
+        /**
+         * SyncConnectionCreatedOut
+         * @description A newly created connection, together with its token.
+         *
+         *     This is the only time the token is ever returned. The server keeps a hash of it and
+         *     cannot show it again; a lost token is replaced by revoking the connection and creating
+         *     another.
+         */
+        SyncConnectionCreatedOut: {
+            connection: components["schemas"]["SyncConnectionOut"];
+            /**
+             * Token
+             * @description The bearer token for this connection, to be sent as 'Authorization: Bearer <token>'. Shown once and never again.
+             */
+            token: string;
+        };
+        /**
+         * SyncConnectionIn
+         * @description Create an Apple Health sync connection.
+         */
+        SyncConnectionIn: {
+            /**
+             * Label
+             * @description A name for this connection, such as the device it will run on.
+             * @default Apple Health
+             */
+            label: string;
+        };
+        /**
+         * SyncConnectionListOut
+         * @description Every sync connection the account holds, most recently created first.
+         */
+        SyncConnectionListOut: {
+            /** Connections */
+            connections: components["schemas"]["SyncConnectionOut"][];
+            /**
+             * Count
+             * @description How many connections are in this list.
+             */
+            count: number;
+        };
+        /**
+         * SyncConnectionOut
+         * @description One sync connection, as its owner sees it. Carries neither the token nor its hash.
+         */
+        SyncConnectionOut: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description When this connection was created (UTC).
+             */
+            created_at: string;
+            /**
+             * Id
+             * @description Stable identifier for this connection.
+             */
+            id: string;
+            /**
+             * Label
+             * @description The name given to this connection.
+             */
+            label: string;
+            /**
+             * Last Used At
+             * @description When this connection's token last authenticated a request, or null if never.
+             */
+            last_used_at: string | null;
+            /**
+             * Source
+             * @description The source this connection may sync from.
+             * @constant
+             */
+            source: "apple_health";
         };
         /**
          * TrajectoryPointOut
@@ -1724,6 +1912,139 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PreferencesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sync_my_apple_health_api_me_sync_apple_health_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppleHealthSyncIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppleHealthSyncOut"];
+                };
+            };
+            /** @description The sync token is missing, invalid or revoked. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request was rejected, or the account's measurement cap was reached. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_my_sync_connections_api_me_sync_connections_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncConnectionListOut"];
+                };
+            };
+        };
+    };
+    create_my_sync_connection_api_me_sync_connections_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SyncConnectionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncConnectionCreatedOut"];
+                };
+            };
+            /** @description The account's sync connection cap was reached. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    revoke_my_sync_connection_api_me_sync_connections__connection_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No sync connection exists under that id. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Validation Error */

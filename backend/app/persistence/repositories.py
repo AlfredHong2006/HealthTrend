@@ -31,6 +31,8 @@ from app.persistence.models import (
     MeasurementSource,
     PreferenceRow,
     SessionRow,
+    SyncConnectionRow,
+    SyncSource,
     Unit,
     UserRow,
 )
@@ -111,6 +113,19 @@ class GoalRecord:
     updated_at: datetime
 
 
+@dataclass(frozen=True, slots=True)
+class SyncConnectionRecord:
+    """A sync client's credential. ``token_hash`` is the SHA-256 of the token, never the token."""
+
+    id: str
+    user_id: str
+    source: SyncSource
+    label: str
+    token_hash: str
+    created_at: datetime
+    last_used_at: datetime | None
+
+
 def _user(row: UserRow) -> UserRecord:
     return UserRecord(
         id=row.id, email=row.email, created_at=row.created_at, last_login_at=row.last_login_at
@@ -164,6 +179,18 @@ def _goal(row: GoalRow) -> GoalRecord:
         target_weight_kg=row.target_weight_kg,
         target_weekly_rate_kg=row.target_weekly_rate_kg,
         updated_at=row.updated_at,
+    )
+
+
+def _sync_connection(row: SyncConnectionRow) -> SyncConnectionRecord:
+    return SyncConnectionRecord(
+        id=row.id,
+        user_id=row.user_id,
+        source=row.source,
+        label=row.label,
+        token_hash=row.token_hash,
+        created_at=row.created_at,
+        last_used_at=row.last_used_at,
     )
 
 
@@ -510,6 +537,77 @@ class GoalRepo:
         return bool(result.rowcount)  # type: ignore[attr-defined]
 
 
+class SyncConnectionRepo:
+    """Sync connections. Scoped to their owner everywhere except the lookup by token hash."""
+
+    def __init__(self, session: Session) -> None:
+        """Bind to ``session``."""
+        self._session = session
+
+    def add(
+        self, user_id: str, *, source: SyncSource, label: str, token_hash: str, now: datetime
+    ) -> SyncConnectionRecord:
+        """Record a new connection for ``user_id`` by the hash of its token."""
+        row = SyncConnectionRow(
+            id=_new_id(),
+            user_id=user_id,
+            source=source,
+            label=label,
+            token_hash=token_hash,
+            created_at=now,
+            last_used_at=None,
+        )
+        self._session.add(row)
+        self._session.flush()
+        return _sync_connection(row)
+
+    def list_for_user(self, user_id: str) -> list[SyncConnectionRecord]:
+        """Return every connection owned by ``user_id``, most recently created first."""
+        rows = self._session.scalars(
+            select(SyncConnectionRow)
+            .where(SyncConnectionRow.user_id == user_id)
+            .order_by(SyncConnectionRow.created_at.desc(), SyncConnectionRow.id.desc())
+        )
+        return [_sync_connection(row) for row in rows]
+
+    def count_for_user(self, user_id: str) -> int:
+        """Count the connections owned by ``user_id``."""
+        count = self._session.scalar(
+            select(func.count())
+            .select_from(SyncConnectionRow)
+            .where(SyncConnectionRow.user_id == user_id)
+        )
+        return int(count or 0)
+
+    def get_by_token_hash(self, token_hash: str) -> SyncConnectionRecord | None:
+        """Return the connection whose token has this hash, if any.
+
+        The one lookup here that takes no ``user_id``: presenting the token is how the owner
+        is established in the first place. The hash is unique, so at most one row matches.
+        """
+        row = self._session.scalar(
+            select(SyncConnectionRow).where(SyncConnectionRow.token_hash == token_hash)
+        )
+        return None if row is None else _sync_connection(row)
+
+    def touch(self, connection_id: str, *, now: datetime) -> None:
+        """Record that a connection's token was just used."""
+        self._session.execute(
+            update(SyncConnectionRow)
+            .where(SyncConnectionRow.id == connection_id)
+            .values(last_used_at=now)
+        )
+
+    def delete_owned(self, user_id: str, connection_id: str) -> bool:
+        """Delete a connection if it belongs to ``user_id``. Return whether one was deleted."""
+        result = self._session.execute(
+            delete(SyncConnectionRow).where(
+                SyncConnectionRow.id == connection_id, SyncConnectionRow.user_id == user_id
+            )
+        )
+        return bool(result.rowcount)  # type: ignore[attr-defined]
+
+
 class Store:
     """One unit of work over every repository, sharing a single transaction."""
 
@@ -522,6 +620,7 @@ class Store:
         self.measurements = MeasurementRepo(session)
         self.preferences = PreferenceRepo(session)
         self.goals = GoalRepo(session)
+        self.sync_connections = SyncConnectionRepo(session)
 
     def commit(self) -> None:
         """Commit everything done through this store so far."""

@@ -91,6 +91,13 @@ def test_deleting_a_user_cascades_to_everything_they_own(store: Store):
         store.measurements.add(owner, timestamp=NOW, weight=70.0, unit="kg", source="csv", now=NOW)
         store.preferences.upsert(owner, display_unit="lb", now=NOW)
         store.goals.upsert(owner, target_weight_kg=65.0, target_weekly_rate_kg=None, now=NOW)
+        store.sync_connections.add(
+            owner,
+            source="apple_health",
+            label="phone",
+            token_hash=owner[:8].ljust(64, "1"),
+            now=NOW,
+        )
     store.commit()
 
     assert store.users.delete(alice) is True
@@ -101,11 +108,14 @@ def test_deleting_a_user_cascades_to_everything_they_own(store: Store):
     assert store.measurements.count_for_user(alice) == 0
     assert store.preferences.get(alice) is None
     assert store.goals.get(alice) is None
+    assert store.sync_connections.count_for_user(alice) == 0
+    assert store.sync_connections.get_by_token_hash(alice[:8].ljust(64, "1")) is None
 
     assert store.sessions.get(bob[:8].ljust(64, "0")) is not None
     assert store.measurements.count_for_user(bob) == 1
     assert store.preferences.get(bob) is not None
     assert store.goals.get(bob) is not None
+    assert store.sync_connections.get_by_token_hash(bob[:8].ljust(64, "1")) is not None
     assert store.users.delete(alice) is False
 
 
@@ -283,6 +293,102 @@ def test_sqlalchemy_does_not_render_bound_values_into_a_database_error(store: St
     message = str(raised.value)
     assert "SQL parameters hidden due to hide_parameters=True" in message
     assert "[parameters:" not in message
+
+
+def test_the_schema_accepts_an_apple_health_measurement_and_refuses_an_unknown_source(
+    store: Store,
+):
+    user_id = make_user(store)
+    stored = store.measurements.add(
+        user_id, timestamp=NOW, weight=70.0, unit="kg", source="apple_health", now=NOW
+    )
+    store.commit()
+    assert stored.source == "apple_health"
+    with pytest.raises(IntegrityError):
+        store.measurements.add(
+            user_id,
+            timestamp=NOW,
+            weight=70.0,
+            unit="kg",
+            source="fitbit",  # type: ignore[arg-type]
+            now=NOW,
+        )
+
+
+# --- sync connections -----------------------------------------------------------------------
+
+
+def test_a_sync_connection_is_found_by_its_token_hash_and_listed_for_its_owner(store: Store):
+    alice = make_user(store)
+    bob = make_user(store, "bob@example.com")
+    created = store.sync_connections.add(
+        alice, source="apple_health", label="iPhone", token_hash="a" * 64, now=NOW
+    )
+    store.commit()
+
+    assert created.last_used_at is None
+    assert store.sync_connections.get_by_token_hash("a" * 64) == created
+    assert store.sync_connections.get_by_token_hash("b" * 64) is None
+    assert store.sync_connections.list_for_user(alice) == [created]
+    assert store.sync_connections.list_for_user(bob) == []
+    assert store.sync_connections.count_for_user(bob) == 0
+
+
+def test_touching_a_sync_connection_stamps_only_that_connection(store: Store):
+    alice = make_user(store)
+    used = store.sync_connections.add(
+        alice, source="apple_health", label="used", token_hash="a" * 64, now=NOW
+    )
+    store.sync_connections.add(
+        alice, source="apple_health", label="idle", token_hash="b" * 64, now=NOW
+    )
+    store.sync_connections.touch(used.id, now=LATER)
+    store.commit()
+    by_label = {c.label: c.last_used_at for c in store.sync_connections.list_for_user(alice)}
+    assert by_label == {"used": LATER, "idle": None}
+
+
+def test_another_users_sync_connection_cannot_be_deleted(store: Store):
+    alice = make_user(store)
+    bob = make_user(store, "bob@example.com")
+    created = store.sync_connections.add(
+        alice, source="apple_health", label="iPhone", token_hash="a" * 64, now=NOW
+    )
+    store.commit()
+
+    assert store.sync_connections.delete_owned(bob, created.id) is False
+    assert store.sync_connections.get_by_token_hash("a" * 64) is not None
+    assert store.sync_connections.delete_owned(alice, created.id) is True
+    assert store.sync_connections.get_by_token_hash("a" * 64) is None
+    assert store.sync_connections.delete_owned(alice, created.id) is False
+
+
+def test_two_sync_connections_cannot_share_a_token_hash(store: Store):
+    alice = make_user(store)
+    store.sync_connections.add(
+        alice, source="apple_health", label="one", token_hash="a" * 64, now=NOW
+    )
+    with pytest.raises(IntegrityError):
+        store.sync_connections.add(
+            alice, source="apple_health", label="two", token_hash="a" * 64, now=NOW
+        )
+
+
+def test_a_sync_connection_requires_an_existing_user_and_a_known_source(store: Store):
+    with pytest.raises(IntegrityError):
+        store.sync_connections.add(
+            "no-such-user", source="apple_health", label="x", token_hash="a" * 64, now=NOW
+        )
+    store.rollback()
+    alice = make_user(store)
+    with pytest.raises(IntegrityError):
+        store.sync_connections.add(
+            alice,
+            source="fitbit",  # type: ignore[arg-type]
+            label="x",
+            token_hash="b" * 64,
+            now=NOW,
+        )
 
 
 # --- preferences and goals ----------------------------------------------------------------------

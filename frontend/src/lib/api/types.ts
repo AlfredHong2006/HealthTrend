@@ -51,3 +51,10 @@ export type PreferencesIn = components["schemas"]["PreferencesIn"];
 export type PreferencesOut = components["schemas"]["PreferencesOut"];
 export type GoalIn = components["schemas"]["GoalIn"];
 export type GoalOut = components["schemas"]["GoalOut"];
+
+// Sync connections (`GET/POST /api/me/sync/connections`, `DELETE /api/me/sync/connections/{id}`).
+// `SyncConnectionOut` carries neither the token nor its hash; only the creation response does,
+// and only the plaintext token, once.
+export type SyncConnectionOut = components["schemas"]["SyncConnectionOut"];
+export type SyncConnectionListOut = components["schemas"]["SyncConnectionListOut"];
+export type SyncConnectionCreatedOut = components["schemas"]["SyncConnectionCreatedOut"];

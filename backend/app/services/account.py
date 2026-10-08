@@ -114,8 +114,9 @@ def clear_goal(user_id: str, *, store: Store) -> None:
 def delete_account(user: UserRecord, *, store: Store) -> None:
     """Hard-delete the account and everything it owns.
 
-    Deleting the user row cascades to their sessions, measurements, preferences and goal
-    (``ON DELETE CASCADE``, :mod:`app.persistence.models`). ``login_codes`` carries no
+    Deleting the user row cascades to their sessions, measurements, preferences, goal and
+    sync connections (``ON DELETE CASCADE``, :mod:`app.persistence.models`), so every sync
+    token the account issued stops working with it. ``login_codes`` carries no
     foreign key to ``users`` -- a code can exist before an account does -- so it is purged by
     email explicitly; otherwise a code issued moments before deletion would outlive the
     account it was issued for.

@@ -30,6 +30,14 @@ MeasurementUnit = Literal["kg", "lb"]
 MeasurementSourceIn = Literal["manual", "csv"]
 """How a measurement being stored arrived. Echoed back unchanged; never inferred."""
 
+MeasurementSource = Literal["manual", "csv", "apple_health"]
+"""Every source a stored measurement may carry.
+
+Wider than :data:`MeasurementSourceIn` on purpose: ``apple_health`` is written only by the
+Apple Health sync route (:mod:`app.schemas.sync`), under a sync token. A signed-in browser
+cannot label a batch with it.
+"""
+
 
 class MeasurementBatchIn(BaseModel):
     """A batch of measurements to store at once, such as a CSV import's accepted rows."""
@@ -53,7 +61,7 @@ class MeasurementOut(BaseModel):
     timestamp: datetime = Field(description="When the weigh-in happened, in UTC.")
     weight: float = Field(description="The weight as entered, in the unit field.")
     unit: MeasurementUnit = Field(description="The unit the weight was entered in.")
-    source: MeasurementSourceIn = Field(description="How this measurement was added.")
+    source: MeasurementSource = Field(description="How this measurement was added.")
     created_at: datetime = Field(description="When this row was first stored (UTC).")
     updated_at: datetime = Field(description="When this row was last changed (UTC).")
 

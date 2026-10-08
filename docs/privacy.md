@@ -140,7 +140,8 @@ session. Everything below is implemented; nothing is a plan.
 | The account's email address (lower-cased), when the account was created, and when it last signed in | it is the account's identity and where sign-in codes are sent |
 | Sign-in codes: the email address they were sent to, an HMAC of the code (never the code itself), when it was issued, when it expires, whether it was used, and failed attempts | to check a code once and enforce expiry, attempt and rate limits |
 | Sessions: a SHA-256 hash of the session token (never the token itself), and when the session was created, last used and expires | to recognise a signed-in browser |
-| Measurements: timestamp, weight, the unit it was entered in, whether it was entered by hand or imported from CSV, and when the row was created and last changed | they are the history the analysis is computed from |
+| Sync connections, if the person creates one: a label, the source it syncs from (Apple Health), a SHA-256 hash of its sync token (never the token itself), and when it was created and last used | to recognise a sync client, such as an Apple Shortcut, without giving it the browser session |
+| Measurements: timestamp, weight, the unit it was entered in, whether it was entered by hand, imported from CSV or synced from Apple Health, and when the row was created and last changed | they are the history the analysis is computed from |
 | The display unit (kg or lb) | so the choice is remembered |
 | The current goal, if one is set: a target weight and/or a target weekly rate | so it can be shown beside the estimate |
 
@@ -176,6 +177,22 @@ account state — the same static guard described below enforces that for `/app`
 lives only in page memory while it is on screen, and is fetched again from the API on the next
 visit.
 
+### Sync tokens
+
+A sync client cannot hold the session cookie, so it holds a sync token instead: a separate random
+credential created in Settings and sent as `Authorization: Bearer <token>`. The token is shown once,
+when the connection is created; the server keeps only its SHA-256 and cannot show it again. It
+authenticates one route, `PUT /api/me/sync/apple_health`, and nothing else — it cannot read the
+history, the analysis or the account, and cannot create or revoke connections. The session cookie,
+in turn, is not accepted on that route. Revoking a connection deletes its row, and its token stops
+working immediately.
+
+The Apple Health sync is **insert-only**. It adds the weigh-ins the account does not already hold
+and never changes or deletes a stored measurement, whatever the request contains; a weigh-in edited
+or deleted in Apple Health is not edited or deleted in HealthTrend. Only weight is accepted — no
+other Apple Health data type has anywhere to go. A synced measurement is analysed exactly like any
+other; where it came from is recorded and never read by the estimate.
+
 ### Getting data out
 
 Settings offers two separate downloads, and they are different on purpose:
@@ -186,14 +203,15 @@ Settings offers two separate downloads, and they are different on purpose:
 - **Account data (JSON)** — a versioned file of the account data HealthTrend stores: the account's
   id, email address and creation time, the display preference, the goal (or none), and every
   measurement with its source and row timestamps. It contains only what HealthTrend itself holds.
-  It leaves out the authentication records — sign-in code HMACs, session hashes and the last
-  sign-in time — which are about signing in rather than the person's data.
+  It leaves out the authentication records — sign-in code HMACs, session hashes, sync connections
+  and their token hashes, and the last sign-in time — which are about signing in rather than the
+  person's data.
 
 ### Deleting an account
 
 Deleting an account from Settings, after retyping its email address, removes it immediately and
 permanently from HealthTrend's database: the account row, and with it every session, measurement,
-preference and goal. Sign-in codes are not linked to the account row, so they are purged separately
+preference, goal and sync connection — so every sync token the account issued stops working too. Sign-in codes are not linked to the account row, so they are purged separately
 by email address, including a code requested moments before deletion. The session cookie is
 cleared, and a copy of it taken earlier stops working. There is no soft delete, no undo and no
 retention period implemented by HealthTrend.

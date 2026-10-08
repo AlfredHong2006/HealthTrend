@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount } from "@/components/app/AccountProvider/AccountProvider";
+import { ConnectedSourcesSetting } from "./ConnectedSourcesSetting";
 import { DeleteAccountSetting } from "./DeleteAccountSetting";
 import { DisplayUnitSetting } from "./DisplayUnitSetting";
 import { ExportSetting } from "./ExportSetting";
@@ -11,7 +12,8 @@ import styles from "./Settings.module.css";
 
 /**
  * `/app/settings`: exactly the account settings the backend already stores -- display unit and
- * goal -- plus the two exports, sign-out and account deletion. Not a general preferences system.
+ * goal -- plus the connected sources (Apple Health sync connections), the two exports, sign-out
+ * and account deletion. Not a general preferences system.
  *
  * Sign-out here is the same `AccountProvider.logout()` the shell's own action uses, not a second
  * implementation.
@@ -43,6 +45,7 @@ export function Settings() {
 
       <DisplayUnitSetting />
       <GoalSetting key={unit} unit={unit} />
+      <ConnectedSourcesSetting />
       <ExportSetting />
 
       <section className={styles.section} aria-labelledby={signOutHeadingId}>

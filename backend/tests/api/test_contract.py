@@ -196,6 +196,9 @@ def test_the_openapi_schema_builds(strict_client: TestClient):
         "/api/me/goal",
         "/api/me/export",
         "/api/me/export/measurements.csv",
+        "/api/me/sync/connections",
+        "/api/me/sync/connections/{connection_id}",
+        "/api/me/sync/apple_health",
     }
 
 

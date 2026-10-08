@@ -5,7 +5,7 @@ one email; deciding *when* to do any of that -- allow-lists, rate limits, expiry
 user -- belongs to :mod:`app.services.auth`, and reading or writing rows belongs to
 :mod:`app.persistence`.
 
-Two kinds of secret, protected differently on purpose:
+Three kinds of secret, protected differently on purpose:
 
 * **Login codes** are six digits: a million possibilities. A plain hash of one is no protection
   at all, because every candidate can be hashed in well under a second. So a code is stored as
@@ -15,6 +15,10 @@ Two kinds of secret, protected differently on purpose:
   sent to.
 * **Session tokens** carry 256 bits from :mod:`secrets`. No search covers that space, so a plain
   SHA-256 is enough to make a copied ``sessions`` table unusable, and it needs no key.
+* **Sync tokens** (:mod:`app.auth.sync_tokens`) are the same kind of secret as a session
+  token -- 256 random bits, stored as a plain SHA-256 -- held by a sync client instead of a
+  browser, and sent in an ``Authorization`` header instead of a cookie.
 
-Both comparisons use :func:`hmac.compare_digest`.
+A login code is compared with :func:`hmac.compare_digest`. A session or sync token is never
+compared at all: its hash is looked up by equality, and a hash that matches no row is no token.
 """

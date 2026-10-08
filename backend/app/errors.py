@@ -112,6 +112,15 @@ class TooManyCodeRequestsError(AuthError):
     """Too many sign-in codes have been requested for one email within the rate-limit window."""
 
 
+class InvalidSyncTokenError(AuthError):
+    """The request carries no usable sync token.
+
+    Deliberately one error for every cause -- no ``Authorization`` header, a malformed one, an
+    unknown or revoked token, a token for a different source, or an account no longer allowed
+    to sign in -- so a response never says which.
+    """
+
+
 class MeasurementNotFoundError(HealthTrendError):
     """No stored measurement exists under that id for the requesting user.
 
@@ -122,6 +131,18 @@ class MeasurementNotFoundError(HealthTrendError):
 
 class MeasurementLimitExceededError(HealthTrendError):
     """Storing this measurement, or this batch, would exceed the per-account cap."""
+
+
+class SyncConnectionNotFoundError(HealthTrendError):
+    """No sync connection exists under that id for the requesting user.
+
+    The same error whether the id belongs to another user or does not exist at all, exactly
+    as for :class:`MeasurementNotFoundError`.
+    """
+
+
+class SyncConnectionLimitExceededError(HealthTrendError):
+    """Creating another sync connection would exceed the per-account cap."""
 
 
 class ConfirmationMismatchError(HealthTrendError):

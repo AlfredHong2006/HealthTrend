@@ -11,23 +11,32 @@ route; tests override :func:`get_mailer` the same way they override the clock.
 
 **The current user** comes only from the ``ht_session`` cookie, resolved against the
 database. No route ever takes a user id from the request body, the query or the path.
+
+**A sync user** is the one exception to "only from the cookie", and it is a separate
+dependency on purpose. :func:`get_apple_health_sync_user` reads an ``Authorization: Bearer``
+sync token and never the cookie; :func:`get_current_user` reads the cookie and never the
+header. A route declares one or the other, so a sync token cannot reach an account route and
+a browser session cannot stand in for a sync token.
 """
 
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import Annotated
+from typing import Annotated, Final
 
 from fastapi import Depends, Request, Response
 
 from app.api.session_cookie import SESSION_COOKIE_NAME, set_session_cookie
 from app.auth.mailer import Mailer
 from app.config import Settings
-from app.errors import UnauthenticatedError
+from app.errors import InvalidSyncTokenError, UnauthenticatedError
 from app.persistence import Database, Store
 from app.persistence.repositories import UserRecord
 from app.services.auth import resolve_session
 from app.services.clock import Clock, SystemClock
+from app.services.sync import authenticate_sync_token
+
+_BEARER_SCHEME: Final = "bearer"
 
 
 def get_clock() -> Clock:
@@ -97,3 +106,34 @@ def get_current_user(
 
 CurrentUserDep = Annotated[UserRecord, Depends(get_current_user)]
 """The signed-in user. A route that declares this rejects anonymous requests with a 401."""
+
+
+def _bearer_token(request: Request) -> str | None:
+    """Return the credential of an ``Authorization: Bearer <token>`` header, if there is one."""
+    scheme, _, credential = request.headers.get("Authorization", "").partition(" ")
+    if scheme.lower() != _BEARER_SCHEME:
+        return None
+    return credential.strip() or None
+
+
+def get_apple_health_sync_user(
+    request: Request, clock: ClockDep, store: StoreDep, settings: SettingsDep
+) -> UserRecord:
+    """Return the user whose Apple Health sync token the request carries.
+
+    The session cookie is not consulted: a request with a valid ``ht_session`` and no bearer
+    token is rejected exactly like one with neither.
+
+    Raises:
+        InvalidSyncTokenError: no bearer token, or one that does not authenticate.
+    """
+    token = _bearer_token(request)
+    if token is None:
+        raise InvalidSyncTokenError("no bearer token")
+    return authenticate_sync_token(
+        token, source="apple_health", now=clock.now(), store=store, settings=settings
+    )
+
+
+AppleHealthSyncUserDep = Annotated[UserRecord, Depends(get_apple_health_sync_user)]
+"""The user an Apple Health sync token belongs to. Only the sync route declares this."""

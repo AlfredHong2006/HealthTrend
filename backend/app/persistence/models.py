@@ -1,6 +1,6 @@
 """The account database schema.
 
-Six tables, each row owned by exactly one user except ``login_codes``, which exist before a
+Seven tables, each row owned by exactly one user except ``login_codes``, which exist before a
 user does::
 
     users          id · email (unique, normalised) · created_at · last_login_at
@@ -10,6 +10,8 @@ user does::
                    updated_at
     preferences    user_id → users · display_unit · updated_at
     goals          user_id → users · target_weight_kg · target_weekly_rate_kg · updated_at
+    sync_connections  id · user_id → users · source · label · token_hash (unique) ·
+                   created_at · last_used_at
 
 Decisions worth knowing before editing:
 
@@ -24,7 +26,10 @@ Decisions worth knowing before editing:
   million possible values, so a bare hash of one could be reversed by trying them all; the
   HMAC is keyed with a server secret held outside the database. A session token carries 256
   bits of randomness, which no search can cover, so a plain hash is sufficient
-  (:mod:`app.auth`).
+  (:mod:`app.auth`). A sync connection's ``token_hash`` is the same plain SHA-256 of the
+  same kind of token, for the same reason.
+* **A sync connection is revoked by deleting its row.** There is no "revoked" flag to forget
+  to check: a token whose row is gone matches nothing.
 * **All datetimes are UTC**, enforced by :class:`UtcDateTime` in both directions.
 
 Constraint names follow :data:`NAMING_CONVENTION` so that the Alembic migration can refer to
@@ -62,8 +67,17 @@ DIGEST_HEX_LENGTH: Final = 64
 Unit = Literal["kg", "lb"]
 """The units a measurement or a display preference may use."""
 
-MeasurementSource = Literal["manual", "csv"]
-"""How a stored measurement arrived."""
+MeasurementSource = Literal["manual", "csv", "apple_health"]
+"""How a stored measurement arrived. Provenance only: no analysis ever reads it."""
+
+SOURCE_MAX_LENGTH: Final = 12
+"""Longest measurement or sync source name stored (``apple_health``)."""
+
+SyncSource = Literal["apple_health"]
+"""The external sources a sync connection may write measurements from."""
+
+SYNC_LABEL_MAX_LENGTH: Final = 64
+"""Longest label a sync connection may carry."""
 
 NAMING_CONVENTION: Final = {
     "ix": "ix_%(table_name)s_%(column_0_N_name)s",
@@ -161,7 +175,7 @@ class MeasurementRow(Base):
     __tablename__ = "measurements"
     __table_args__ = (
         CheckConstraint("unit IN ('kg', 'lb')", name="unit"),
-        CheckConstraint("source IN ('manual', 'csv')", name="source"),
+        CheckConstraint("source IN ('manual', 'csv', 'apple_health')", name="source"),
         Index(None, "user_id", "timestamp"),
     )
 
@@ -172,7 +186,7 @@ class MeasurementRow(Base):
     timestamp: Mapped[datetime] = mapped_column(UtcDateTime())
     weight: Mapped[float] = mapped_column(Float)
     unit: Mapped[Unit] = mapped_column(String(2))
-    source: Mapped[MeasurementSource] = mapped_column(String(6))
+    source: Mapped[MeasurementSource] = mapped_column(String(SOURCE_MAX_LENGTH))
     created_at: Mapped[datetime] = mapped_column(UtcDateTime())
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime())
 
@@ -201,3 +215,20 @@ class GoalRow(Base):
     target_weight_kg: Mapped[float | None] = mapped_column(Float, nullable=True)
     target_weekly_rate_kg: Mapped[float | None] = mapped_column(Float, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime())
+
+
+class SyncConnectionRow(Base):
+    """One sync client's credential, keyed by a public id and found by its token's SHA-256."""
+
+    __tablename__ = "sync_connections"
+    __table_args__ = (CheckConstraint("source IN ('apple_health')", name="source"),)
+
+    id: Mapped[str] = mapped_column(String(ID_LENGTH), primary_key=True)
+    user_id: Mapped[str] = mapped_column(
+        String(ID_LENGTH), ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    source: Mapped[SyncSource] = mapped_column(String(SOURCE_MAX_LENGTH))
+    label: Mapped[str] = mapped_column(String(SYNC_LABEL_MAX_LENGTH))
+    token_hash: Mapped[str] = mapped_column(String(DIGEST_HEX_LENGTH), unique=True)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime())
+    last_used_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)

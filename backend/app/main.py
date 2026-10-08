@@ -19,7 +19,9 @@ never what this API accepts.
 request and nothing about it is retained. The auth routes store what signing in requires -- the
 user's email, an HMAC of each issued sign-in code, and the hash of each session token -- in the
 database named by ``HEALTHTREND_DATABASE_URL``. The session travels in an HttpOnly cookie
-(:mod:`app.api.session_cookie`).
+(:mod:`app.api.session_cookie`). A sync client holds a separate bearer token instead, of which
+the database keeps only a hash (:mod:`app.api.routes_sync`); ``Authorization`` is deliberately
+not a CORS-allowed header, because no browser page is meant to send one.
 
 **Startup fails closed.** :class:`app.config.Settings` is read when the server starts, and a
 missing database URL, auth secret or mailer configuration stops it from starting. Reading the
@@ -48,6 +50,7 @@ from app.api.logging import register_request_logging
 from app.api.routes import router
 from app.api.routes_account import router as account_router
 from app.api.routes_auth import router as auth_router
+from app.api.routes_sync import router as sync_router
 from app.auth.mailer import ConsoleMailer, Mailer, SmtpMailer
 from app.config import ALLOWED_ORIGINS_ENV_VAR, Settings, allowed_origins, load_settings
 from app.errors import ConfigurationError
@@ -142,6 +145,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(router)
     app.include_router(auth_router)
     app.include_router(account_router)
+    app.include_router(sync_router)
     return app
 
 

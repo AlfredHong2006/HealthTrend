@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createMeasurement,
+  createSyncConnection,
   deleteAccount,
   deleteGoal,
   deleteMeasurement,
@@ -9,16 +10,18 @@ import {
   getCurrentAccount,
   getMeasurements,
   getMeasurementsCsvExport,
+  getSyncConnections,
   importMeasurementsBatch,
   logout,
   requestSignInCode,
+  revokeSyncConnection,
   updateGoal,
   updateMeasurement,
   updatePreferences,
   verifySignInCode,
 } from "../accountClient";
 import { ApiError, NetworkError, UnauthorizedError } from "../errors";
-import type { MeasurementOut, MeOut, ObservationIn } from "../types";
+import type { MeasurementOut, MeOut, ObservationIn, SyncConnectionOut } from "../types";
 
 /**
  * Covers what is specific to the account/auth client: every call is credentialed, hits the
@@ -502,3 +505,69 @@ describe("deleteAccount", () => {
 // (`src/lib/privacy/__tests__/no-persistence.test.ts`) already scans every source file,
 // this one included, for those mechanisms -- a redundant runtime check here would only
 // duplicate it, and could not name what it is checking for without tripping that same guard.
+
+const CONNECTION: SyncConnectionOut = {
+  id: "c1",
+  source: "apple_health",
+  label: "Apple Health",
+  created_at: "2026-04-20T08:00:00Z",
+  last_used_at: null,
+};
+
+describe("sync connections", () => {
+  it("GETs the connection list with credentials", async () => {
+    const list = { count: 1, connections: [CONNECTION] };
+    const fetchMock = mockFetchOnce(new Response(JSON.stringify(list), { status: 200 }));
+
+    await expect(getSyncConnections()).resolves.toEqual(list);
+
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(String(url)).toBe("http://localhost:8000/api/me/sync/connections");
+    expect(init).toMatchObject({ method: "GET", credentials: "include" });
+  });
+
+  it("POSTs only a label to create a connection, and returns the one-time token", async () => {
+    const created = { connection: CONNECTION, token: "hts_example" };
+    const fetchMock = mockFetchOnce(new Response(JSON.stringify(created), { status: 201 }));
+
+    await expect(createSyncConnection("Apple Health")).resolves.toEqual(created);
+
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(String(url)).toBe("http://localhost:8000/api/me/sync/connections");
+    expect(init).toMatchObject({ method: "POST", credentials: "include" });
+    expect(JSON.parse(String(init?.body))).toEqual({ label: "Apple Health" });
+  });
+
+  it("throws ApiError with the backend's message when the connection cap is reached", async () => {
+    const body = {
+      error: {
+        code: "sync_connection_limit_exceeded",
+        message: "This account already holds the maximum of 5 sync connections.",
+      },
+    };
+    mockFetchOnce(new Response(JSON.stringify(body), { status: 422 }));
+
+    const error = await createSyncConnection("Apple Health").catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).code).toBe("sync_connection_limit_exceeded");
+  });
+
+  it("DELETEs the connection's own URL with credentials and resolves on a 204", async () => {
+    const fetchMock = mockFetchOnce(new Response(null, { status: 204 }));
+
+    await expect(revokeSyncConnection("c1")).resolves.toBeUndefined();
+
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(String(url)).toBe("http://localhost:8000/api/me/sync/connections/c1");
+    expect(init).toMatchObject({ method: "DELETE", credentials: "include" });
+  });
+
+  it("throws UnauthorizedError without a session, and NetworkError when unreachable", async () => {
+    mockFetchOnce(new Response(JSON.stringify({ error: { code: "x", message: "y" } }), { status: 401 }));
+    await expect(getSyncConnections()).rejects.toBeInstanceOf(UnauthorizedError);
+
+    offline();
+    await expect(revokeSyncConnection("c1")).rejects.toBeInstanceOf(NetworkError);
+  });
+});

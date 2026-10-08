@@ -63,8 +63,11 @@ from app.errors import (
     FutureObservationError,
     HealthTrendError,
     InvalidCodeError,
+    InvalidSyncTokenError,
     MeasurementLimitExceededError,
     MeasurementNotFoundError,
+    SyncConnectionLimitExceededError,
+    SyncConnectionNotFoundError,
     TooManyCodeRequestsError,
     UnauthenticatedError,
     UnknownScenarioError,
@@ -72,6 +75,7 @@ from app.errors import (
 from app.schemas.analysis import MAX_OBSERVATIONS
 from app.schemas.errors import ErrorBody, ErrorDetail, ErrorResponse
 from app.schemas.ingestion import MAX_CSV_BYTES
+from app.schemas.sync import MAX_SYNC_CONNECTIONS
 
 logger = logging.getLogger("healthtrend.api")
 
@@ -241,6 +245,32 @@ _DOMAIN_ERRORS: Final[tuple[tuple[type[Exception], ErrorSpec], ...]] = (
             429,
             "too_many_requests",
             "Too many sign-in codes have been requested. Wait a few minutes and try again.",
+        ),
+    ),
+    # Sync failures. One body for every way a sync token can fail to authenticate.
+    (
+        InvalidSyncTokenError,
+        ErrorSpec(
+            401,
+            "invalid_sync_token",
+            "The sync token is missing, not valid, or has been revoked.",
+        ),
+    ),
+    (
+        SyncConnectionNotFoundError,
+        ErrorSpec(
+            404,
+            "sync_connection_not_found",
+            "No sync connection was found under that id.",
+        ),
+    ),
+    (
+        SyncConnectionLimitExceededError,
+        ErrorSpec(
+            422,
+            "sync_connection_limit_exceeded",
+            f"This account already holds the maximum of {MAX_SYNC_CONNECTIONS} sync "
+            "connections. Revoke one before creating another.",
         ),
     ),
     # Account failures.

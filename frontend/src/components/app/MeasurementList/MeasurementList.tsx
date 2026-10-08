@@ -187,6 +187,8 @@ export function MeasurementList() {
                   {formatTimeOfDay(new Date(measurement.timestamp))}
                   {measurement.source === "csv" ? (
                     <span className={styles.source}> · imported</span>
+                  ) : measurement.source === "apple_health" ? (
+                    <span className={styles.source}> · Apple Health</span>
                   ) : null}
                 </span>
               </div>

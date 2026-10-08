@@ -125,6 +125,20 @@ describe("MeasurementList populated", () => {
     expect(within(rows[0]!).queryByText(/imported/)).not.toBeInTheDocument();
     expect(within(rows[1]!).getByText(/imported/)).toBeInTheDocument();
   });
+
+  it("labels a synced row as Apple Health, and no other row", async () => {
+    mockUseAccount();
+    const synced: MeasurementOut = { ...ROW_A, id: "m3", source: "apple_health" };
+    vi.mocked(getMeasurements).mockResolvedValue({ count: 3, measurements: [synced, ROW_A, ROW_B] });
+
+    render(<MeasurementList />);
+
+    const rows = await screen.findAllByRole("listitem");
+    expect(within(rows[0]!).getByText(/Apple Health/)).toBeInTheDocument();
+    expect(within(rows[0]!).queryByText(/imported/)).not.toBeInTheDocument();
+    expect(within(rows[1]!).queryByText(/Apple Health/)).not.toBeInTheDocument();
+    expect(within(rows[2]!).queryByText(/Apple Health/)).not.toBeInTheDocument();
+  });
 });
 
 describe("MeasurementList edit", () => {

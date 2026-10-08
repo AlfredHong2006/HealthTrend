@@ -116,7 +116,7 @@ Three things follow from it, and all three are load-bearing:
 ```
 backend/
   pyproject.toml          uv project; numpy, fastapi, pydantic, uvicorn, sqlalchemy, alembic, psycopg
-  alembic.ini  alembic/   migrations (versions/0001_initial.py); URL from HEALTHTREND_DATABASE_URL
+  alembic.ini  alembic/   migrations (versions/0001_initial.py, 0002_sync_connections.py); URL from HEALTHTREND_DATABASE_URL
   .env.example            setting names and placeholders only
   app/
     config.py             CORS allow-list; Settings: database, auth secret, cookie, mailer, beta list
@@ -139,10 +139,11 @@ backend/
     auth/                 M8, framework-free
       codes.py            six-digit codes, HMAC, expiry/attempt/rate constants
       sessions.py         256-bit tokens, SHA-256 at rest, sliding 90-day expiry
+      sync_tokens.py      256-bit bearer tokens for sync clients, SHA-256 at rest
       mailer.py           Mailer protocol; SmtpMailer (TLS), ConsoleMailer (local only)
     persistence/          M8; the only package that imports SQLAlchemy
       engine.py           engine creation (no bound values in errors), Database handle
-      models.py           six tables; aware-UTC datetimes; cascades from users
+      models.py           seven tables; aware-UTC datetimes; cascades from users
       repositories.py     per-table repositories, every account query filtered by user_id
     demo/
       scenarios.py        the five product scenarios and their registry
@@ -158,6 +159,8 @@ backend/
       account.py          M8: MeOut, preferences, goal, account analysis, deletion
       measurements.py     M8: CRUD, batch import with stored-row skipping, record -> wire
       export.py           M8: the JSON snapshot and the re-importable CSV
+      sync.py             sync connections, sync-token authentication, and the Apple Health
+                          sync: the unchanged batch import with source "apple_health"
     api/
       deps.py             the injected clock, settings, store, mailer, CurrentUserDep
       errors.py           exception -> response, by explicit table
@@ -166,6 +169,8 @@ backend/
       routes_auth.py      M8: /api/auth/code/request, /api/auth/code/verify, /api/auth/logout
       routes_account.py   M8: /api/me, measurements, analysis, preferences, goal, export
       session_cookie.py   M8: the one place the ht_session cookie's attributes are set
+      routes_sync.py      sync connections (browser session) and the insert-only
+                          PUT /api/me/sync/apple_health (bearer sync token, never the cookie)
     main.py               create_app(); settings read and resources attached at startup
   testing/
     synthetic.py          deterministic seeded generators, for tests and the evaluation harness

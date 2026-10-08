@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
 import { useAccount } from "@/components/app/AccountProvider/AccountProvider";
+import { getSyncConnections } from "@/lib/api/accountClient";
 import { Settings } from "../Settings";
 
 vi.mock("@/lib/api/accountClient", () => ({
@@ -12,6 +13,8 @@ vi.mock("@/lib/api/accountClient", () => ({
   deleteGoal: vi.fn(),
   getMeasurementsCsvExport: vi.fn(),
   getAccountJsonExport: vi.fn(),
+  getSyncConnections: vi.fn(),
+  revokeSyncConnection: vi.fn(),
 }));
 
 vi.mock("@/components/app/AccountProvider/AccountProvider", () => ({
@@ -24,6 +27,7 @@ vi.mock("next/navigation", () => ({
 
 function setup(logout = vi.fn().mockResolvedValue(undefined)) {
   const replace = vi.fn();
+  vi.mocked(getSyncConnections).mockResolvedValue({ count: 0, connections: [] });
   vi.mocked(useRouter).mockReturnValue({ replace } as unknown as ReturnType<typeof useRouter>);
   vi.mocked(useAccount).mockReturnValue({
     status: "authenticated",
@@ -52,13 +56,21 @@ afterEach(() => {
 });
 
 describe("Settings", () => {
-  it("has exactly the settings the backend stores, plus export, sign-out and deletion", () => {
+  it("has exactly the settings the backend stores, plus sources, export, sign-out and deletion", async () => {
     setup();
 
-    for (const heading of ["Display unit", "Goal", "Data export", "Sign out", "Delete account"]) {
+    expect(await screen.findByText("Not connected")).toBeInTheDocument();
+    for (const heading of [
+      "Display unit",
+      "Goal",
+      "Connected Sources",
+      "Data export",
+      "Sign out",
+      "Delete account",
+    ]) {
       expect(screen.getByRole("heading", { level: 2, name: heading })).toBeInTheDocument();
     }
-    expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(5);
+    expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(6);
   });
 
   it("signs out through the existing AccountProvider logout and routes to sign-in", async () => {
@@ -81,6 +93,7 @@ describe("Settings", () => {
 
   it("has no detectable accessibility violations", async () => {
     const { container } = setup();
+    await screen.findByText("Not connected");
     const results = await axe(container, { rules: { "color-contrast": { enabled: false } } });
     expect(results).toHaveNoViolations();
   });

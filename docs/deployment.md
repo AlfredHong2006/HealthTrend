@@ -95,8 +95,15 @@ HEALTHTREND_DATABASE_URL='postgresql+psycopg://…' uv run alembic check   # mod
 
 Run them from a trusted machine, or as a pre-deploy step where the Render plan offers one — always
 **before** the M8 code serves traffic. The application never creates or migrates the schema itself.
-**Never run `alembic downgrade` against a database holding real accounts**: the only migration is the
-initial one, so downgrading drops every table.
+**Never run `alembic downgrade` against a database holding real accounts**: downgrading to `base`
+drops every table, and downgrading `0002_sync_connections` drops every sync connection and relabels
+Apple Health measurements as manual.
+
+`0002_sync_connections` (sync connections, and `apple_health` as a measurement source) is additive:
+it creates one table and widens one column and its check constraint, rewriting no existing row. Run
+it **before** deploying the code that needs it — the previous code runs unchanged against the
+migrated schema, whereas the new code against the old schema fails the first time a sync stores a
+measurement.
 
 **Backend** on Render, root directory `backend/`, Python version from `backend/.python-version`.
 Confirm against the live service's current settings before changing them:

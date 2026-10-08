@@ -1,0 +1,157 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-7);
+  width: 100%;
+  max-width: var(--v2-frame-reading);
+  margin: 0 auto;
+  padding: var(--v2-space-8) var(--v2-gutter-compact) var(--v2-space-10);
+}
+
+.title {
+  margin: 0;
+  font: 400 var(--v2-size-subtitle) var(--v2-font-prose);
+  color: var(--v2-ink-1);
+}
+
+.intro {
+  margin: 0;
+  max-width: 60ch;
+  font: 400 var(--v2-size-body-sm) / 1.6 var(--v2-font-prose);
+  color: var(--v2-ink-3);
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+}
+
+/* Hairline-separated steps, not cards -- the same division Settings uses for its sections. */
+.step,
+.semantics {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--v2-space-5);
+  padding: var(--v2-space-6) 0;
+  border-top: 1px solid var(--v2-rule-1);
+}
+
+.heading {
+  margin: 0;
+  font: 400 19px var(--v2-font-prose);
+  color: var(--v2-ink-1);
+}
+
+.text {
+  margin: 0;
+  max-width: 60ch;
+  font: 400 var(--v2-size-body-sm) / 1.6 var(--v2-font-prose);
+  color: var(--v2-ink-2);
+}
+
+.aside {
+  margin: 0;
+  max-width: 60ch;
+  font: 400 var(--v2-size-ui) / 1.55 var(--v2-font-prose);
+  color: var(--v2-ink-3);
+}
+
+.aside a {
+  color: var(--v2-azure-500);
+  text-decoration: underline;
+}
+
+.bullets,
+.numbered {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-3);
+  max-width: 60ch;
+  padding-left: var(--v2-space-6);
+  font: 400 var(--v2-size-body-sm) / 1.55 var(--v2-font-prose);
+  color: var(--v2-ink-2);
+}
+
+.bullets {
+  list-style: disc;
+}
+
+.numbered {
+  list-style: decimal;
+}
+
+.tokenField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-space-3);
+  width: 100%;
+}
+
+.fieldLabel {
+  font: 500 var(--v2-size-ui-sm) var(--v2-font-numeric);
+  color: var(--v2-ink-3);
+}
+
+.token {
+  width: 100%;
+  min-width: 0;
+  padding: var(--v2-space-4) var(--v2-space-5);
+  font: 400 var(--v2-size-ui) var(--v2-font-mono);
+  color: var(--v2-ink-1);
+  background: var(--v2-paper-2);
+  border: 1px solid var(--v2-rule-2);
+  border-radius: var(--v2-radius);
+}
+
+.token:focus-visible {
+  outline: 2px solid var(--v2-focus);
+  outline-offset: 1px;
+}
+
+.primary {
+  padding: var(--v2-space-4) var(--v2-space-6);
+  font: 500 var(--v2-size-ui) var(--v2-font-numeric);
+  color: var(--v2-paper-1);
+  background: var(--v2-azure-500);
+  border: none;
+  border-radius: var(--v2-radius);
+  cursor: pointer;
+}
+
+.primary:hover {
+  background: var(--v2-azure-600);
+}
+
+.primary:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.secondary {
+  padding: var(--v2-space-4) var(--v2-space-6);
+  font: 500 var(--v2-size-ui) var(--v2-font-numeric);
+  color: var(--v2-ink-3);
+  background: none;
+  border: 1px solid var(--v2-rule-2);
+  border-radius: var(--v2-radius);
+  cursor: pointer;
+}
+
+.secondary:hover {
+  color: var(--v2-ink-1);
+  border-color: var(--v2-rule-3);
+}
+
+.error {
+  margin: 0;
+  font: 400 var(--v2-size-ui-sm) var(--v2-font-numeric);
+  color: var(--v2-amber-500);
+}
+
+@media (max-width: 359px) {
+  .page {
+    padding: var(--v2-space-6) var(--v2-gutter-narrow) var(--v2-space-8);
+  }
+}
