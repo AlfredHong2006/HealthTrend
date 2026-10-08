@@ -17,7 +17,7 @@ from alembic.config import Config
 from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from sqlalchemy import inspect, text
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import DataError, IntegrityError
 
 from app.persistence import Database
 from app.persistence.models import Base
@@ -126,7 +126,12 @@ def test_the_initial_schema_refuses_an_apple_health_measurement(empty_database: 
         command.upgrade(config, "0001_initial")
         connection.execute(INSERT_USER, {"id": "user-1", "email": "alice@example.com"})
 
-    with pytest.raises(IntegrityError), empty_database.engine.begin() as connection:
+    # Which error is the database's business: SQLite fails the source check (IntegrityError),
+    # PostgreSQL fails 0001's VARCHAR(6) first (DataError). Either way the row is refused.
+    with (
+        pytest.raises((IntegrityError, DataError)),
+        empty_database.engine.begin() as connection,
+    ):
         connection.execute(INSERT_MEASUREMENT, APPLE_ROW)
 
 
