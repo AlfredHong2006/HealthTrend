@@ -173,7 +173,8 @@ The browser holds one cookie, `ht_session`, set by the API when a code is verifi
 deployed configuration, so it is only sent over HTTPS; `SameSite=Lax`; and scoped to the API host.
 It carries a random token and nothing else. The frontend never reads, writes or stores a token of its
 own, and uses no `localStorage`, `sessionStorage`, IndexedDB, Cache API or `document.cookie` for
-account state — the same static guard described below enforces that for `/app` too. Signed-in data
+account state — the same static guard described below enforces that for `/app` too. (The only thing
+the frontend keeps in the browser at all is the light/dark appearance choice, described there.) Signed-in data
 lives only in page memory while it is on screen, and is fetched again from the API on the next
 visit.
 
@@ -245,7 +246,12 @@ health data can exist in the frontend, and they are held to the same "nothing ne
 stronger than a policy forbidding it" standard, enforced directly by a static guard,
 `frontend/src/lib/privacy/__tests__/no-persistence.test.ts`, which fails the build if
 `localStorage`, `sessionStorage`, IndexedDB, `document.cookie`, the Cache API or
-`navigator.storage` appears anywhere under `frontend/src`. `/app` keeps its data on the server, not
+`navigator.storage` appears anywhere under `frontend/src`. The guard has one named exception:
+`frontend/src/lib/theme/theme.ts` may use `localStorage` to remember the light/dark appearance
+choice — the single word `light` or `dark` under the key `healthtrend-theme`. That is a display
+preference, not health data or account state; it is never sent to the server, and it is kept in
+the browser because the public pages have no account to hold it. The same test pins that file to
+reading and writing that one key and nothing else. `/app` keeps its data on the server, not
 in the browser: a signed-in page holds what it fetched in component state while it is open. `/app`
 has no service worker and no offline storage. Entered and imported measurements live
 only in that page's component state for the duration of the visit; there is no draft-saving, no

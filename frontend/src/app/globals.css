@@ -2,7 +2,12 @@
 
 html {
   height: 100%;
-  color-scheme: light dark;
+  color-scheme: light;
+}
+
+/* Native controls and scrollbars follow the chosen theme, as the tokens do (tokens.css). */
+html[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 html,

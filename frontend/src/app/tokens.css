@@ -52,23 +52,25 @@
   --ht-max-width: 760px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ht-bg: #161513;
-    --ht-surface: #1e1c19;
-    --ht-border: #33302a;
-    --ht-text: #efece6;
-    --ht-text-muted: #b0a99b;
-    --ht-text-faint: #7d7669;
+/* Dark, by the reader's explicit choice: the same `data-theme` attribute on `<html>` that the
+   V2 and `/app` palette answers to (`v2/v2-tokens.css`, `lib/theme/theme.ts`), so one Settings
+   choice holds across every route. This was a `prefers-color-scheme` response; it no longer
+   follows the OS, which would let these pages disagree with the rest of the site. */
+:root[data-theme="dark"] {
+  --ht-bg: #161513;
+  --ht-surface: #1e1c19;
+  --ht-border: #33302a;
+  --ht-text: #efece6;
+  --ht-text-muted: #b0a99b;
+  --ht-text-faint: #7d7669;
 
-    --ht-accent: #6fb09d;
-    --ht-accent-soft: rgba(111, 176, 157, 0.16);
+  --ht-accent: #6fb09d;
+  --ht-accent-soft: rgba(111, 176, 157, 0.16);
 
-    --ht-forecast: #d3ab6e;
-    --ht-forecast-soft: rgba(211, 171, 110, 0.16);
+  --ht-forecast: #d3ab6e;
+  --ht-forecast-soft: rgba(211, 171, 110, 0.16);
 
-    --ht-observation: #58524a;
+  --ht-observation: #58524a;
 
-    --ht-focus-ring: #6cb0ff;
-  }
+  --ht-focus-ring: #6cb0ff;
 }

@@ -39,6 +39,10 @@ const PRIMARY_NAV = [
  * badge -- a native, JS-free control rather than a second interactive surface, so it stays
  * quiet and secondary the way a demo control should, while switching scenarios remains one
  * click away.
+ *
+ * The wordmark links to `/v2`, the public home -- never to `/app`, so a public visitor is not
+ * dropped at a sign-in page for clicking the logo. The way into (or back to) the signed-in app
+ * is its own plainly labelled "Open app" link, last in the trailing controls on every V2 page.
  */
 export function V2Header({
   current,
@@ -51,7 +55,9 @@ export function V2Header({
 }: V2HeaderProps) {
   return (
     <header className={styles.header}>
-      <span className={styles.wordmark}>HealthTrend</span>
+      <Link href="/v2" className={styles.wordmark}>
+        HealthTrend
+      </Link>
 
       <nav aria-label="HealthTrend" className={styles.nav}>
         <ul className={styles.navList}>
@@ -114,6 +120,10 @@ export function V2Header({
         ) : meta && meta.source === "submitted" ? (
           <span className={styles.badge}>Your data · not saved</span>
         ) : null}
+
+        <Link href="/app" className={styles.appLink}>
+          Open app
+        </Link>
       </div>
     </header>
   );

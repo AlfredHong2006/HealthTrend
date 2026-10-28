@@ -93,6 +93,23 @@
   white-space: nowrap;
 }
 
+/* The way into the signed-in app: the same quiet outline as the badge beside it, but in ink
+   that reads as a control rather than a label. */
+.appLink {
+  padding: 4px var(--v2-space-6);
+  font: 500 var(--v2-size-ui-sm) var(--v2-font-numeric);
+  color: var(--v2-ink-1);
+  border: 1px solid var(--v2-rule-3);
+  border-radius: var(--v2-radius);
+  white-space: nowrap;
+  transition: background-color 140ms ease;
+}
+
+.appLink:hover,
+.appLink:focus-visible {
+  background: var(--v2-paper-3);
+}
+
 /* The scenario switcher: a native disclosure tied to the provenance badge, so it reads as one
    quiet secondary control rather than a second row of primary navigation. No JS is needed for
    this interaction, so it costs nothing to keep `V2Header` free of "use client". */

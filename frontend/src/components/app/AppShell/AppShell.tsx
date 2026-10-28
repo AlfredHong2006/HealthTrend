@@ -12,8 +12,14 @@ const NAV = [
   { id: "history", label: "History", href: "/app/measurements" },
   { id: "import", label: "Import", href: "/app/import" },
   { id: "settings", label: "Settings", href: "/app/settings" },
+] as const;
+
+/** The public informational pages. They are not duplicated inside `/app`: these links leave the
+ * app for `/v2`, whose header carries an "Open app" link and so the way back. */
+const INFO_NAV = [
   { id: "method", label: "Method", href: "/v2/method" },
   { id: "demo", label: "Demo", href: "/v2/gradual-loss" },
+  { id: "about", label: "About", href: "/v2/about" },
 ] as const;
 
 /**
@@ -23,6 +29,9 @@ const NAV = [
  * nowhere is worse than a short nav; docs/design/IMPLEMENTATION_NOTES.md, "ship only real
  * destinations"). This is a new, app-specific component rather than a reuse of `V2Header`,
  * whose `current` prop and nav list are fixed to the four public V2 destinations.
+ *
+ * The nav is two lists in one landmark: the app's own destinations, then a visually separated
+ * group of the public informational pages. The wordmark is the way home, to `/app`.
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -47,7 +56,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <header className={styles.header}>
-        <span className={styles.wordmark}>HealthTrend</span>
+        <Link href="/app" className={styles.wordmark}>
+          HealthTrend
+        </Link>
 
         <nav aria-label="HealthTrend" className={styles.nav}>
           <ul className={styles.navList}>
@@ -62,6 +73,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       : styles.navLink
                   }
                 >
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <ul className={`${styles.navList} ${styles.infoList}`} aria-label="About HealthTrend">
+            {INFO_NAV.map((item) => (
+              <li key={item.id}>
+                <Link href={item.href} className={styles.navLink}>
                   {item.label}
                 </Link>
               </li>

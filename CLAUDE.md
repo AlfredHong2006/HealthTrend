@@ -123,7 +123,9 @@ Full rules in [docs/privacy.md](docs/privacy.md). The operative constraints:
   display unit and goal in Postgres, server-side only. No cache or telemetry anywhere. A static test
   fails the build if `localStorage`, `sessionStorage`, IndexedDB, `document.cookie`, the Cache API or
   `navigator.storage` appears anywhere under `frontend/src`; the session is an HttpOnly cookie the
-  frontend never touches.
+  frontend never touches. The guard's single named exception is `src/lib/theme/theme.ts`, which
+  keeps the light/dark appearance choice (the word `light` or `dark`, nothing else) in
+  `localStorage`.
 - **No measurement may reach a log.** The access log carries counts and route *templates* only. Error
   responses come from an explicit table, never exception text; unexpected exceptions log a class name
   and nothing else.

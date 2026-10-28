@@ -20,7 +20,18 @@
 }
 
 .nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--v2-space-3) var(--v2-space-7);
   min-width: 0;
+}
+
+/* The public informational pages, set apart from the app's own destinations by a hairline
+   rather than a second bar: same links, same type, one quiet divider. */
+.infoList {
+  padding-left: var(--v2-space-7);
+  border-left: 1px solid var(--v2-rule-2);
 }
 
 .navList {
@@ -107,6 +118,15 @@
   .nav {
     order: 3;
     flex-basis: 100%;
+    display: block;
+  }
+
+  /* Its own grid row beneath the app destinations; the divider turns to sit above it. */
+  .infoList {
+    margin-top: var(--v2-space-2);
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid var(--v2-rule-1);
   }
 
   .navList {

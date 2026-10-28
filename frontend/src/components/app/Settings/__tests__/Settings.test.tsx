@@ -62,6 +62,7 @@ describe("Settings", () => {
     expect(await screen.findByText("Not connected")).toBeInTheDocument();
     for (const heading of [
       "Display unit",
+      "Appearance",
       "Goal",
       "Connected Sources",
       "Data export",
@@ -70,7 +71,7 @@ describe("Settings", () => {
     ]) {
       expect(screen.getByRole("heading", { level: 2, name: heading })).toBeInTheDocument();
     }
-    expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(6);
+    expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(7);
   });
 
   it("signs out through the existing AccountProvider logout and routes to sign-in", async () => {

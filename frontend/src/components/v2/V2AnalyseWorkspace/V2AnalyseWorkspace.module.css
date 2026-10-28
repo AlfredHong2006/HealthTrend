@@ -43,12 +43,11 @@
 
 /* The 1B Editorial skin for the reused V1 ingestion components.
 
-   `MeasurementForm` and `CsvImport` are styled entirely against V1's `--ht-*` tokens, and V1's
-   token file carries a `prefers-color-scheme: dark` palette. 1B Editorial is light-only
-   (`v2-tokens.css`), so in dark mode those tokens resolved to V1's near-black surfaces and the
-   form rendered as a dark slab in the middle of a white page. Re-declaring the tokens here
-   fixes that at the source: a custom property resolves from the nearest ancestor that sets it,
-   so these values win over `:root` in either colour scheme, and V1's own routes are untouched.
+   `MeasurementForm` and `CsvImport` are styled entirely against V1's `--ht-*` tokens, whose
+   palette (warm paper, a green accent) is not this page's. Re-declaring the tokens here skins
+   them at the source: a custom property resolves from the nearest ancestor that sets it, so
+   these values win over `:root` in either theme, and V1's own routes are untouched. Because
+   they point at `--v2-*` tokens, the form follows the light/dark choice with the rest of V2.
 
    Only the properties the two components actually reference are listed. Anything not remapped
    would silently fall through to V1's palette, which is the bug this block exists to close. */

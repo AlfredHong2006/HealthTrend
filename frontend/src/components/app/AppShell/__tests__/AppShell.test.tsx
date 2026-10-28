@@ -79,10 +79,55 @@ describe("AppShell", () => {
       "href",
       "/v2/gradual-loss",
     );
-    expect(within(nav).getAllByRole("link")).toHaveLength(7);
+    expect(within(nav).getByRole("link", { name: "About" })).toHaveAttribute("href", "/v2/about");
+    expect(within(nav).getAllByRole("link")).toHaveLength(8);
     for (const dead of ["Goals", "Coaching", "Devices"]) {
       expect(within(nav).queryByRole("link", { name: dead })).not.toBeInTheDocument();
     }
+  });
+
+  it("groups the public informational pages apart from the app's own destinations", () => {
+    vi.mocked(usePathname).mockReturnValue("/app");
+    vi.mocked(useRouter).mockReturnValue({ replace: vi.fn() } as unknown as ReturnType<
+      typeof useRouter
+    >);
+    mockUseAccount();
+
+    render(
+      <AppShell>
+        <p>Content</p>
+      </AppShell>,
+    );
+
+    const nav = screen.getByRole("navigation", { name: "HealthTrend" });
+    const info = within(nav).getByRole("list", { name: "About HealthTrend" });
+    expect(within(info).getAllByRole("link").map((link) => link.textContent)).toEqual([
+      "Method",
+      "Demo",
+      "About",
+    ]);
+    for (const link of within(info).getAllByRole("link")) {
+      expect(link.getAttribute("href")).toMatch(/^\/v2\//);
+    }
+    for (const name of ["Trend", "Log", "History", "Import", "Settings"]) {
+      expect(within(info).queryByRole("link", { name })).not.toBeInTheDocument();
+    }
+  });
+
+  it("makes the wordmark a link home to /app", () => {
+    vi.mocked(usePathname).mockReturnValue("/app/settings");
+    vi.mocked(useRouter).mockReturnValue({ replace: vi.fn() } as unknown as ReturnType<
+      typeof useRouter
+    >);
+    mockUseAccount();
+
+    render(
+      <AppShell>
+        <p>Content</p>
+      </AppShell>,
+    );
+
+    expect(screen.getByRole("link", { name: "HealthTrend" })).toHaveAttribute("href", "/app");
   });
 
   it("every nav destination is a route that exists in this app", async () => {

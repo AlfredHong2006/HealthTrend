@@ -153,7 +153,8 @@
 .danger {
   padding: var(--v2-space-4) var(--v2-space-6);
   font: 500 var(--v2-size-ui) var(--v2-font-numeric);
-  color: var(--v2-paper-1);
+  /* A literal, like the fill: the page colour would turn dark in the dark theme. */
+  color: #ffffff;
   background: #a3312b;
   border: none;
   border-radius: var(--v2-radius);
